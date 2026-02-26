@@ -825,6 +825,9 @@ function joinChannel() {
     });
 
     channel.on('broadcast', { event: 'spin_result' }, ({ payload }) => {
+        // The spinner already applied the result locally, skip if it's me
+        if (payload.spinnerId === MY_ID) return;
+        
         showSpinAnimation(payload.letter, () => {
             G = payload.state;
             renderGame();
@@ -912,7 +915,7 @@ function doSpin() {
         channel.send({
             type: 'broadcast',
             event: 'spin_result',
-            payload: { letter, state: G }
+            payload: { letter, state: G, spinnerId: MY_ID }
         });
         showSpinAnimation(letter, () => {
             renderGame();
