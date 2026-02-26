@@ -828,8 +828,11 @@ function joinChannel() {
         // The spinner already applied the result locally, skip if it's me
         if (payload.spinnerId === MY_ID) return;
         
+        // Update state IMMEDIATELY so the turn is correct
+        G = payload.state;
+        
+        // Show animation, then update UI
         showSpinAnimation(payload.letter, () => {
-            G = payload.state;
             renderGame();
             updateOnlineUI();
             if (G.over) showWinner();
@@ -886,8 +889,12 @@ function startOnlineGame() {
 }
 
 function updateOnlineUI() {
-    const myTurn = G.players[G.currentTurn]?.id === MY_ID;
-    document.getElementById('spinBtn').classList.toggle('hidden', !myTurn);
+    const currentPlayer = G.players[G.currentTurn];
+    const myTurn = currentPlayer?.id === MY_ID;
+    console.log('updateOnlineUI:', { myTurn, MY_ID, currentTurnId: currentPlayer?.id, currentTurn: G.currentTurn });
+    const spinBtn = document.getElementById('spinBtn');
+    spinBtn.classList.toggle('hidden', !myTurn);
+    spinBtn.disabled = !myTurn;
     document.getElementById('waitingMsg').classList.toggle('hidden', myTurn);
 }
 
