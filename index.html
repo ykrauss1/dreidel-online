@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סביבון — מקומי ואונליין</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Secular+One&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════
+           CSS VARIABLES & RESET
+           ═══════════════════════════════════════════ */
+        :root {
+            --bg: #06080f;
+            --bg-card: #0e1225;
+            --bg-card-alt: #141938;
+            --bg-input: #0a0d1a;
+            --gold: #f5c842;
+            --gold-dim: #b8912a;
+            --gold-glow: rgba(245, 200, 66, 0.25);
+            --gold-glow-strong: rgba(245, 200, 66, 0.5);
+            --blue: #3d7aed;
+            --blue-glow: rgba(61, 122, 237, 0.25);
+            --green: #34d399;
+            --green-glow: rgba(52, 211, 153, 0.2);
+            --red: #f87171;
+            --red-glow: rgba(248, 113, 113, 0.2);
+            --text: #e4e4f0;
+            --text-dim: #7a7da0;
+            --text-dimmer: #4a4d6a;
+            --border: #1e2348;
+            --border-light: #2a3060;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 600px 400px at 15% 10%, rgba(61,122,237,0.06), transparent),
+                radial-gradient(ellipse 500px 500px at 85% 85%, rgba(245,200,66,0.04), transparent);
+            pointer-events: none;
+        }
+
+        .app { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+        /* ═══════════ HEADER ═══════════ */
+        .header { text-align: center; padding: 28px 0 12px; }
+        .header h1 {
+            font-family: 'Secular One', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            color: var(--gold);
+            text-shadow: 0 0 40px var(--gold-glow), 0 2px 4px rgba(0,0,0,0.6);
+            letter-spacing: 1px;
+        }
+        .header .sub {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-top: 4px;
+            font-weight: 300;
+        }
+
+        /* ═══════════ SHARED COMPONENTS ═══════════ */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 26px; border: none; border-radius: var(--radius-sm);
+            font-family: 'Secular One', sans-serif; font-size: 1.05rem;
+            cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            color: #12141f;
+            box-shadow: 0 4px 18px var(--gold-glow);
+        }
+        .btn-gold:hover { box-shadow: 0 6px 28px var(--gold-glow-strong); transform: translateY(-1px); }
+
+        .btn-blue {
+            background: linear-gradient(135deg, var(--blue), #2b5ecf);
+            color: #fff;
+            box-shadow: 0 4px 18px var(--blue-glow);
+        }
+        .btn-blue:hover { box-shadow: 0 6px 28px var(--blue-glow); transform: translateY(-1px); }
+
+        .btn-outline {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-dim); font-size: 0.9rem; padding: 8px 18px;
+        }
+        .btn-outline:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+        .input, select.input {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 10px 14px;
+            color: var(--text); font-size: 1rem; font-family: 'Heebo', sans-serif;
+            outline: none; transition: border-color 0.2s; width: 100%;
+        }
+        .input:focus { border-color: var(--gold-dim); }
+
+        .form-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .form-row label { flex-shrink: 0; font-weight: 600; font-size: 0.9rem; color: var(--text-dim); min-width: 110px; }
+
+        .section-title {
+            font-family: 'Secular One', sans-serif;
+            color: var(--gold); font-size: 1.3rem;
+            text-align: center; margin-bottom: 18px;
+        }
+
+        .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+        .hidden { display: none !important; }
+
+        /* ═══════════ MODE SELECTOR ═══════════ */
+        .mode-selector {
+            display: flex; gap: 16px; max-width: 600px;
+            margin: 24px auto;
+        }
+
+        .mode-card {
+            flex: 1; background: var(--bg-card); border: 2px solid var(--border);
+            border-radius: var(--radius); padding: 28px 20px;
+            text-align: center; cursor: pointer; transition: all 0.25s;
+        }
+        .mode-card:hover { border-color: var(--border-light); background: var(--bg-card-alt); }
+        .mode-card.selected { border-color: var(--gold); box-shadow: 0 0 24px var(--gold-glow); }
+
+        .mode-card .icon { font-size: 2.6rem; margin-bottom: 10px; }
+        .mode-card .label {
+            font-family: 'Secular One', sans-serif;
+            font-size: 1.15rem; color: var(--text); margin-bottom: 4px;
+        }
+        .mode-card .desc { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+
+        /* Collapsed mode selector (after choosing) */
+        .mode-selector.collapsed {
+            justify-content: center;
+        }
+        .mode-selector.collapsed .mode-card {
+            display: none;
+        }
+        .mode-selector.collapsed .back-btn-wrap {
+            display: block;
+        }
+        .back-btn-wrap {
+            display: none;
+            text-align: center;
+        }
+
+        /* ═══════════ SETUP SCREENS ═══════════ */
+        .setup-panel { max-width: 520px; margin: 20px auto; }
+
+        .player-name-row {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+        }
+        .player-name-row .badge {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: var(--blue); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+        }
+
+        /* Online lobby */
+        .room-code-display {
+            font-family: 'Secular One', sans-serif;
+            font-size: 2.8rem; letter-spacing: 10px;
+            color: var(--gold); text-align: center;
+            text-shadow: 0 0 20px var(--gold-glow);
+            padding: 20px; margin: 12px 0;
+            background: var(--bg-input); border-radius: var(--radius);
+            border: 1px dashed var(--border-light);
+            user-select: all;
+        }
+
+        .lobby-players {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            justify-content: center; margin: 16px 0;
+        }
+        .lobby-player {
+            background: var(--bg-card-alt); border: 1px solid var(--border);
+            border-radius: 30px; padding: 8px 18px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.9rem;
+        }
+        .lobby-player .dot {
+            width: 8px; height: 8px; background: var(--green);
+            border-radius: 50%; animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+        }
+
+        .lobby-player.host::after {
+            content: '👑'; margin-right: 4px; font-size: 0.85rem;
+        }
+
+        /* ═══════════ GAME LAYOUT ═══════════ */
+
+        .game-top {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+        }
+
+        .pot-box {
+            display: flex; align-items: center; gap: 14px;
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-alt) 100%);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 14px 24px;
+        }
+        .pot-box .emoji { font-size: 1.8rem; }
+        .pot-label { font-size: 0.8rem; color: var(--text-dim); }
+        .pot-val { font-family: 'Secular One', sans-serif; font-size: 1.7rem; color: var(--gold); }
+
+        .turn-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px 22px; font-size: 0.95rem;
+        }
+        .turn-box strong { color: var(--gold); }
+
+        /* ═══════════ DREIDEL ═══════════ */
+        .dreidel-zone { display: flex; flex-direction: column; align-items: center; margin: 24px 0; }
+
+        .dreidel-wrap { perspective: 800px; width: 150px; height: 150px; margin-bottom: 14px; }
+
+        .dreidel {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 6.5rem; font-family: 'Secular One', sans-serif;
+            color: var(--gold); user-select: none;
+            text-shadow: 0 0 25px var(--gold-glow);
+            transition: transform 0.3s;
+        }
+        .dreidel.spinning { animation: dreidel-spin 0.12s linear infinite; }
+        @keyframes dreidel-spin {
+            0% { transform: rotateY(0deg) scale(1.05); }
+            50% { transform: rotateY(180deg) scale(0.95); }
+            100% { transform: rotateY(360deg) scale(1.05); }
+        }
+
+        .result-line {
+            font-size: 1.15rem; font-weight: 600;
+            min-height: 28px; text-align: center;
+        }
+        .r-נ { color: var(--text-dim); }
+        .r-ג { color: var(--green); }
+        .r-ה { color: var(--blue); }
+        .r-פ { color: var(--red); }
+
+        .spin-btn {
+            margin-top: 14px; padding: 14px 52px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            color: #12141f; border: none; border-radius: 12px;
+            font-family: 'Secular One', sans-serif; font-size: 1.35rem;
+            cursor: pointer; box-shadow: 0 4px 18px var(--gold-glow);
+            transition: all 0.2s;
+        }
+        .spin-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 30px var(--gold-glow-strong); }
+        .spin-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .waiting-text {
+            color: var(--text-dim); font-size: 1rem;
+            margin-top: 14px; text-align: center;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        /* ═══════════ PLAYERS GRID ═══════════ */
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 12px; margin-top: 16px;
+        }
+
+        .p-card {
+            background: var(--bg-card); border: 2px solid var(--border);
+            border-radius: var(--radius); padding: 14px 16px;
+            transition: all 0.3s; overflow: hidden;
+        }
+        .p-card.active { border-color: var(--gold); box-shadow: 0 0 22px var(--gold-glow); background: var(--bg-card-alt); }
+        .p-card.out { opacity: 0.3; }
+        .p-card.winner { border-color: var(--gold); }
+
+        .p-card .p-name {
+            font-weight: 700; font-size: 1.05rem;
+            display: flex; align-items: center; gap: 6px;
+            margin-bottom: 4px;
+        }
+        .p-card .p-name .crown { display: none; }
+        .p-card.winner .p-name .crown { display: inline; }
+
+        .p-card .p-amt {
+            font-family: 'Secular One', sans-serif;
+            font-size: 1.5rem; color: var(--gold);
+        }
+        .p-card .p-delta { font-size: 0.85rem; min-height: 20px; margin-top: 2px; }
+        .p-delta.plus { color: var(--green); }
+        .p-delta.minus { color: var(--red); }
+        .p-delta.zero { color: var(--text-dim); }
+
+        /* ═══════════ VIDEO GRID ═══════════ */
+        .video-section {
+            margin-top: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .video-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .video-section-header h3 {
+            font-size: 0.9rem; color: var(--text-dim); font-weight: 400;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .video-tile {
+            position: relative;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            aspect-ratio: 4/3;
+        }
+
+        .video-tile video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .video-tile .vid-name {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.75));
+            padding: 20px 10px 8px;
+            font-size: 0.8rem; color: #fff;
+        }
+
+        .video-controls {
+            display: flex; gap: 8px;
+        }
+
+        .vid-btn {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 6px 14px;
+            color: var(--text-dim); font-size: 0.8rem; font-family: 'Heebo', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .vid-btn:hover { border-color: var(--blue); color: var(--blue); }
+        .vid-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+        /* ═══════════ GAME LOG ═══════════ */
+        .game-log {
+            margin-top: 20px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 14px; max-height: 180px; overflow-y: auto;
+        }
+        .game-log h3 { color: var(--text-dim); font-size: 0.85rem; font-weight: 400; margin-bottom: 8px; }
+        .log-entry {
+            padding: 3px 0; font-size: 0.85rem; color: var(--text-dim);
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+
+        /* ═══════════ WINNER MODAL ═══════════ */
+        .modal-bg {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal-bg.show { display: flex; }
+
+        .win-modal {
+            background: var(--bg-card); border: 2px solid var(--gold);
+            border-radius: 20px; padding: 40px; text-align: center;
+            box-shadow: 0 0 80px var(--gold-glow-strong);
+            max-width: 400px; width: 90%;
+            animation: modal-pop 0.35s ease-out;
+        }
+        @keyframes modal-pop {
+            0% { transform: scale(0.6) translateY(30px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .win-modal .big-icon { font-size: 4rem; margin-bottom: 8px; }
+        .win-modal h2 { font-family: 'Secular One', sans-serif; color: var(--gold); font-size: 1.7rem; margin-bottom: 6px; }
+        .win-modal p { color: var(--text-dim); margin-bottom: 18px; }
+
+        /* ═══════════ SUPABASE CONFIG BANNER ═══════════ */
+        .config-banner {
+            max-width: 700px; margin: 20px auto;
+            background: var(--bg-card-alt); border: 1px solid var(--border-light);
+            border-radius: var(--radius); padding: 20px;
+        }
+        .config-banner h3 {
+            font-family: 'Secular One', sans-serif;
+            font-size: 1rem; color: var(--blue); margin-bottom: 10px;
+        }
+        .config-banner p { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; line-height: 1.6; }
+        .config-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .config-row input { flex: 1; }
+        .config-status { font-size: 0.85rem; margin-top: 8px; }
+        .config-status.ok { color: var(--green); }
+        .config-status.err { color: var(--red); }
+
+        /* ═══════════ RESPONSIVE ═══════════ */
+        @media (max-width: 600px) {
+            .mode-selector { flex-direction: column; }
+            .game-top { flex-direction: column; align-items: stretch; }
+            .players-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+            .dreidel { font-size: 5rem; }
+            .video-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ═══════════ TAB SWITCHER (online sub-views) ═══════════ */
+        .tab-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+        .tab-btn {
+            padding: 8px 20px; border-radius: 20px; font-size: 0.9rem;
+            background: var(--bg-input); border: 1px solid var(--border);
+            color: var(--text-dim); cursor: pointer; font-family: 'Heebo', sans-serif;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+        .info-box {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 14px;
+            font-size: 0.85rem; color: var(--text-dim); line-height: 1.7;
+            margin-top: 14px;
+        }
+        .info-box code {
+            background: var(--bg-card-alt); padding: 2px 7px;
+            border-radius: 4px; color: var(--gold); font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- HEADER -->
+    <header class="header">
+        <h1>🕎 משחק סביבון</h1>
+        <p class="sub">נ ג ה פ — מקומי או אונליין עם חברים!</p>
+    </header>
+
+    <!-- ═══════════ MODE SELECTION ═══════════ -->
+    <div id="modeScreen">
+        <div class="mode-selector" id="modeSelector">
+            <div class="back-btn-wrap">
+                <button class="btn btn-outline" onclick="resetMode()">◂ חזרה לבחירת מצב</button>
+            </div>
+            <div class="mode-card" data-mode="local" onclick="selectMode('local')">
+                <div class="icon">🎮</div>
+                <div class="label">משחק מקומי</div>
+                <div class="desc">כל השחקנים על אותו מכשיר</div>
+            </div>
+            <div class="mode-card" data-mode="online" onclick="selectMode('online')">
+                <div class="icon">🌐</div>
+                <div class="label">משחק אונליין</div>
+                <div class="desc">שלח קוד חדר לחברים ושחקו יחד עם וידאו</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ LOCAL SETUP ═══════════ -->
+    <div id="localSetup" class="setup-panel card hidden">
+        <h2 class="section-title">הגדרות משחק מקומי</h2>
+        <div class="form-row">
+            <label>מספר שחקנים:</label>
+            <select id="localNumPlayers" class="input" onchange="renderLocalNames()">
+                <option value="2">2</option><option value="3">3</option>
+                <option value="4" selected>4</option><option value="5">5</option>
+                <option value="6">6</option><option value="7">7</option><option value="8">8</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label>סכום התחלתי:</label>
+            <input type="number" id="localStartAmt" class="input" value="100" min="10" step="10">
+        </div>
+        <hr class="divider">
+        <div id="localNames"></div>
+        <button class="btn btn-gold" style="width:100%;margin-top:18px" onclick="startLocalGame()">🎲 התחל משחק!</button>
+    </div>
+
+    <!-- ═══════════ ONLINE SETUP ═══════════ -->
+    <div id="onlineSetup" class="hidden">
+
+        <!-- Supabase config (hidden - auto-connect) -->
+        <div class="config-banner hidden" id="supabaseConfig"></div>
+
+        <!-- Online lobby (after Supabase connected) -->
+        <div id="onlineLobby" class="setup-panel card hidden">
+            <h2 class="section-title">משחק אונליין</h2>
+
+            <div class="tab-row">
+                <button class="tab-btn active" id="tabCreate" onclick="showOnlineTab('create')">צור חדר</button>
+                <button class="tab-btn" id="tabJoin" onclick="showOnlineTab('join')">הצטרף לחדר</button>
+            </div>
+
+            <!-- Create room -->
+            <div id="createPanel">
+                <div class="form-row">
+                    <label>השם שלך:</label>
+                    <input type="text" id="hostName" class="input" placeholder="הכנס שם...">
+                </div>
+                <div class="form-row">
+                    <label>סכום התחלתי:</label>
+                    <input type="number" id="onlineStartAmt" class="input" value="100" min="10" step="10">
+                </div>
+                <button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="createRoom()">צור חדר</button>
+            </div>
+
+            <!-- Join room -->
+            <div id="joinPanel" class="hidden">
+                <div class="form-row">
+                    <label>השם שלך:</label>
+                    <input type="text" id="joinName" class="input" placeholder="הכנס שם...">
+                </div>
+                <div class="form-row">
+                    <label>קוד חדר:</label>
+                    <input type="text" id="joinCode" class="input" placeholder="XXXX" maxlength="4" style="letter-spacing:6px;text-align:center;font-size:1.2rem" dir="ltr">
+                </div>
+                <button class="btn btn-blue" style="width:100%;margin-top:12px" onclick="joinRoom()">הצטרף</button>
+            </div>
+        </div>
+
+        <!-- Waiting room -->
+        <div id="waitingRoom" class="setup-panel card hidden">
+            <h2 class="section-title">ממתינים לשחקנים...</h2>
+            <div class="room-code-display" id="roomCodeDisplay">----</div>
+            <p style="text-align:center;color:var(--text-dim);font-size:0.85rem;margin-bottom:12px">
+                שתף את הקוד עם החברים
+            </p>
+            <div class="lobby-players" id="lobbyPlayers"></div>
+            <button class="btn btn-gold hidden" style="width:100%;margin-top:14px" id="startOnlineBtn" onclick="startOnlineGame()">🎲 התחל משחק!</button>
+        </div>
+    </div>
+
+    <!-- ═══════════ GAME SCREEN ═══════════ -->
+    <div class="game-screen hidden" id="gameScreen">
+        <div class="game-top">
+            <div class="pot-box">
+                <span class="emoji">🪙</span>
+                <div>
+                    <div class="pot-label">קופה</div>
+                    <div class="pot-val" id="potVal">0</div>
+                </div>
+            </div>
+            <div class="turn-box" id="turnBox">תור: <strong>—</strong></div>
+            <button class="btn btn-outline" onclick="location.reload()">משחק חדש</button>
+        </div>
+
+        <div class="dreidel-zone">
+            <div class="dreidel-wrap">
+                <div class="dreidel" id="dreidel">🔯</div>
+            </div>
+            <div class="result-line" id="resultLine"></div>
+            <button class="spin-btn" id="spinBtn" onclick="doSpin()">סובב!</button>
+            <div class="waiting-text hidden" id="waitingMsg">ממתין לתור של השחקן...</div>
+        </div>
+
+        <div class="players-grid" id="playersGrid"></div>
+
+        <!-- Video Section -->
+        <div class="video-section hidden" id="videoSection">
+            <div class="video-section-header">
+                <h3>📹 וידאו</h3>
+                <div class="video-controls">
+                    <button class="vid-btn" id="vidToggle" onclick="toggleVideo()">📷 הפעל מצלמה</button>
+                    <button class="vid-btn" id="micToggle" onclick="toggleMic()">🎤 השתק</button>
+                </div>
+            </div>
+            <div class="video-grid" id="videoGrid"></div>
+        </div>
+
+        <div class="game-log" id="gameLog">
+            <h3>📜 יומן משחק</h3>
+            <div id="logEntries"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════ WINNER MODAL ═══════════ -->
+    <div class="modal-bg" id="winModal">
+        <div class="win-modal">
+            <div class="big-icon">🏆</div>
+            <h2 id="winName">—</h2>
+            <p>ניצח את המשחק!</p>
+            <button class="btn btn-gold" onclick="location.reload()">משחק חדש</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SUPABASE CDN
+     ═══════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+// ============================================================
+//  GLOBAL STATE
+// ============================================================
+let MODE = null;        // 'local' | 'online'
+let sb = null;          // Supabase client
+let channel = null;     // Realtime channel
+
+let G = {               // Game state
+    players: [],        // { id, name, amount, alive, change }
+    pot: 0,
+    currentTurn: 0,
+    startAmt: 100,
+    ante: 10,
+    over: false
+};
+
+let MY_ID = null;       // online player id
+let IS_HOST = false;
+let ROOM_CODE = null;
+
+let spinning = false;
+
+// Video / WebRTC
+let localStream = null;
+let videoEnabled = false;
+let micEnabled = true;
+let peerConnections = {};   // peerId -> RTCPeerConnection
+
+// ============================================================
+//  MODE SELECTION
+// ============================================================
+function selectMode(mode) {
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+    document.querySelector(`.mode-card[data-mode="${mode}"]`).classList.add('selected');
+    MODE = mode;
+
+    // Collapse mode selector to just a back button
+    document.getElementById('modeSelector').classList.add('collapsed');
+
+    hide('localSetup'); hide('onlineSetup');
+    if (mode === 'local') show('localSetup');
+    if (mode === 'online') {
+        show('onlineSetup');
+        // Auto-connect to Supabase
+        if (!sb) connectSupabase();
+    }
+}
+
+function resetMode() {
+    MODE = null;
+    document.getElementById('modeSelector').classList.remove('collapsed');
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+    hide('localSetup'); hide('onlineSetup');
+}
+
+// ============================================================
+//  LOCAL GAME SETUP
+// ============================================================
+function renderLocalNames() {
+    const n = parseInt(document.getElementById('localNumPlayers').value);
+    const div = document.getElementById('localNames');
+    div.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+        div.innerHTML += `
+            <div class="player-name-row">
+                <span class="badge">${i + 1}</span>
+                <input class="input local-name" placeholder="שחקן ${i + 1}">
+            </div>`;
+    }
+}
+renderLocalNames();
+
+function startLocalGame() {
+    G.startAmt = parseInt(document.getElementById('localStartAmt').value) || 100;
+    G.ante = Math.round(G.startAmt * 0.1);
+    G.players = [];
+    G.pot = 0; G.currentTurn = 0; G.over = false;
+
+    document.querySelectorAll('.local-name').forEach((inp, i) => {
+        G.players.push({
+            id: 'p' + i,
+            name: inp.value.trim() || `שחקן ${i + 1}`,
+            amount: G.startAmt - G.ante,
+            alive: true,
+            change: ''
+        });
+        G.pot += G.ante;
+    });
+
+    hide('modeScreen'); hide('localSetup');
+    show('gameScreen');
+    document.getElementById('spinBtn').classList.remove('hidden');
+    document.getElementById('waitingMsg').classList.add('hidden');
+    addLog('המשחק התחיל! כל שחקן שם ' + G.ante + ' בקופה.');
+    renderGame();
+}
+
+// ============================================================
+//  SUPABASE CONNECTION (auto-connect with embedded credentials)
+// ============================================================
+const SB_URL = 'https://vhcxfrrafpqhvmmunoxp.supabase.co';
+const SB_KEY = 'sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
+
+function connectSupabase() {
+    try {
+        sb = supabase.createClient(SB_URL, SB_KEY);
+        console.log('Supabase connected');
+        show('onlineLobby');
+        return true;
+    } catch (e) {
+        console.error('Supabase error:', e);
+        alert('שגיאה בהתחברות ל-Supabase: ' + e.message);
+        return false;
+    }
+}
+
+// ============================================================
+//  ONLINE LOBBY
+// ============================================================
+function showOnlineTab(tab) {
+    document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+    document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+    toggle('createPanel', tab === 'create');
+    toggle('joinPanel', tab === 'join');
+}
+
+function genCode() {
+    const chars = 'ABCDEFGHJKLMNPRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+}
+
+async function createRoom() {
+    const name = document.getElementById('hostName').value.trim() || 'מארח';
+    G.startAmt = parseInt(document.getElementById('onlineStartAmt').value) || 100;
+    G.ante = Math.round(G.startAmt * 0.1);
+    ROOM_CODE = genCode();
+    MY_ID = 'p_' + Math.random().toString(36).substr(2, 6);
+    IS_HOST = true;
+
+    G.players = [{ id: MY_ID, name, amount: 0, alive: true, change: '' }];
+    G.pot = 0; G.currentTurn = 0; G.over = false;
+
+    hide('onlineLobby');
+    show('waitingRoom');
+    document.getElementById('roomCodeDisplay').textContent = ROOM_CODE;
+    document.getElementById('startOnlineBtn').classList.remove('hidden');
+
+    joinChannel();
+    renderLobby();
+}
+
+async function joinRoom() {
+    const name = document.getElementById('joinName').value.trim() || 'שחקן';
+    ROOM_CODE = document.getElementById('joinCode').value.trim().toUpperCase();
+    if (!ROOM_CODE || ROOM_CODE.length < 4) { alert('יש להכניס קוד חדר תקין'); return; }
+
+    MY_ID = 'p_' + Math.random().toString(36).substr(2, 6);
+    IS_HOST = false;
+
+    hide('onlineLobby');
+    show('waitingRoom');
+    document.getElementById('roomCodeDisplay').textContent = ROOM_CODE;
+    document.getElementById('startOnlineBtn').classList.add('hidden');
+
+    joinChannel();
+
+    // Announce join
+    channel.send({
+        type: 'broadcast',
+        event: 'player_join',
+        payload: { id: MY_ID, name }
+    });
+}
+
+function joinChannel() {
+    channel = sb.channel('room_' + ROOM_CODE, {
+        config: { broadcast: { self: true } }
+    });
+
+    channel.on('broadcast', { event: 'player_join' }, ({ payload }) => {
+        if (IS_HOST && !G.players.find(p => p.id === payload.id)) {
+            G.players.push({ id: payload.id, name: payload.name, amount: 0, alive: true, change: '' });
+            broadcastState();
+        }
+        renderLobby();
+    });
+
+    channel.on('broadcast', { event: 'game_state' }, ({ payload }) => {
+        G = payload;
+        renderLobby();
+        if (G.started) {
+            hide('waitingRoom'); hide('modeScreen'); hide('onlineSetup');
+            show('gameScreen');
+            show('videoSection');
+            renderGame();
+            updateOnlineUI();
+        }
+    });
+
+    channel.on('broadcast', { event: 'spin_result' }, ({ payload }) => {
+        showSpinAnimation(payload.letter, () => {
+            G = payload.state;
+            renderGame();
+            updateOnlineUI();
+            if (G.over) showWinner();
+        });
+    });
+
+    // WebRTC signaling
+    channel.on('broadcast', { event: 'rtc_offer' }, async ({ payload }) => {
+        if (payload.target !== MY_ID) return;
+        await handleOffer(payload.from, payload.offer);
+    });
+    channel.on('broadcast', { event: 'rtc_answer' }, async ({ payload }) => {
+        if (payload.target !== MY_ID) return;
+        await handleAnswer(payload.from, payload.answer);
+    });
+    channel.on('broadcast', { event: 'rtc_ice' }, async ({ payload }) => {
+        if (payload.target !== MY_ID) return;
+        await handleIce(payload.from, payload.candidate);
+    });
+
+    channel.subscribe();
+}
+
+function broadcastState() {
+    channel.send({ type: 'broadcast', event: 'game_state', payload: G });
+}
+
+function renderLobby() {
+    const div = document.getElementById('lobbyPlayers');
+    div.innerHTML = G.players.map((p, i) => `
+        <div class="lobby-player ${i === 0 ? 'host' : ''}">
+            <span class="dot"></span> ${p.name}
+        </div>
+    `).join('');
+}
+
+function startOnlineGame() {
+    if (G.players.length < 2) { alert('צריך לפחות 2 שחקנים'); return; }
+
+    G.players.forEach(p => {
+        p.amount = G.startAmt - G.ante;
+        p.alive = true;
+        p.change = '';
+    });
+    G.pot = G.ante * G.players.length;
+    G.currentTurn = 0;
+    G.over = false;
+    G.started = true;
+
+    broadcastState();
+
+    // Start WebRTC connections
+    setTimeout(() => initVideoConnections(), 500);
+}
+
+function updateOnlineUI() {
+    const myTurn = G.players[G.currentTurn]?.id === MY_ID;
+    document.getElementById('spinBtn').classList.toggle('hidden', !myTurn);
+    document.getElementById('waitingMsg').classList.toggle('hidden', myTurn);
+}
+
+// ============================================================
+//  SPINNING & GAME LOGIC
+// ============================================================
+const LETTERS = ['נ', 'ג', 'ה', 'פ'];
+const LETTER_DESC = {
+    'נ': 'נון — ניקס (כלום)',
+    'ג': 'גימל — גנץ (הכל!)',
+    'ה': 'הא — האלב (חצי)',
+    'פ': 'פה — פיי (לשלם)'
+};
+
+function doSpin() {
+    if (spinning || G.over) return;
+
+    const letter = LETTERS[Math.floor(Math.random() * 4)];
+
+    if (MODE === 'online') {
+        // Apply locally then broadcast
+        spinning = true;
+        document.getElementById('spinBtn').disabled = true;
+        applyLetter(letter);
+        channel.send({
+            type: 'broadcast',
+            event: 'spin_result',
+            payload: { letter, state: G }
+        });
+        showSpinAnimation(letter, () => {
+            renderGame();
+            updateOnlineUI();
+            spinning = false;
+            document.getElementById('spinBtn').disabled = false;
+            if (G.over) showWinner();
+        });
+    } else {
+        spinning = true;
+        document.getElementById('spinBtn').disabled = true;
+        G.players.forEach(p => p.change = '');
+
+        showSpinAnimation(letter, () => {
+            applyLetter(letter);
+            renderGame();
+            spinning = false;
+            document.getElementById('spinBtn').disabled = false;
+            if (G.over) showWinner();
+        });
+    }
+}
+
+function showSpinAnimation(finalLetter, onDone) {
+    const el = document.getElementById('dreidel');
+    const rl = document.getElementById('resultLine');
+    rl.textContent = ''; rl.className = 'result-line';
+    el.classList.add('spinning');
+
+    const flicker = setInterval(() => {
+        el.textContent = LETTERS[Math.floor(Math.random() * 4)];
+    }, 70);
+
+    setTimeout(() => {
+        clearInterval(flicker);
+        el.classList.remove('spinning');
+        el.textContent = finalLetter;
+        rl.textContent = LETTER_DESC[finalLetter];
+        rl.className = 'result-line r-' + finalLetter;
+        if (onDone) onDone();
+    }, 1200 + Math.random() * 600);
+}
+
+function applyLetter(letter) {
+    const p = G.players[G.currentTurn];
+    G.players.forEach(pl => pl.change = '');
+
+    switch (letter) {
+        case 'נ':
+            p.change = '—';
+            addLog(`${p.name} קיבל נ׳ — כלום.`);
+            break;
+        case 'ג': {
+            const won = G.pot;
+            p.amount += G.pot;
+            p.change = '+' + won;
+            G.pot = 0;
+            addLog(`${p.name} קיבל ג׳ — לקח ${won} מהקופה! 🎉`);
+            // Everyone antes again
+            G.players.forEach(pl => { if (pl.alive) { pl.amount -= G.ante; G.pot += G.ante; } });
+            addLog(`כולם שמו ${G.ante} בקופה.`);
+            break;
+        }
+        case 'ה': {
+            const half = Math.round(G.pot / 2);
+            p.amount += half;
+            G.pot -= half;
+            p.change = '+' + half;
+            addLog(`${p.name} קיבל ה׳ — חצי (${half}).`);
+            break;
+        }
+        case 'פ':
+            p.amount -= G.ante;
+            G.pot += G.ante;
+            p.change = '-' + G.ante;
+            addLog(`${p.name} קיבל פ׳ — שילם ${G.ante}.`);
+            break;
+    }
+
+    // Eliminate
+    G.players.forEach(pl => {
+        if (pl.alive && pl.amount <= 0) {
+            pl.alive = false; pl.amount = 0;
+            addLog(`💀 ${pl.name} יצא מהמשחק!`);
+        }
+    });
+
+    // Next turn
+    const alive = G.players.filter(p => p.alive);
+    if (alive.length <= 1) {
+        G.over = true;
+        if (alive[0]) { alive[0].amount += G.pot; G.pot = 0; }
+        return;
+    }
+
+    do { G.currentTurn = (G.currentTurn + 1) % G.players.length; }
+    while (!G.players[G.currentTurn].alive);
+
+    // Refill pot if empty
+    if (G.pot === 0) {
+        G.players.forEach(pl => { if (pl.alive) { pl.amount -= G.ante; G.pot += G.ante; } });
+        G.players.forEach(pl => {
+            if (pl.alive && pl.amount <= 0) { pl.alive = false; pl.amount = 0; addLog(`💀 ${pl.name} יצא מהמשחק!`); }
+        });
+    }
+}
+
+// ============================================================
+//  RENDERING
+// ============================================================
+function renderGame() {
+    document.getElementById('potVal').textContent = G.pot;
+
+    const cp = G.players[G.currentTurn];
+    document.getElementById('turnBox').innerHTML = `תור: <strong>${cp ? cp.name : '—'}</strong>`;
+
+    const grid = document.getElementById('playersGrid');
+    grid.innerHTML = G.players.map((p, i) => `
+        <div class="p-card ${i === G.currentTurn && p.alive ? 'active' : ''} ${!p.alive ? 'out' : ''} ${G.over && p.alive ? 'winner' : ''}">
+            <div class="p-name">
+                <span class="crown">👑</span>
+                ${p.name} ${!p.alive ? '(בחוץ)' : ''}
+            </div>
+            <div class="p-amt">${p.alive ? p.amount : 0}</div>
+            <div class="p-delta ${p.change.startsWith('+') ? 'plus' : p.change.startsWith('-') ? 'minus' : 'zero'}">${p.change}</div>
+        </div>
+    `).join('');
+}
+
+function showWinner() {
+    const w = G.players.find(p => p.alive);
+    if (w) {
+        document.getElementById('winName').textContent = '🎉 ' + w.name + ' ניצח!';
+        document.getElementById('winModal').classList.add('show');
+        addLog(`🏆 ${w.name} ניצח עם ${w.amount}!`);
+    }
+}
+
+function addLog(text) {
+    const el = document.createElement('div');
+    el.className = 'log-entry';
+    el.textContent = text;
+    const c = document.getElementById('logEntries');
+    c.insertBefore(el, c.firstChild);
+}
+
+// ============================================================
+//  WebRTC VIDEO
+// ============================================================
+const RTC_CONFIG = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
+async function initVideoConnections() {
+    // Each player initiates connections to players with higher index
+    const myIndex = G.players.findIndex(p => p.id === MY_ID);
+    for (let i = 0; i < G.players.length; i++) {
+        if (i === myIndex) continue;
+        if (myIndex < i) {
+            // I initiate
+            await createPeerConnection(G.players[i].id, true);
+        }
+    }
+}
+
+async function getLocalStream() {
+    if (localStream) return localStream;
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        addLocalVideo();
+        videoEnabled = true;
+        micEnabled = true;
+        updateVidButtons();
+        return localStream;
+    } catch (e) {
+        console.warn('Camera access denied:', e);
+        addLog('⚠️ לא ניתן לגשת למצלמה');
+        return null;
+    }
+}
+
+function addLocalVideo() {
+    const grid = document.getElementById('videoGrid');
+    if (document.getElementById('vid_local')) return;
+    const tile = document.createElement('div');
+    tile.className = 'video-tile';
+    tile.id = 'vid_local';
+    tile.innerHTML = `<video autoplay muted playsinline></video><div class="vid-name">אני</div>`;
+    grid.appendChild(tile);
+    tile.querySelector('video').srcObject = localStream;
+}
+
+async function createPeerConnection(peerId, initiator) {
+    const stream = await getLocalStream();
+    if (!stream) return;
+
+    const pc = new RTCPeerConnection(RTC_CONFIG);
+    peerConnections[peerId] = pc;
+
+    stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+    pc.onicecandidate = (e) => {
+        if (e.candidate) {
+            channel.send({
+                type: 'broadcast', event: 'rtc_ice',
+                payload: { from: MY_ID, target: peerId, candidate: e.candidate }
+            });
+        }
+    };
+
+    pc.ontrack = (e) => {
+        addRemoteVideo(peerId, e.streams[0]);
+    };
+
+    if (initiator) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        channel.send({
+            type: 'broadcast', event: 'rtc_offer',
+            payload: { from: MY_ID, target: peerId, offer }
+        });
+    }
+}
+
+async function handleOffer(from, offer) {
+    await createPeerConnection(from, false);
+    const pc = peerConnections[from];
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    channel.send({
+        type: 'broadcast', event: 'rtc_answer',
+        payload: { from: MY_ID, target: from, answer }
+    });
+}
+
+async function handleAnswer(from, answer) {
+    const pc = peerConnections[from];
+    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+}
+
+async function handleIce(from, candidate) {
+    const pc = peerConnections[from];
+    if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+}
+
+function addRemoteVideo(peerId, stream) {
+    const grid = document.getElementById('videoGrid');
+    if (document.getElementById('vid_' + peerId)) return;
+    const player = G.players.find(p => p.id === peerId);
+    const tile = document.createElement('div');
+    tile.className = 'video-tile';
+    tile.id = 'vid_' + peerId;
+    tile.innerHTML = `<video autoplay playsinline></video><div class="vid-name">${player ? player.name : peerId}</div>`;
+    grid.appendChild(tile);
+    tile.querySelector('video').srcObject = stream;
+}
+
+function toggleVideo() {
+    if (!localStream) return;
+    videoEnabled = !videoEnabled;
+    localStream.getVideoTracks().forEach(t => t.enabled = videoEnabled);
+    updateVidButtons();
+}
+
+function toggleMic() {
+    if (!localStream) return;
+    micEnabled = !micEnabled;
+    localStream.getAudioTracks().forEach(t => t.enabled = micEnabled);
+    updateVidButtons();
+}
+
+function updateVidButtons() {
+    const vb = document.getElementById('vidToggle');
+    const mb = document.getElementById('micToggle');
+    vb.textContent = videoEnabled ? '📷 כבה מצלמה' : '📷 הפעל מצלמה';
+    vb.classList.toggle('active', videoEnabled);
+    mb.textContent = micEnabled ? '🎤 השתק' : '🔇 בטל השתקה';
+    mb.classList.toggle('active', micEnabled);
+}
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+function toggle(id, v) { document.getElementById(id).classList.toggle('hidden', !v); }
+
+</script>
+</body>
+</html>
