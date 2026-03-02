@@ -66,12 +66,45 @@
         .turn-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 18px;font-size:0.9rem} .turn-box strong{color:var(--gold)}
 
         .game-main{display:flex;flex-direction:column;align-items:center;gap:10px}
-        .dreidel-zone{display:flex;flex-direction:column;align-items:center}
-        .dreidel-wrap{perspective:800px;width:100px;height:100px;margin-bottom:6px}
-        .dreidel{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4.2rem;font-family:'Secular One',sans-serif;color:var(--gold);user-select:none;text-shadow:0 0 25px var(--gold-glow)}
-        .dreidel.spinning{animation:dspin 0.12s linear infinite}
+        .dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative}
+        .dreidel-wrap{perspective:800px;width:120px;height:180px;margin-bottom:4px;display:flex;align-items:center;justify-content:center}
+        .dreidel-svg{width:120px;height:180px;filter:drop-shadow(0 0 15px var(--gold-glow));transition:transform 0.3s;transform-origin:center center}
+        .dreidel-svg .body-rect{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
+        .dreidel-svg .body-tri{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
+        .dreidel-svg .handle{fill:var(--gold-dim);stroke:var(--gold);stroke-width:1.5}
+        .dreidel-svg .handle-knob{fill:var(--gold);stroke:var(--gold-dim);stroke-width:1}
+        .dreidel-svg .letter{font-family:'Secular One',sans-serif;font-size:36px;fill:var(--gold);text-anchor:middle;dominant-baseline:central}
+        .dreidel-svg.spinning{animation:dreidel3d 0.18s linear infinite}
+        @keyframes dreidel3d{
+            0%{transform:rotateY(0deg)}
+            25%{transform:rotateY(90deg) scaleX(0.2)}
+            50%{transform:rotateY(180deg) scaleX(1)}
+            75%{transform:rotateY(270deg) scaleX(0.2)}
+            100%{transform:rotateY(360deg)}
+        }
+        .dreidel-svg.fall-right{animation:fall-r 0.6s ease-in forwards}
+        .dreidel-svg.fall-left{animation:fall-l 0.6s ease-in forwards}
+        @keyframes fall-r{
+            0%{transform:rotate(0deg)}
+            40%{transform:rotate(8deg)}
+            70%{transform:rotate(75deg)}
+            85%{transform:rotate(82deg)}
+            100%{transform:rotate(78deg)}
+        }
+        @keyframes fall-l{
+            0%{transform:rotate(0deg)}
+            40%{transform:rotate(-8deg)}
+            70%{transform:rotate(-75deg)}
+            85%{transform:rotate(-82deg)}
+            100%{transform:rotate(-78deg)}
+        }
+        .dreidel-svg.upright{animation:stand-up 0.4s ease-out forwards}
+        @keyframes stand-up{
+            0%{transform:rotate(var(--current-rot,0deg))}
+            100%{transform:rotate(0deg)}
+        }
         @keyframes dspin{0%{transform:rotateY(0) scale(1.05)}50%{transform:rotateY(180deg) scale(0.95)}100%{transform:rotateY(360deg) scale(1.05)}}
-        .result-line{font-size:0.9rem;font-weight:600;min-height:22px;text-align:center}
+        .result-line{font-size:0.9rem;font-weight:600;min-height:20px;text-align:center;white-space:nowrap;margin-bottom:8px;margin-top:24px}
         .r-נ{color:var(--text-dim)} .r-ג{color:var(--green)} .r-ה{color:var(--blue)} .r-פ{color:var(--red)}
         .spin-btn{margin-top:6px;padding:10px 36px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;border:none;border-radius:10px;font-family:'Secular One',sans-serif;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 15px var(--gold-glow);transition:all 0.2s}
         .spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 25px var(--gold-glow-strong)}
@@ -173,7 +206,20 @@
             </div>
             <div class="game-main">
                 <div class="dreidel-zone">
-                    <div class="dreidel-wrap"><div class="dreidel" id="dreidel">🔯</div></div>
+                    <div class="dreidel-wrap">
+                        <svg class="dreidel-svg" id="dreidelSvg" viewBox="0 0 100 170" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Handle knob -->
+                            <circle class="handle-knob" cx="50" cy="6" r="5"/>
+                            <!-- Handle stick -->
+                            <rect class="handle" x="46" y="10" width="8" height="40" rx="3"/>
+                            <!-- Square body -->
+                            <rect class="body-rect" x="15" y="52" width="70" height="70" rx="5"/>
+                            <!-- Triangle bottom (starts exactly at bottom of square) -->
+                            <polygon class="body-tri" points="20,122 80,122 50,162"/>
+                            <!-- Letter inside square -->
+                            <text class="letter" x="50" y="90" id="dreidelLetter">?</text>
+                        </svg>
+                    </div>
                     <div class="result-line" id="resultLine"></div>
                     <button class="spin-btn" id="spinBtn" onclick="doSpin()">סובב!</button>
                     <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
@@ -289,6 +335,7 @@ const LDESC={'נ':'נון — ניקס (כלום)','ג':'גימל — גנץ (ה
 
 function doSpin(){
     if(spinning||G.over)return;
+    resetDreidel();
     const letter=LETTERS[Math.floor(Math.random()*4)];
     spinning=true;document.getElementById('spinBtn').disabled=true;G.players.forEach(p=>p.change='');
     if(MODE==='online'){
@@ -301,10 +348,42 @@ function doSpin(){
 }
 
 function showSpinAnimation(fl,cb){
-    const el=document.getElementById('dreidel'),rl=document.getElementById('resultLine');
-    rl.textContent='';rl.className='result-line';el.classList.add('spinning');
-    const f=setInterval(()=>{el.textContent=LETTERS[Math.floor(Math.random()*4)]},70);
-    setTimeout(()=>{clearInterval(f);el.classList.remove('spinning');el.textContent=fl;rl.textContent=LDESC[fl];rl.className='result-line r-'+fl;if(cb)cb()},1200+Math.random()*600);
+    const svg=document.getElementById('dreidelSvg');
+    const letterEl=document.getElementById('dreidelLetter');
+    const rl=document.getElementById('resultLine');
+    rl.textContent='';rl.className='result-line';
+    
+    // Reset any previous fall
+    svg.classList.remove('fall-right','fall-left','upright');
+    svg.style.transform='';
+    
+    // Start spinning
+    svg.classList.add('spinning');
+    const f=setInterval(()=>{letterEl.textContent=LETTERS[Math.floor(Math.random()*4)]},100);
+    
+    const spinDuration=1200+Math.random()*600;
+    
+    setTimeout(()=>{
+        clearInterval(f);
+        svg.classList.remove('spinning');
+        letterEl.textContent=fl;
+        rl.textContent=LDESC[fl];rl.className='result-line r-'+fl;
+        
+        // Fall to random side
+        const fallRight=Math.random()>0.5;
+        svg.classList.add(fallRight?'fall-right':'fall-left');
+        
+        // Callback after fall completes
+        setTimeout(()=>{if(cb)cb()},650);
+    },spinDuration);
+}
+
+// Stand the dreidel back up before next spin
+function resetDreidel(){
+    const svg=document.getElementById('dreidelSvg');
+    svg.classList.remove('fall-right','fall-left');
+    svg.classList.add('upright');
+    setTimeout(()=>{svg.classList.remove('upright')},400);
 }
 
 function applyLetter(l){
