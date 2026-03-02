@@ -283,11 +283,15 @@ async function joinRoom(){
     if(!ROOM_CODE||ROOM_CODE.length<4){alert('קוד לא תקין');return}
     MY_ID='p_'+Math.random().toString(36).substr(2,6);IS_HOST=false;
     hide('onlineLobby');show('waitingRoom');document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
-    document.getElementById('startOnlineBtn').classList.add('hidden');joinChannel();
-    setTimeout(()=>{channel.send({type:'broadcast',event:'player_join',payload:{id:MY_ID,name}})},500);
+    document.getElementById('startOnlineBtn').classList.add('hidden');
+    joinChannel(()=>{
+        // Send join only after channel is subscribed
+        channel.send({type:'broadcast',event:'player_join',payload:{id:MY_ID,name}});
+        console.log('Sent player_join for',name,MY_ID);
+    });
 }
 
-function joinChannel(){
+function joinChannel(onReady){
     channel=sb.channel('room_'+ROOM_CODE,{config:{broadcast:{self:true}}});
     channel.on('broadcast',{event:'player_join'},({payload})=>{
         if(IS_HOST&&!G.players.find(p=>p.id===payload.id)){G.players.push({id:payload.id,name:payload.name,amount:0,alive:true,change:''});broadcastState()}
@@ -306,12 +310,14 @@ function joinChannel(){
     channel.on('broadcast',{event:'rtc_offer'},async({payload})=>{if(payload.target!==MY_ID)return;await handleOffer(payload.from,payload.offer)});
     channel.on('broadcast',{event:'rtc_answer'},async({payload})=>{if(payload.target!==MY_ID)return;await handleAnswer(payload.from,payload.answer)});
     channel.on('broadcast',{event:'rtc_ice'},async({payload})=>{if(payload.target!==MY_ID)return;await handleIce(payload.from,payload.candidate)});
-    // When another player starts their camera, connect to them
     channel.on('broadcast',{event:'video_ready'},async({payload})=>{
         if(payload.id===MY_ID)return;
         if(localStream&&!peerConnections[payload.id]){await createPeerConnection(payload.id,true)}
     });
-    channel.subscribe();
+    channel.subscribe((status)=>{
+        console.log('Channel status:',status);
+        if(status==='SUBSCRIBED'&&onReady)onReady();
+    });
 }
 
 function broadcastState(){channel.send({type:'broadcast',event:'game_state',payload:G})}
