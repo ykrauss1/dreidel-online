@@ -1,344 +1,681 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>סביבון — מקומי ואונליין</title>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Secular+One&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg:#06080f; --bg-card:#0e1225; --bg-card-alt:#141938; --bg-input:#0a0d1a;
-            --gold:#f5c842; --gold-dim:#b8912a; --gold-glow:rgba(245,200,66,0.25); --gold-glow-strong:rgba(245,200,66,0.5);
-            --blue:#3d7aed; --blue-glow:rgba(61,122,237,0.25); --green:#34d399; --red:#f87171;
-            --text:#e4e4f0; --text-dim:#7a7da0; --border:#1e2348; --border-light:#2a3060;
-            --radius:14px; --radius-sm:8px;
-        }
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 600px 400px at 15% 10%,rgba(61,122,237,0.06),transparent),radial-gradient(ellipse 500px 500px at 85% 85%,rgba(245,200,66,0.04),transparent);pointer-events:none}
-        .app{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:16px}
-        .hidden{display:none!important}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סביבון — מקומי ואונליין</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Secular+One&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#06080f;--bg-card:#0e1225;--bg-card-alt:#141938;--bg-input:#0a0d1a;
+    --gold:#f5c842;--gold-dim:#b8912a;--gold-glow:rgba(245,200,66,.25);--gold-glow-s:rgba(245,200,66,.5);
+    --blue:#3d7aed;--blue-glow:rgba(61,122,237,.25);--green:#34d399;--red:#f87171;
+    --text:#e4e4f0;--text-dim:#7a7da0;--border:#1e2348;--border-l:#2a3060;
+    --r:14px;--rs:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 600px 400px at 15% 10%,rgba(61,122,237,.06),transparent),radial-gradient(ellipse 500px 500px at 85% 85%,rgba(245,200,66,.04),transparent);pointer-events:none}
+.app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:12px}
+.hidden{display:none!important}
 
-        .header{text-align:center;padding:18px 0 6px}
-        .header h1{font-family:'Secular One',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--gold);text-shadow:0 0 30px var(--gold-glow)}
-        .header .sub{color:var(--text-dim);font-size:0.85rem;margin-top:2px;font-weight:300}
+/* HEADER */
+.header{text-align:center;padding:14px 0 4px}
+.header h1{font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,4vw,2.4rem);color:var(--gold);text-shadow:0 0 25px var(--gold-glow)}
+.header .sub{color:var(--text-dim);font-size:.8rem;margin-top:1px;font-weight:300}
 
-        .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 24px;border:none;border-radius:var(--radius-sm);font-family:'Secular One',sans-serif;font-size:1rem;cursor:pointer;transition:all 0.2s}
-        .btn:active{transform:scale(0.97)}
-        .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;box-shadow:0 4px 15px var(--gold-glow)}
-        .btn-gold:hover{box-shadow:0 6px 25px var(--gold-glow-strong);transform:translateY(-1px)}
-        .btn-blue{background:linear-gradient(135deg,var(--blue),#2b5ecf);color:#fff;box-shadow:0 4px 15px var(--blue-glow)}
-        .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:0.85rem;padding:7px 16px}
-        .btn-outline:hover{border-color:var(--gold-dim);color:var(--gold)}
-        .input,select.input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-size:1rem;font-family:'Heebo',sans-serif;outline:none;width:100%;transition:border-color 0.2s}
-        .input:focus{border-color:var(--gold-dim)}
-        .form-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-        .form-row label{flex-shrink:0;font-weight:600;font-size:0.9rem;color:var(--text-dim);min-width:100px}
-        .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
-        .section-title{font-family:'Secular One',sans-serif;color:var(--gold);font-size:1.2rem;text-align:center;margin-bottom:16px}
-        .divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+/* COMMON */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border:none;border-radius:var(--rs);font-family:'Secular One',sans-serif;font-size:.95rem;cursor:pointer;transition:all .2s}
+.btn:active{transform:scale(.97)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;box-shadow:0 3px 12px var(--gold-glow)}
+.btn-gold:hover{box-shadow:0 5px 20px var(--gold-glow-s);transform:translateY(-1px)}
+.btn-blue{background:linear-gradient(135deg,var(--blue),#2b5ecf);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:.8rem;padding:6px 14px}
+.btn-outline:hover{border-color:var(--gold-dim);color:var(--gold)}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.input,select.input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;color:var(--text);font-size:.95rem;font-family:'Heebo',sans-serif;outline:none;width:100%;transition:border-color .2s}
+.input:focus{border-color:var(--gold-dim)}
+.form-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.form-row label{flex-shrink:0;font-weight:600;font-size:.85rem;color:var(--text-dim);min-width:90px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.section-title{font-family:'Secular One',sans-serif;color:var(--gold);font-size:1.1rem;text-align:center;margin-bottom:14px}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
 
-        .mode-selector{display:flex;gap:14px;max-width:550px;margin:20px auto}
-        .mode-card{flex:1;background:var(--bg-card);border:2px solid var(--border);border-radius:var(--radius);padding:24px 16px;text-align:center;cursor:pointer;transition:all 0.25s}
-        .mode-card:hover{border-color:var(--border-light);background:var(--bg-card-alt)}
-        .mode-card.selected{border-color:var(--gold);box-shadow:0 0 20px var(--gold-glow)}
-        .mode-card .icon{font-size:2.4rem;margin-bottom:8px} .mode-card .label{font-family:'Secular One',sans-serif;font-size:1.1rem} .mode-card .desc{font-size:0.8rem;color:var(--text-dim);margin-top:4px}
-        .mode-selector.collapsed .mode-card{display:none} .mode-selector.collapsed .back-wrap{display:block} .back-wrap{display:none;text-align:center}
+/* MODE */
+.mode-selector{display:flex;gap:12px;max-width:500px;margin:16px auto}
+.mode-card{flex:1;background:var(--bg-card);border:2px solid var(--border);border-radius:var(--r);padding:20px 14px;text-align:center;cursor:pointer;transition:all .25s}
+.mode-card:hover{border-color:var(--border-l);background:var(--bg-card-alt)}
+.mode-card.selected{border-color:var(--gold);box-shadow:0 0 18px var(--gold-glow)}
+.mode-card .icon{font-size:2rem;margin-bottom:6px}.mode-card .label{font-family:'Secular One',sans-serif;font-size:1rem}.mode-card .desc{font-size:.75rem;color:var(--text-dim);margin-top:3px}
+.mode-selector.collapsed .mode-card{display:none}.mode-selector.collapsed .back-wrap{display:block}.back-wrap{display:none;text-align:center}
 
-        .setup-panel{max-width:500px;margin:16px auto}
-        .player-name-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-        .player-name-row .badge{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0}
-        .room-code-display{font-family:'Secular One',sans-serif;font-size:2.6rem;letter-spacing:10px;color:var(--gold);text-align:center;text-shadow:0 0 20px var(--gold-glow);padding:16px;margin:10px 0;background:var(--bg-input);border-radius:var(--radius);border:1px dashed var(--border-light);user-select:all}
-        .lobby-players{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
-        .lobby-player{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:0.85rem;display:flex;align-items:center;gap:6px}
-        .lobby-player .dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-        .lobby-player.host::after{content:'👑';margin-right:4px;font-size:0.8rem}
-        .tab-row{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
-        .tab-btn{padding:7px 18px;border-radius:20px;font-size:0.85rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.2s}
-        .tab-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* SETUP */
+.setup-panel{max-width:480px;margin:14px auto}
+.player-name-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.player-name-row .badge{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+.room-code-display{font-family:'Secular One',sans-serif;font-size:2.4rem;letter-spacing:10px;color:var(--gold);text-align:center;text-shadow:0 0 18px var(--gold-glow);padding:14px;margin:8px 0;background:var(--bg-input);border-radius:var(--r);border:1px dashed var(--border-l);user-select:all}
+.lobby-players{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.lobby-player{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:18px;padding:5px 14px;font-size:.8rem;display:flex;align-items:center;gap:5px}
+.lobby-player .dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.lobby-player.host::after{content:'👑';margin-right:3px;font-size:.75rem}
+.tab-row{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+.tab-btn{padding:6px 16px;border-radius:18px;font-size:.8rem;background:var(--bg-input);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;font-family:'Heebo',sans-serif;transition:all .2s}
+.tab-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 
-        /* ══ GAME: 2 COLUMN LAYOUT ══ */
-        .game-layout{display:grid;grid-template-columns:1fr 220px;grid-template-rows:auto auto auto;gap:12px;align-items:start}
-        .game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-        .pot-box{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--bg-card),var(--bg-card-alt));border:1px solid var(--border);border-radius:var(--radius);padding:10px 20px}
-        .pot-box .emoji{font-size:1.6rem} .pot-label{font-size:0.75rem;color:var(--text-dim)} .pot-val{font-family:'Secular One',sans-serif;font-size:1.5rem;color:var(--gold)}
-        .turn-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 18px;font-size:0.9rem} .turn-box strong{color:var(--gold)}
+/* FAMILY SETUP */
+.family-member-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.family-member-row input{flex:1}
+.family-member-row .remove-member{background:none;border:none;color:var(--red);cursor:pointer;font-size:1.1rem;padding:0 4px}
+.add-member-btn{background:none;border:1px dashed var(--border-l);border-radius:var(--rs);color:var(--text-dim);padding:6px;width:100%;cursor:pointer;font-family:'Heebo',sans-serif;font-size:.8rem;margin-top:4px;transition:all .2s}
+.add-member-btn:hover{border-color:var(--gold-dim);color:var(--gold)}
 
-        .game-main{display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:start}
-        .dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative}
-        .dreidel-wrap{perspective:800px;width:120px;height:180px;margin-bottom:4px;display:flex;align-items:center;justify-content:center}
-        .dreidel-svg{width:120px;height:180px;filter:drop-shadow(0 0 15px var(--gold-glow));transition:transform 0.3s;transform-origin:center center}
-        .dreidel-svg .body-rect{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
-        .dreidel-svg .body-tri{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
-        .dreidel-svg .handle{fill:var(--gold-dim);stroke:var(--gold);stroke-width:1.5}
-        .dreidel-svg .handle-knob{fill:var(--gold);stroke:var(--gold-dim);stroke-width:1}
-        .dreidel-svg .letter{font-family:'Secular One',sans-serif;font-size:36px;fill:var(--gold);text-anchor:middle;dominant-baseline:central}
-        .dreidel-svg.spinning{animation:dreidel3d 0.18s linear infinite}
-        @keyframes dreidel3d{
-            0%{transform:rotateY(0deg)}
-            25%{transform:rotateY(90deg) scaleX(0.2)}
-            50%{transform:rotateY(180deg) scaleX(1)}
-            75%{transform:rotateY(270deg) scaleX(0.2)}
-            100%{transform:rotateY(360deg)}
-        }
-        .dreidel-svg.fall-right{animation:fall-r 0.6s ease-in forwards}
-        .dreidel-svg.fall-left{animation:fall-l 0.6s ease-in forwards}
-        @keyframes fall-r{
-            0%{transform:rotate(0deg)}
-            40%{transform:rotate(8deg)}
-            70%{transform:rotate(75deg)}
-            85%{transform:rotate(82deg)}
-            100%{transform:rotate(78deg)}
-        }
-        @keyframes fall-l{
-            0%{transform:rotate(0deg)}
-            40%{transform:rotate(-8deg)}
-            70%{transform:rotate(-75deg)}
-            85%{transform:rotate(-82deg)}
-            100%{transform:rotate(-78deg)}
-        }
-        .dreidel-svg.upright{animation:stand-up 0.4s ease-out forwards}
-        @keyframes stand-up{
-            0%{transform:rotate(var(--current-rot,0deg))}
-            100%{transform:rotate(0deg)}
-        }
-        @keyframes dspin{0%{transform:rotateY(0) scale(1.05)}50%{transform:rotateY(180deg) scale(0.95)}100%{transform:rotateY(360deg) scale(1.05)}}
-        .result-line{font-size:0.9rem;font-weight:600;min-height:20px;text-align:center;white-space:nowrap;margin-bottom:8px;margin-top:24px}
-        .r-נ{color:var(--text-dim)} .r-ג{color:var(--green)} .r-ה{color:var(--blue)} .r-פ{color:var(--red)}
-        .spin-btn{margin-top:6px;padding:10px 36px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;border:none;border-radius:10px;font-family:'Secular One',sans-serif;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 15px var(--gold-glow);transition:all 0.2s}
-        .spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 25px var(--gold-glow-strong)}
-        .spin-btn:disabled{opacity:0.35;cursor:not-allowed}
-        .waiting-text{color:var(--text-dim);font-size:0.85rem;margin-top:8px;text-align:center;animation:pulse 1.5s infinite}
+/* LOBBY — family groups */
+.lobby-family{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:8px}
+.lobby-family-name{font-weight:700;font-size:.9rem;color:var(--gold);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.lobby-family-members{display:flex;flex-wrap:wrap;gap:4px}
+.lobby-family-members span{background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:3px 10px;font-size:.75rem}
 
-        .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;width:100%;align-content:start}
-        .p-card{background:var(--bg-card);border:2px solid var(--border);border-radius:10px;padding:8px 10px;transition:all 0.3s}
-        .p-card.active{border-color:var(--gold);box-shadow:0 0 18px var(--gold-glow);background:var(--bg-card-alt)}
-        .p-card.out{opacity:0.3} .p-card.winner{border-color:var(--gold)}
-        .p-card .p-name{font-weight:700;font-size:0.8rem;display:flex;align-items:center;gap:4px;margin-bottom:1px}
-        .p-card .p-name .crown{display:none} .p-card.winner .p-name .crown{display:inline}
-        .p-card .p-amt{font-family:'Secular One',sans-serif;font-size:1.1rem;color:var(--gold)}
-        .p-card .p-delta{font-size:0.7rem;min-height:14px;margin-top:1px}
-        .p-delta.plus{color:var(--green)} .p-delta.minus{color:var(--red)} .p-delta.zero{color:var(--text-dim)}
+/* ══════════ GAME SCREEN ══════════ */
+.game-layout{display:grid;grid-template-columns:1fr 180px;grid-template-rows:auto 1fr;gap:10px;align-items:start}
+.game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pot-box{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--bg-card),var(--bg-card-alt));border:1px solid var(--border);border-radius:var(--r);padding:8px 16px}
+.pot-box .emoji{font-size:1.4rem}.pot-label{font-size:.7rem;color:var(--text-dim)}.pot-val{font-family:'Secular One',sans-serif;font-size:1.3rem;color:var(--gold)}
+.turn-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:8px 16px;font-size:.85rem}.turn-box strong{color:var(--gold)}
 
-        /* Sidebar */
-        .game-sidebar{display:flex;flex-direction:column;gap:10px;grid-row:2/4}
-        .sidebar-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
-        .sidebar-panel h3{font-size:0.8rem;color:var(--text-dim);font-weight:400;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-        .video-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-        .video-tile{position:relative;border-radius:var(--radius-sm);overflow:hidden;background:var(--bg-input);border:1px solid var(--border);aspect-ratio:4/3;max-height:80px}
-        .video-tile video{width:100%;height:100%;object-fit:cover;display:block}
-        .video-tile .vid-name{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.7));padding:16px 8px 6px;font-size:0.75rem;color:#fff}
-        .vid-controls{display:flex;gap:4px}
-        .vid-btn{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;color:var(--text-dim);font-size:0.7rem;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s}
-        .vid-btn:hover{border-color:var(--blue);color:var(--blue)} .vid-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-        .vid-placeholder{text-align:center;padding:18px 8px;color:var(--text-dim);font-size:0.8rem}
+/* Main area: dreidel centered, players below */
+.game-main{display:flex;flex-direction:column;align-items:center;gap:12px}
 
-        .log-entries{max-height:160px;overflow-y:auto}
-        .log-entry{padding:3px 0;font-size:0.78rem;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,0.02)}
+/* Dreidel */
+.dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative}
+.dreidel-wrap{perspective:800px;width:100px;height:150px;margin-bottom:4px;display:flex;align-items:center;justify-content:center}
+.dreidel-svg{width:100px;height:150px;filter:drop-shadow(0 0 12px var(--gold-glow));transform-origin:50% 85%;transform-style:preserve-3d}
+.dreidel-svg .body-rect{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
+.dreidel-svg .body-tri{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
+.dreidel-svg .handle{fill:var(--gold-dim);stroke:var(--gold);stroke-width:1.5}
+.dreidel-svg .handle-knob{fill:var(--gold);stroke:var(--gold-dim);stroke-width:1}
+.dreidel-svg .letter{font-family:'Secular One',sans-serif;font-size:36px;fill:var(--gold);text-anchor:middle;dominant-baseline:central}
+/* JS-driven animation via canvas-style RAF — no CSS class needed for spin */
+.dreidel-svg.fall-right{animation:fr 1.1s cubic-bezier(.4,0,1,1) forwards}
+.dreidel-svg.fall-left {animation:fl 1.1s cubic-bezier(.4,0,1,1) forwards}
+@keyframes fr{
+  0%  {transform:rotate(0deg) translateX(0)}
+  15% {transform:rotate(6deg) translateX(3px)}
+  35% {transform:rotate(18deg) translateX(8px)}
+  60% {transform:rotate(55deg) translateX(18px)}
+  80% {transform:rotate(80deg) translateX(26px)}
+  100%{transform:rotate(85deg) translateX(30px)}
+}
+@keyframes fl{
+  0%  {transform:rotate(0deg) translateX(0)}
+  15% {transform:rotate(-6deg) translateX(-3px)}
+  35% {transform:rotate(-18deg) translateX(-8px)}
+  60% {transform:rotate(-55deg) translateX(-18px)}
+  80% {transform:rotate(-80deg) translateX(-26px)}
+  100%{transform:rotate(-85deg) translateX(-30px)}
+}
+.dreidel-svg.upright{animation:up .4s ease-out forwards}
+@keyframes up{0%{transform:rotate(var(--r,0))}100%{transform:rotate(0)}}
+.result-line{font-size:.85rem;font-weight:600;min-height:18px;text-align:center;white-space:nowrap;margin-top:20px;margin-bottom:4px}
+.r-נ{color:var(--text-dim)}.r-ג{color:var(--green)}.r-ה{color:var(--blue)}.r-פ{color:var(--red)}
+.spin-btn{padding:9px 34px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;border:none;border-radius:10px;font-family:'Secular One',sans-serif;font-size:1rem;cursor:pointer;box-shadow:0 3px 12px var(--gold-glow);transition:all .2s}
+.spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 5px 20px var(--gold-glow-s)}
+.spin-btn:disabled{opacity:.35;cursor:not-allowed}
+/* Power meter */
+.power-meter{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:6px;min-width:160px}
+.power-label{font-size:.8rem;color:var(--text-dim);font-weight:600;animation:pulse 0.8s infinite}
+.power-bar-bg{width:140px;height:10px;background:var(--bg-input);border-radius:5px;border:1px solid var(--border);overflow:hidden}
+.power-bar-fill{height:100%;width:0%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--gold),var(--red));transition:width 0.15s ease}
+.power-clicks{font-size:1rem;letter-spacing:6px;color:var(--gold)}
+/* Dreidel face highlight on result */
+.dreidel-svg .face-נ,.dreidel-svg .face-ג,.dreidel-svg .face-ה,.dreidel-svg .face-פ{transition:filter 0.5s,opacity 0.5s}
+.dreidel-svg.result-נ .face-נ{filter:brightness(3) drop-shadow(0 0 4px #aaa)}
+.dreidel-svg.result-ג .face-ג{filter:brightness(3) drop-shadow(0 0 6px #34d399)}
+.dreidel-svg.result-ה .face-ה{filter:brightness(3) drop-shadow(0 0 6px #3d7aed)}
+.dreidel-svg.result-פ .face-פ{filter:brightness(3) drop-shadow(0 0 6px #f87171)}
+/* Settings panel */
+.settings-toggle{position:fixed;bottom:18px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .2s}
+.settings-toggle:hover{border-color:var(--gold-dim);transform:rotate(30deg)}
+.settings-panel{position:fixed;bottom:72px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border-l);border-radius:var(--r);padding:16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideUp .2s ease-out}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.settings-panel h4{font-family:'Secular One',sans-serif;color:var(--gold);font-size:.9rem;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.settings-panel h4 button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem}
+.settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:.8rem;gap:8px}
+.settings-row label{color:var(--text-dim);flex-shrink:0}
+.settings-row input[type=color]{width:34px;height:24px;border:1px solid var(--border);border-radius:4px;padding:1px;background:var(--bg-input);cursor:pointer}
+.settings-row input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
+.settings-row .val-label{font-size:.75rem;color:var(--gold);min-width:28px;text-align:left}
+.sound-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:.8rem;user-select:none}
+.sound-toggle input{accent-color:var(--gold)}
+.waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
-        .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center}
-        .modal-bg.show{display:flex}
-        .win-modal{background:var(--bg-card);border:2px solid var(--gold);border-radius:20px;padding:36px;text-align:center;box-shadow:0 0 80px var(--gold-glow-strong);max-width:380px;width:90%;animation:mpop 0.35s ease-out}
-        @keyframes mpop{0%{transform:scale(0.6) translateY(30px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
-        .win-modal .big-icon{font-size:3.5rem;margin-bottom:6px} .win-modal h2{font-family:'Secular One',sans-serif;color:var(--gold);font-size:1.5rem;margin-bottom:4px} .win-modal p{color:var(--text-dim);margin-bottom:16px}
+/* Players — full width grid, grouped by family */
+.players-area{width:100%}
+.family-group{margin-bottom:10px}
+.family-group-title{font-size:.75rem;color:var(--text-dim);font-weight:600;margin-bottom:4px;padding-right:4px;display:flex;align-items:center;gap:5px}
+.family-group-title .fam-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;width:100%}
+.p-card{background:var(--bg-card);border:2px solid var(--border);border-radius:10px;padding:8px 10px;transition:all .3s}
+.p-card.active{border-color:var(--gold);box-shadow:0 0 14px var(--gold-glow);background:var(--bg-card-alt)}
+.p-card.out{opacity:.3}.p-card.winner{border-color:var(--gold)}
+.p-card .p-name{font-weight:700;font-size:.78rem;display:flex;align-items:center;gap:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-card .p-name .crown{display:none}.p-card.winner .p-name .crown{display:inline}
+.p-card .p-amt{font-family:'Secular One',sans-serif;font-size:1.05rem;color:var(--gold)}
+.p-card .p-delta{font-size:.7rem;min-height:14px;margin-top:1px}
+.p-delta.plus{color:var(--green)}.p-delta.minus{color:var(--red)}.p-delta.zero{color:var(--text-dim)}
 
-        @media(max-width:768px){
-            .mode-selector{flex-direction:column}
-            .game-layout{grid-template-columns:1fr}
-            .game-sidebar{grid-row:auto}
-            .game-main{grid-template-columns:1fr;justify-items:center}
-            .players-grid{grid-template-columns:repeat(3,1fr)}
-        }
-        ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-    </style>
+/* Sidebar */
+.game-sidebar{display:flex;flex-direction:column;gap:8px}
+.sidebar-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:10px}
+.sidebar-panel h3{font-size:.75rem;color:var(--text-dim);font-weight:400;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.video-tile{position:relative;border-radius:var(--rs);overflow:hidden;background:var(--bg-input);border:1px solid var(--border);aspect-ratio:4/3;max-height:70px}
+.video-tile video{width:100%;height:100%;object-fit:cover;display:block}
+.video-tile .vid-name{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:12px 6px 4px;font-size:.65rem;color:#fff}
+.vid-controls{display:flex;gap:3px}
+.vid-btn{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--rs);padding:3px 6px;color:var(--text-dim);font-size:.65rem;font-family:'Heebo',sans-serif;cursor:pointer;transition:all .2s}
+.vid-btn:hover{border-color:var(--blue);color:var(--blue)}.vid-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.vid-placeholder{text-align:center;padding:14px 6px;color:var(--text-dim);font-size:.75rem}
+.log-entries{max-height:120px;overflow-y:auto}
+.log-entry{padding:2px 0;font-size:.72rem;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.02)}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.win-modal{background:var(--bg-card);border:2px solid var(--gold);border-radius:18px;padding:30px;text-align:center;box-shadow:0 0 60px var(--gold-glow-s);max-width:360px;width:90%;animation:mp .35s ease-out}
+@keyframes mp{0%{transform:scale(.6) translateY(30px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+.win-modal .big-icon{font-size:3rem;margin-bottom:4px}.win-modal h2{font-family:'Secular One',sans-serif;color:var(--gold);font-size:1.3rem;margin-bottom:3px}.win-modal p{color:var(--text-dim);margin-bottom:14px}
+
+@media(max-width:768px){
+    .mode-selector{flex-direction:column}
+    .game-layout{grid-template-columns:1fr}
+    .game-sidebar{flex-direction:row;flex-wrap:wrap}
+    .sidebar-panel{flex:1;min-width:140px}
+    .players-grid{grid-template-columns:repeat(3,1fr)}
+}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
 </head>
 <body>
 <div class="app">
-    <header class="header"><h1>🕎 משחק סביבון</h1><p class="sub">נ ג ה פ — מקומי או אונליין עם חברים!</p></header>
+<header class="header"><h1>🕎 משחק סביבון</h1><p class="sub">נ ג ה פ — מקומי או אונליין עם חברים!</p></header>
 
-    <div id="modeScreen">
-        <div class="mode-selector" id="modeSelector">
-            <div class="back-wrap"><button class="btn btn-outline" onclick="resetMode()">◂ חזרה</button></div>
-            <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
-            <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
+<div id="modeScreen">
+    <div class="mode-selector" id="modeSelector">
+        <div class="back-wrap"><button class="btn btn-outline" onclick="resetMode()">◂ חזרה</button></div>
+        <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
+        <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
+    </div>
+</div>
+
+<!-- LOCAL SETUP -->
+<div id="localSetup" class="setup-panel card hidden">
+    <h2 class="section-title">משחק מקומי</h2>
+    <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+    <div class="form-row"><label>סכום התחלתי:</label><input type="number" id="localStartAmt" class="input" value="100" min="10" step="10"></div>
+    <hr class="divider"><div id="localNames"></div>
+    <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="startLocalGame()">🎲 התחל!</button>
+</div>
+
+<!-- ONLINE SETUP -->
+<div id="onlineSetup" class="hidden">
+    <div id="onlineLobby" class="setup-panel card hidden">
+        <h2 class="section-title">משחק אונליין</h2>
+
+        <!-- Game type: individual or families -->
+        <div class="form-row" style="justify-content:center;margin-bottom:14px">
+            <button class="tab-btn active" id="tabIndividual" onclick="setOnlineType('individual')">שחקנים בודדים</button>
+            <button class="tab-btn" id="tabFamily" onclick="setOnlineType('family')">משפחות</button>
         </div>
-    </div>
 
-    <div id="localSetup" class="setup-panel card hidden">
-        <h2 class="section-title">משחק מקומי</h2>
-        <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
-        <div class="form-row"><label>סכום התחלתי:</label><input type="number" id="localStartAmt" class="input" value="100" min="10" step="10"></div>
-        <hr class="divider"><div id="localNames"></div>
-        <button class="btn btn-gold" style="width:100%;margin-top:16px" onclick="startLocalGame()">🎲 התחל!</button>
-    </div>
+        <div class="tab-row">
+            <button class="tab-btn active" id="tabCreate" onclick="showOnlineTab('create')">צור חדר</button>
+            <button class="tab-btn" id="tabJoin" onclick="showOnlineTab('join')">הצטרף</button>
+        </div>
 
-    <div id="onlineSetup" class="hidden">
-        <div id="onlineLobby" class="setup-panel card hidden">
-            <h2 class="section-title">משחק אונליין</h2>
-            <div class="tab-row"><button class="tab-btn active" id="tabCreate" onclick="showOnlineTab('create')">צור חדר</button><button class="tab-btn" id="tabJoin" onclick="showOnlineTab('join')">הצטרף</button></div>
-            <div id="createPanel">
+        <!-- CREATE -->
+        <div id="createPanel">
+            <!-- Individual mode -->
+            <div id="createIndividual">
                 <div class="form-row"><label>השם שלך:</label><input type="text" id="hostName" class="input" placeholder="שם..."></div>
-                <div class="form-row"><label>סכום:</label><input type="number" id="onlineStartAmt" class="input" value="100" min="10" step="10"></div>
-                <button class="btn btn-gold" style="width:100%;margin-top:10px" onclick="createRoom()">צור חדר</button>
             </div>
-            <div id="joinPanel" class="hidden">
+            <!-- Family mode -->
+            <div id="createFamily" class="hidden">
+                <div class="form-row"><label>שם משפחה:</label><input type="text" id="hostFamilyName" class="input" placeholder="כהן, לוי..."></div>
+                <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:6px">בני משפחה:</div>
+                <div id="hostMembers"></div>
+                <button type="button" class="add-member-btn" onclick="addHostMember()">+ הוסף בן משפחה</button>
+                <hr class="divider">
+                <div style="font-size:.8rem;color:var(--gold);font-weight:600;margin-bottom:8px">⚙️ הגדרות משחק</div>
+                <div class="form-row"><label>סדר תורות:</label>
+                    <select id="turnOrder" class="input">
+                        <option value="family_block">כל המשפחה ואז הבאה</option>
+                        <option value="round_robin">אחד מכל משפחה לסירוגין</option>
+                        <option value="random">סדר אקראי</option>
+                    </select>
+                </div>
+                <div class="form-row"><label>ניקוד:</label>
+                    <select id="scoringMode" class="input">
+                        <option value="individual">כל שחקן בנפרד</option>
+                        <option value="family">ניקוד משפחתי משותף</option>
+                        <option value="both">גם וגם (אישי + משפחתי)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row" style="margin-top:12px"><label>סכום התחלתי:</label><input type="number" id="onlineStartAmt" class="input" value="100" min="10" step="10"></div>
+            <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="createRoom()">צור חדר</button>
+        </div>
+
+        <!-- JOIN -->
+        <div id="joinPanel" class="hidden">
+            <!-- Individual mode -->
+            <div id="joinIndividual">
                 <div class="form-row"><label>השם שלך:</label><input type="text" id="joinName" class="input" placeholder="שם..."></div>
-                <div class="form-row"><label>קוד חדר:</label><input type="text" id="joinCode" class="input" placeholder="XXXX" maxlength="4" style="letter-spacing:6px;text-align:center;font-size:1.1rem" dir="ltr"></div>
-                <button class="btn btn-blue" style="width:100%;margin-top:10px" onclick="joinRoom()">הצטרף</button>
             </div>
-        </div>
-        <div id="waitingRoom" class="setup-panel card hidden">
-            <h2 class="section-title">ממתינים לשחקנים...</h2>
-            <div class="room-code-display" id="roomCodeDisplay">----</div>
-            <p style="text-align:center;color:var(--text-dim);font-size:0.8rem;margin-bottom:10px">שתף את הקוד עם החברים</p>
-            <div class="lobby-players" id="lobbyPlayers"></div>
-            <button class="btn btn-gold hidden" style="width:100%;margin-top:12px" id="startOnlineBtn" onclick="startOnlineGame()">🎲 התחל!</button>
-        </div>
-    </div>
-
-    <!-- GAME -->
-    <div class="hidden" id="gameScreen">
-        <div class="game-layout">
-            <div class="game-top">
-                <div class="pot-box"><span class="emoji">🪙</span><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
-                <div class="turn-box" id="turnBox">תור: <strong>—</strong></div>
-                <button class="btn btn-outline" onclick="location.reload()">משחק חדש</button>
+            <!-- Family mode -->
+            <div id="joinFamily" class="hidden">
+                <div class="form-row"><label>שם משפחה:</label><input type="text" id="joinFamilyName" class="input" placeholder="כהן, לוי..."></div>
+                <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:6px">בני משפחה:</div>
+                <div id="joinMembers"></div>
+                <button type="button" class="add-member-btn" onclick="addJoinMember()">+ הוסף בן משפחה</button>
             </div>
-            <div class="game-main">
-                <div class="dreidel-zone">
-                    <div class="dreidel-wrap">
-                        <svg class="dreidel-svg" id="dreidelSvg" viewBox="0 0 100 170" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Handle knob -->
-                            <circle class="handle-knob" cx="50" cy="6" r="5"/>
-                            <!-- Handle stick -->
-                            <rect class="handle" x="46" y="10" width="8" height="40" rx="3"/>
-                            <!-- Square body -->
-                            <rect class="body-rect" x="15" y="52" width="70" height="70" rx="5"/>
-                            <!-- Triangle bottom (starts exactly at bottom of square) -->
-                            <polygon class="body-tri" points="20,122 80,122 50,162"/>
-                            <!-- Letter inside square -->
-                            <text class="letter" x="50" y="90" id="dreidelLetter">?</text>
-                        </svg>
-                    </div>
-                    <div class="result-line" id="resultLine"></div>
-                    <button class="spin-btn" id="spinBtn" onclick="doSpin()">סובב!</button>
-                    <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
-                </div>
-                <div class="players-grid" id="playersGrid"></div>
-            </div>
-            <div class="game-sidebar">
-                <div class="sidebar-panel" id="videoSection">
-                    <h3>📹 וידאו <span class="vid-controls"><button class="vid-btn" id="camStartBtn" onclick="startCamera()">הפעל מצלמה</button><button class="vid-btn hidden" id="vidToggle" onclick="toggleVideo()">📷</button><button class="vid-btn hidden" id="micToggle" onclick="toggleMic()">🎤</button></span></h3>
-                    <div class="video-grid" id="videoGrid"><div class="vid-placeholder" id="vidPlaceholder">לחץ "הפעל מצלמה"</div></div>
-                </div>
-                <div class="sidebar-panel"><h3>📜 יומן</h3><div class="log-entries" id="logEntries"></div></div>
-            </div>
+            <div class="form-row"><label>קוד חדר:</label><input type="text" id="joinCode" class="input" placeholder="XXXX" maxlength="4" style="letter-spacing:6px;text-align:center;font-size:1rem" dir="ltr"></div>
+            <button class="btn btn-blue" style="width:100%;margin-top:8px" onclick="joinRoom()">הצטרף</button>
         </div>
     </div>
 
-    <div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon">🏆</div><h2 id="winName">—</h2><p>ניצח את המשחק!</p><button class="btn btn-gold" onclick="location.reload()">משחק חדש</button></div></div>
+    <!-- WAITING ROOM -->
+    <div id="waitingRoom" class="setup-panel card hidden">
+        <h2 class="section-title">ממתינים לשחקנים...</h2>
+        <div class="room-code-display" id="roomCodeDisplay">----</div>
+        <p style="text-align:center;color:var(--text-dim);font-size:.75rem;margin-bottom:8px">שתף את הקוד עם החברים</p>
+        <div id="lobbyPlayers"></div>
+        <button class="btn btn-gold hidden" style="width:100%;margin-top:10px" id="startOnlineBtn" onclick="startOnlineGame()">🎲 התחל!</button>
+    </div>
+</div>
+
+<!-- ══════ GAME ══════ -->
+<div class="hidden" id="gameScreen">
+    <div class="game-layout">
+        <div class="game-top">
+            <div class="pot-box"><span class="emoji">🪙</span><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
+            <div class="turn-box" id="turnBox">תור: <strong>—</strong></div>
+            <button class="btn btn-outline" onclick="location.reload()">משחק חדש</button>
+        </div>
+        <div class="game-main">
+            <div class="dreidel-zone">
+                <div class="dreidel-wrap">
+                    <svg class="dreidel-svg" id="dreidelSvg" viewBox="0 0 100 170" xmlns="http://www.w3.org/2000/svg">
+                        <!-- handle -->
+                        <circle class="handle-knob" cx="50" cy="6" r="5"/>
+                        <rect class="handle" x="46" y="10" width="8" height="40" rx="3"/>
+                        <!-- 4 colored sides of the body, clipped to square shape -->
+                        <defs>
+                            <clipPath id="bodyClip">
+                                <rect x="15" y="52" width="70" height="70" rx="5"/>
+                            </clipPath>
+                            <clipPath id="triClip">
+                                <polygon points="20,122 80,122 50,162"/>
+                            </clipPath>
+                        </defs>
+                        <!-- Top side — נ gray -->
+                        <rect class="face-נ" x="15" y="52" width="70" height="35" rx="0" clip-path="url(#bodyClip)" fill="#4a4a6a"/>
+                        <!-- Bottom side — ג green -->
+                        <rect class="face-ג" x="15" y="87" width="70" height="35" rx="0" clip-path="url(#bodyClip)" fill="#1a4a35"/>
+                        <!-- Left side — ה blue overlay -->
+                        <polygon class="face-ה" points="15,52 50,87 15,122" clip-path="url(#bodyClip)" fill="#1a3060"/>
+                        <!-- Right side — פ red overlay -->
+                        <polygon class="face-פ" points="85,52 50,87 85,122" clip-path="url(#bodyClip)" fill="#4a1a1a"/>
+                        <!-- border -->
+                        <rect class="body-rect" x="15" y="52" width="70" height="70" rx="5" fill="none" stroke="var(--gold)" stroke-width="2"/>
+                        <!-- diagonal lines -->
+                        <line x1="15" y1="52" x2="85" y2="122" stroke="var(--gold)" stroke-width="1" opacity="0.4"/>
+                        <line x1="85" y1="52" x2="15" y2="122" stroke="var(--gold)" stroke-width="1" opacity="0.4"/>
+                        <!-- triangle tip — split in 4 -->
+                        <polygon class="body-tri" points="20,122 80,122 50,162" fill="#1a1a3a" stroke="var(--gold)" stroke-width="2"/>
+                        <!-- Letter display, centered -->
+                        <text class="letter" x="50" y="92" id="dreidelLetter">?</text>
+                        <!-- small corner letters (dim) -->
+                        <text x="22" y="72" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">נ</text>
+                        <text x="50" y="116" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">ג</text>
+                        <text x="26" y="107" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">ה</text>
+                        <text x="74" y="107" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">פ</text>
+                    </svg>
+                </div>
+                <div class="result-line" id="resultLine"></div>
+                <button class="spin-btn" id="spinBtn" onclick="handleSpinClick()">סובב!</button>
+                <div class="power-meter hidden" id="powerMeter">
+                    <div class="power-label" id="powerLabel">לחץ שוב!</div>
+                    <div class="power-bar-bg"><div class="power-bar-fill" id="powerFill"></div></div>
+                    <div class="power-clicks" id="powerClicks">● ○ ○</div>
+                </div>
+                <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
+            </div>
+            <div class="players-area" id="playersArea"></div>
+        </div>
+        <div class="game-sidebar">
+            <div class="sidebar-panel" id="videoSection">
+                <h3>📹 וידאו <span class="vid-controls"><button class="vid-btn" id="camStartBtn" onclick="startCamera()">מצלמה</button><button class="vid-btn hidden" id="vidToggle" onclick="toggleVideo()">📷</button><button class="vid-btn hidden" id="micToggle" onclick="toggleMic()">🎤</button></span></h3>
+                <div class="video-grid" id="videoGrid"><div class="vid-placeholder" id="vidPlaceholder">לחץ "מצלמה"</div></div>
+            </div>
+            <div class="sidebar-panel"><h3>📜 יומן</h3><div class="log-entries" id="logEntries"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon">🏆</div><h2 id="winName">—</h2><p>ניצח את המשחק!</p><button class="btn btn-gold" onclick="location.reload()">משחק חדש</button></div></div>
+</div>
+
+<!-- ══ SETTINGS PANEL ══ -->
+<button class="settings-toggle" id="settingsToggle" onclick="toggleSettings()" title="הגדרות">⚙️</button>
+<div class="settings-panel hidden" id="settingsPanel">
+  <h4>⚙️ הגדרות <button onclick="toggleSettings()">✕</button></h4>
+
+  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px;letter-spacing:.5px">🎨 צבעי הסביבון</div>
+  <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun" value="#4a4a6a" oninput="updateFaceColor('נ',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">אפור</span></div>
+  <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1a4a35" oninput="updateFaceColor('ג',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">ירוק</span></div>
+  <div class="settings-row"><label>ה (חצי)</label><input type="color" id="colHeh" value="#1a3060" oninput="updateFaceColor('ה',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">כחול</span></div>
+  <div class="settings-row"><label>פ (לשלם)</label><input type="color" id="colPeh" value="#4a1a1a" oninput="updateFaceColor('פ',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">אדום</span></div>
+
+  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px;letter-spacing:.5px">⏱ זמן סיבוב</div>
+  <div class="settings-row"><label>מינ׳ (שניות)</label><input type="range" id="spinMin" min="0.5" max="3" step="0.5" value="1" oninput="document.getElementById('spinMinVal').textContent=this.value+'s'"><span class="val-label" id="spinMinVal">1s</span></div>
+  <div class="settings-row"><label>מקס׳ (שניות)</label><input type="range" id="spinMax" min="1" max="6" step="0.5" value="4" oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">4s</span></div>
+
+  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+  <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים מופעלים</label>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+// ═══════════ STATE ═══════════
 let MODE=null, sb=null, channel=null;
-let G={players:[],pot:0,currentTurn:0,startAmt:100,ante:10,over:false};
-let MY_ID=null, IS_HOST=false, ROOM_CODE=null, spinning=false;
+let ONLINE_TYPE='individual'; // 'individual' | 'family'
+let G={players:[],families:[],pot:0,currentTurn:0,startAmt:100,ante:10,over:false,started:false};
+let MY_ID=null, MY_FAMILY=null, IS_HOST=false, ROOM_CODE=null, spinning=false;
 let localStream=null, videoEnabled=false, micEnabled=true, peerConnections={};
 
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
+const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
 
-function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){alert('שגיאה: '+e.message);return false}}
+function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){alert(e.message);return false}}
 
-function selectMode(m){document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));document.querySelector(`.mode-card[data-mode="${m}"]`).classList.add('selected');MODE=m;document.getElementById('modeSelector').classList.add('collapsed');hide('localSetup');hide('onlineSetup');if(m==='local')show('localSetup');if(m==='online'){show('onlineSetup');if(!sb)connectSupabase()}}
+// ═══════════ MODE / ONLINE TYPE ═══════════
+function selectMode(m){document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));document.querySelector(`.mode-card[data-mode="${m}"]`)?.classList.add('selected');MODE=m;document.getElementById('modeSelector').classList.add('collapsed');hide('localSetup');hide('onlineSetup');if(m==='local')show('localSetup');if(m==='online'){show('onlineSetup');if(!sb)connectSupabase()}}
 function resetMode(){MODE=null;document.getElementById('modeSelector').classList.remove('collapsed');document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));hide('localSetup');hide('onlineSetup')}
 
+function setOnlineType(t){
+    ONLINE_TYPE=t;
+    document.getElementById('tabIndividual').classList.toggle('active',t==='individual');
+    document.getElementById('tabFamily').classList.toggle('active',t==='family');
+    toggle('createIndividual',t==='individual');toggle('createFamily',t==='family');
+    toggle('joinIndividual',t==='individual');toggle('joinFamily',t==='family');
+}
+
+// ═══════════ LOCAL ═══════════
 function renderLocalNames(){const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');d.innerHTML='';for(let i=0;i<n;i++)d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" placeholder="שחקן ${i+1}"></div>`}
 renderLocalNames();
 
 function startLocalGame(){
-    G.startAmt=parseInt(document.getElementById('localStartAmt').value)||100;G.ante=Math.round(G.startAmt*0.1);G.players=[];G.pot=0;G.currentTurn=0;G.over=false;
-    document.querySelectorAll('.local-name').forEach((inp,i)=>{G.players.push({id:'p'+i,name:inp.value.trim()||`שחקן ${i+1}`,amount:G.startAmt-G.ante,alive:true,change:''});G.pot+=G.ante});
+    G.startAmt=parseInt(document.getElementById('localStartAmt').value)||100;G.ante=Math.round(G.startAmt*.1);
+    G.players=[];G.families=[];G.pot=0;G.currentTurn=0;G.over=false;
+    document.querySelectorAll('.local-name').forEach((inp,i)=>{G.players.push({id:'p'+i,name:inp.value.trim()||`שחקן ${i+1}`,family:null,amount:G.startAmt-G.ante,alive:true,change:''});G.pot+=G.ante});
     hide('modeScreen');hide('localSetup');show('gameScreen');document.getElementById('videoSection').classList.add('hidden');
     document.getElementById('spinBtn').classList.remove('hidden');document.getElementById('waitingMsg').classList.add('hidden');
     addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');renderGame();
 }
 
+// ═══════════ ONLINE LOBBY ═══════════
 function showOnlineTab(t){document.getElementById('tabCreate').classList.toggle('active',t==='create');document.getElementById('tabJoin').classList.toggle('active',t==='join');toggle('createPanel',t==='create');toggle('joinPanel',t==='join')}
 function genCode(){const c='ABCDEFGHJKLMNPRSTUVWXYZ23456789';let r='';for(let i=0;i<4;i++)r+=c[Math.floor(Math.random()*c.length)];return r}
 
+// Family member inputs
+function addHostMember(){addMemberInput('hostMembers')}
+function addJoinMember(){addMemberInput('joinMembers')}
+function addMemberInput(containerId){
+    const d=document.getElementById(containerId);
+    const idx=d.children.length+1;
+    const row=document.createElement('div');row.className='family-member-row';
+    row.innerHTML=`<input class="input input-sm member-name" placeholder="בן משפחה ${idx}" style="padding:6px 10px;font-size:.85rem"><button class="remove-member" onclick="this.parentElement.remove()">✕</button>`;
+    d.appendChild(row);
+}
+// Init with 2 members each
+addMemberInput('hostMembers');addMemberInput('hostMembers');
+addMemberInput('joinMembers');addMemberInput('joinMembers');
+
+function getMemberNames(containerId){
+    return [...document.querySelectorAll(`#${containerId} .member-name`)].map(i=>i.value.trim()).filter(n=>n);
+}
+
 async function createRoom(){
-    const name=document.getElementById('hostName').value.trim()||'מארח';
-    G.startAmt=parseInt(document.getElementById('onlineStartAmt').value)||100;G.ante=Math.round(G.startAmt*0.1);
-    ROOM_CODE=genCode();MY_ID='p_'+Math.random().toString(36).substr(2,6);IS_HOST=true;
-    G.players=[{id:MY_ID,name,amount:0,alive:true,change:''}];G.pot=0;G.currentTurn=0;G.over=false;
+    MY_ID='fam_'+Math.random().toString(36).substr(2,6);IS_HOST=true;
+    ROOM_CODE=genCode();
+    G.startAmt=parseInt(document.getElementById('onlineStartAmt').value)||100;
+    G.ante=Math.round(G.startAmt*.1);
+    G.families=[];G.players=[];G.pot=0;G.currentTurn=0;G.over=false;G.started=false;
+    G.onlineType=ONLINE_TYPE;
+    G.turnOrder=ONLINE_TYPE==='family'?(document.getElementById('turnOrder').value):'family_block';
+    G.scoringMode=ONLINE_TYPE==='family'?(document.getElementById('scoringMode').value):'individual';
+
+    if(ONLINE_TYPE==='family'){
+        const famName=document.getElementById('hostFamilyName').value.trim()||'משפחה 1';
+        const members=getMemberNames('hostMembers');
+        if(members.length===0)members.push(famName);
+        MY_FAMILY=MY_ID;
+        G.families.push({id:MY_ID,name:famName,color:FAM_COLORS[0]});
+        members.forEach((m,i)=>{G.players.push({id:MY_ID+'_'+i,name:m,family:MY_ID,amount:0,alive:true,change:''})});
+    }else{
+        const name=document.getElementById('hostName').value.trim()||'מארח';
+        MY_FAMILY=null;
+        G.players.push({id:MY_ID,name,family:null,amount:0,alive:true,change:''});
+    }
+
     hide('onlineLobby');show('waitingRoom');document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
-    document.getElementById('startOnlineBtn').classList.remove('hidden');joinChannel();renderLobby();
+    document.getElementById('startOnlineBtn').classList.remove('hidden');
+    joinChannel();renderLobby();
 }
 
 async function joinRoom(){
-    const name=document.getElementById('joinName').value.trim()||'שחקן';
+    MY_ID='fam_'+Math.random().toString(36).substr(2,6);IS_HOST=false;
     ROOM_CODE=document.getElementById('joinCode').value.trim().toUpperCase();
     if(!ROOM_CODE||ROOM_CODE.length<4){alert('קוד לא תקין');return}
-    MY_ID='p_'+Math.random().toString(36).substr(2,6);IS_HOST=false;
+
+    let payload;
+    // We read ONLINE_TYPE from the local selection (it should match the room)
+    if(ONLINE_TYPE==='family'){
+        const famName=document.getElementById('joinFamilyName').value.trim()||'משפחה';
+        const members=getMemberNames('joinMembers');
+        if(members.length===0)members.push(famName);
+        MY_FAMILY=MY_ID;
+        payload={id:MY_ID,type:'family',name:famName,members};
+    }else{
+        const name=document.getElementById('joinName').value.trim()||'שחקן';
+        MY_FAMILY=null;
+        payload={id:MY_ID,type:'individual',name};
+    }
+
     hide('onlineLobby');show('waitingRoom');document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
     document.getElementById('startOnlineBtn').classList.add('hidden');
     joinChannel(()=>{
-        // Send join only after channel is subscribed
-        channel.send({type:'broadcast',event:'player_join',payload:{id:MY_ID,name}});
-        console.log('Sent player_join for',name,MY_ID);
+        channel.send({type:'broadcast',event:'player_join',payload});
     });
 }
 
 function joinChannel(onReady){
     channel=sb.channel('room_'+ROOM_CODE,{config:{broadcast:{self:true}}});
-    channel.on('broadcast',{event:'player_join'},({payload})=>{
-        if(IS_HOST&&!G.players.find(p=>p.id===payload.id)){G.players.push({id:payload.id,name:payload.name,amount:0,alive:true,change:''});broadcastState()}
+
+    channel.on('broadcast',{event:'player_join'},({payload:p})=>{
+        if(!IS_HOST)return renderLobby();
+        // Host processes join
+        if(p.type==='family'){
+            if(G.families.find(f=>f.id===p.id))return;
+            const color=FAM_COLORS[G.families.length%FAM_COLORS.length];
+            G.families.push({id:p.id,name:p.name,color});
+            p.members.forEach((m,i)=>{G.players.push({id:p.id+'_'+i,name:m,family:p.id,amount:0,alive:true,change:''})});
+        }else{
+            if(G.players.find(pl=>pl.id===p.id))return;
+            G.players.push({id:p.id,name:p.name,family:null,amount:0,alive:true,change:''});
+        }
+        broadcastState();
         renderLobby();
     });
+
     channel.on('broadcast',{event:'game_state'},({payload})=>{
         G=payload;renderLobby();
         if(G.started){hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');renderGame();updateOnlineUI()}
     });
+
     channel.on('broadcast',{event:'spin_result'},({payload})=>{
         if(payload.spinnerId===MY_ID)return;
         G=payload.state;
         showSpinAnimation(payload.letter,()=>{renderGame();updateOnlineUI();if(G.over)showWinner()});
     });
+
     channel.on('broadcast',{event:'game_log'},({payload})=>{addLogLocal(payload.text)});
     channel.on('broadcast',{event:'rtc_offer'},async({payload})=>{if(payload.target!==MY_ID)return;await handleOffer(payload.from,payload.offer)});
     channel.on('broadcast',{event:'rtc_answer'},async({payload})=>{if(payload.target!==MY_ID)return;await handleAnswer(payload.from,payload.answer)});
     channel.on('broadcast',{event:'rtc_ice'},async({payload})=>{if(payload.target!==MY_ID)return;await handleIce(payload.from,payload.candidate)});
-    channel.on('broadcast',{event:'video_ready'},async({payload})=>{
-        if(payload.id===MY_ID)return;
-        if(localStream&&!peerConnections[payload.id]){await createPeerConnection(payload.id,true)}
-    });
-    channel.subscribe((status)=>{
-        console.log('Channel status:',status);
-        if(status==='SUBSCRIBED'&&onReady)onReady();
-    });
+    channel.on('broadcast',{event:'video_ready'},async({payload})=>{if(payload.id===MY_ID)return;if(localStream&&!peerConnections[payload.id])await createPeerConnection(payload.id,true)});
+
+    channel.subscribe(s=>{if(s==='SUBSCRIBED'&&onReady)onReady()});
 }
 
 function broadcastState(){channel.send({type:'broadcast',event:'game_state',payload:G})}
-function renderLobby(){document.getElementById('lobbyPlayers').innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''}"><span class="dot"></span> ${p.name}</div>`).join('')}
+
+function renderLobby(){
+    const el=document.getElementById('lobbyPlayers');
+    if(G.families&&G.families.length>0){
+        // Family mode lobby
+        el.innerHTML=G.families.map(f=>{
+            const members=G.players.filter(p=>p.family===f.id);
+            return `<div class="lobby-family">
+                <div class="lobby-family-name"><span style="color:${f.color}">●</span> משפ׳ ${f.name}</div>
+                <div class="lobby-family-members">${members.map(m=>`<span>${m.name}</span>`).join('')}</div>
+            </div>`;
+        }).join('');
+        // Also show non-family players if mixed
+        const noFam=G.players.filter(p=>!p.family);
+        if(noFam.length)el.innerHTML+=noFam.map(p=>`<div class="lobby-player"><span class="dot"></span> ${p.name}</div>`).join('');
+    }else{
+        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''}"><span class="dot"></span> ${p.name}</div>`).join('');
+    }
+}
 
 function startOnlineGame(){
     if(G.players.length<2){alert('צריך לפחות 2 שחקנים');return}
-    G.players.forEach(p=>{p.amount=G.startAmt-G.ante;p.alive=true;p.change=''});
+
+    // Order players based on turnOrder setting
+    if(G.families&&G.families.length>0){
+        let ordered=[];
+        if(G.turnOrder==='round_robin'){
+            // One from each family in rotation: A1,B1,C1,A2,B2,C2,...
+            const famPlayers=G.families.map(f=>G.players.filter(p=>p.family===f.id));
+            const maxLen=Math.max(...famPlayers.map(a=>a.length));
+            for(let i=0;i<maxLen;i++){
+                famPlayers.forEach(fp=>{if(fp[i])ordered.push(fp[i])});
+            }
+            G.players.filter(p=>!p.family).forEach(p=>ordered.push(p));
+        }else if(G.turnOrder==='random'){
+            // Shuffle all players randomly
+            ordered=[...G.players];
+            for(let i=ordered.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ordered[i],ordered[j]]=[ordered[j],ordered[i]]}
+        }else{
+            // family_block: all of family A, then B, etc (default)
+            G.families.forEach(f=>{G.players.filter(p=>p.family===f.id).forEach(p=>ordered.push(p))});
+            G.players.filter(p=>!p.family).forEach(p=>ordered.push(p));
+        }
+        G.players=ordered;
+    }
+
+    // Init scoring
+    if(G.scoringMode==='family'){
+        // Family scoring: all members share one pool per family
+        G.familyScores={};
+        G.families.forEach(f=>{
+            const members=G.players.filter(p=>p.family===f.id);
+            const famTotal=(G.startAmt-G.ante)*members.length;
+            G.familyScores[f.id]=famTotal;
+            members.forEach(p=>{p.amount=famTotal;p.alive=true;p.change=''});
+        });
+        // Non-family players
+        G.players.filter(p=>!p.family).forEach(p=>{p.amount=G.startAmt-G.ante;p.alive=true;p.change=''});
+    }else{
+        // individual or both: each player has own score
+        G.players.forEach(p=>{p.amount=G.startAmt-G.ante;p.alive=true;p.change=''});
+        if(G.scoringMode==='both'){
+            // Init family totals for display
+            G.familyScores={};
+            G.families.forEach(f=>{
+                const members=G.players.filter(p=>p.family===f.id);
+                G.familyScores[f.id]=members.reduce((s,p)=>s+p.amount,0);
+            });
+        }
+    }
+
     G.pot=G.ante*G.players.length;G.currentTurn=0;G.over=false;G.started=true;
     broadcastState();addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');
 }
 
 function updateOnlineUI(){
-    const myTurn=G.players[G.currentTurn]?.id===MY_ID;
-    const btn=document.getElementById('spinBtn');btn.classList.toggle('hidden',!myTurn);btn.disabled=!myTurn;
-    document.getElementById('waitingMsg').classList.toggle('hidden',myTurn);
+    // Check if current turn player belongs to my family
+    const cp=G.players[G.currentTurn];
+    const isMyTurn=cp&&(cp.id===MY_ID||(MY_FAMILY&&cp.family===MY_FAMILY));
+    const btn=document.getElementById('spinBtn');
+    btn.classList.toggle('hidden',!isMyTurn);btn.disabled=!isMyTurn;
+    document.getElementById('waitingMsg').classList.toggle('hidden',isMyTurn);
 }
 
+// ═══════════ SPIN — 3-click power mechanic ═══════════
 const LETTERS=['נ','ג','ה','פ'];
 const LDESC={'נ':'נון — ניקס (כלום)','ג':'גימל — גנץ (הכל!)','ה':'הא — האלב (חצי)','פ':'פה — פיי (לשלם)'};
+
+let spinClicks=0, spinClickTimes=[], spinPower=0, spinClickTimer=null;
+
+function handleSpinClick(){
+    if(spinning||G.over)return;
+    playClickSound();
+    const now=Date.now();
+    spinClicks++;
+    spinClickTimes.push(now);
+
+    // Update visual
+    const dots=['○','○','○'];
+    for(let i=0;i<spinClicks;i++)dots[i]='●';
+    document.getElementById('powerClicks').textContent=dots.join(' ');
+    document.getElementById('powerMeter').classList.remove('hidden');
+
+    if(spinClicks===1){
+        document.getElementById('spinBtn').textContent='עוד פעם!';
+        document.getElementById('powerLabel').textContent='לחץ שוב!';
+        document.getElementById('powerFill').style.width='33%';
+        // Auto-cancel if too slow
+        spinClickTimer=setTimeout(()=>{resetSpinUI()},3000);
+    }else if(spinClicks===2){
+        document.getElementById('powerFill').style.width='66%';
+        document.getElementById('powerLabel').textContent='עוד אחת!';
+    }else if(spinClicks>=3){
+        clearTimeout(spinClickTimer);
+        // Calculate power: time between click1 and click3
+        const totalMs=spinClickTimes[2]-spinClickTimes[0];
+        // Fast = <400ms → power ~1.0, Slow = >2000ms → power ~0.1
+        spinPower=Math.max(0.1,Math.min(1.0,1-(totalMs-300)/1800));
+        document.getElementById('powerFill').style.width='100%';
+        document.getElementById('powerLabel').textContent= spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':' עייף... 😴';
+        // Log power message
+        const cp=G.players[G.currentTurn];
+        if(cp)logWithPower(cp.name, spinPower);
+        setTimeout(()=>doSpin(),250);
+    }
+}
+
+function resetSpinUI(){
+    spinClicks=0;spinClickTimes=[];spinPower=0.5;
+    document.getElementById('spinBtn').textContent='סובב!';
+    document.getElementById('powerMeter').classList.add('hidden');
+    document.getElementById('powerFill').style.width='0%';
+    document.getElementById('powerClicks').textContent='○ ○ ○';
+}
 
 function doSpin(){
     if(spinning||G.over)return;
@@ -348,84 +685,298 @@ function doSpin(){
     if(MODE==='online'){
         applyLetter(letter);
         channel.send({type:'broadcast',event:'spin_result',payload:{letter,state:G,spinnerId:MY_ID}});
-        showSpinAnimation(letter,()=>{renderGame();updateOnlineUI();spinning=false;document.getElementById('spinBtn').disabled=false;if(G.over)showWinner()});
+        showSpinAnimation(letter,spinPower,()=>{resetSpinUI();renderGame();updateOnlineUI();spinning=false;document.getElementById('spinBtn').disabled=false;if(G.over)showWinner()});
     }else{
-        showSpinAnimation(letter,()=>{applyLetter(letter);renderGame();spinning=false;document.getElementById('spinBtn').disabled=false;if(G.over)showWinner()});
+        showSpinAnimation(letter,spinPower,()=>{applyLetter(letter);renderGame();spinning=false;document.getElementById('spinBtn').disabled=false;resetSpinUI();if(G.over)showWinner()});
     }
 }
 
-function showSpinAnimation(fl,cb){
-    const svg=document.getElementById('dreidelSvg');
-    const letterEl=document.getElementById('dreidelLetter');
-    const rl=document.getElementById('resultLine');
+function showSpinAnimation(fl,power,cb){
+    const spinMinS=parseFloat(document.getElementById('spinMin')?.value||1);
+    const spinMaxS=parseFloat(document.getElementById('spinMax')?.value||4);
+    const duration=Math.round((spinMinS+(power*(spinMaxS-spinMinS)))*1000);
+
+    const svg=document.getElementById('dreidelSvg'),le=document.getElementById('dreidelLetter'),rl=document.getElementById('resultLine');
     rl.textContent='';rl.className='result-line';
-    
-    // Reset any previous fall
-    svg.classList.remove('fall-right','fall-left','upright');
-    svg.style.transform='';
-    
-    // Start spinning
-    svg.classList.add('spinning');
-    const f=setInterval(()=>{letterEl.textContent=LETTERS[Math.floor(Math.random()*4)]},100);
-    
-    const spinDuration=1200+Math.random()*600;
-    
-    setTimeout(()=>{
-        clearInterval(f);
-        svg.classList.remove('spinning');
-        letterEl.textContent=fl;
+    svg.classList.remove('fall-right','fall-left','upright','result-נ','result-ג','result-ה','result-פ');
+    svg.style.transform='';svg.style.transition='none';
+
+    // ── Physics spin via requestAnimationFrame ──
+    const start=performance.now();
+    let angle=0, tiltAngle=0, scaleX=1;
+    let lastLetter=0;
+    const soundCtx=getAudioCtx();
+
+    // Spin hum sound
+    let hum=null;
+    if(soundCtx){
+        hum=soundCtx.createOscillator();
+        const g=soundCtx.createGain();
+        hum.connect(g);g.connect(soundCtx.destination);
+        hum.type='sawtooth';
+        hum.frequency.setValueAtTime(120+power*180,soundCtx.currentTime);
+        g.gain.setValueAtTime(0.04,soundCtx.currentTime);
+        hum.start();
+    }
+
+    function frame(now){
+        const elapsed=now-start;
+        const t=Math.min(elapsed/duration,1);
+        // ease-out: fast start, slow finish
+        const speedFactor=Math.pow(1-t,1.8);
+
+        // rotation speed: degrees per ms at full speed ~ 2.2 deg/ms
+        const degsPerMs=2.2*speedFactor*(0.5+power*0.5);
+        angle+=(now-(frame._last||now))*degsPerMs;
+        frame._last=now;
+
+        // Wobble tilt: increases as it slows
+        const wobble=t>0.55?Math.sin(elapsed/60)*(t-0.55)*28:0;
+        tiltAngle=wobble;
+
+        // scaleX: simulate rotation squish
+        const spinCycle=angle%360/360;
+        scaleX=Math.abs(Math.cos(spinCycle*Math.PI*2))*0.5+0.5;
+
+        svg.style.transition='none';
+        svg.style.transform=`rotate(${tiltAngle}deg) scaleX(${0.7+scaleX*0.3})`;
+
+        // Shuffle letter while fast
+        if(elapsed-lastLetter > 60+t*180){
+            le.textContent=LETTERS[Math.floor(Math.random()*4)];
+            lastLetter=elapsed;
+        }
+
+        // Pitch-down hum as it slows
+        if(hum&&soundCtx){
+            const freq=40+speedFactor*280;
+            hum.frequency.setValueAtTime(freq,soundCtx.currentTime);
+        }
+
+        if(t<1){requestAnimationFrame(frame)}
+        else{finish()}
+    }
+    requestAnimationFrame(frame);
+
+    function finish(){
+        if(hum){try{hum.stop();hum.disconnect()}catch(e){}}
+        svg.style.transform='';
+        le.textContent=fl;
         rl.textContent=LDESC[fl];rl.className='result-line r-'+fl;
-        
-        // Fall to random side
-        const fallRight=Math.random()>0.5;
-        svg.classList.add(fallRight?'fall-right':'fall-left');
-        
-        // Callback after fall completes
-        setTimeout(()=>{if(cb)cb()},650);
-    },spinDuration);
+        svg.classList.add('result-'+fl);
+
+        // Thud + result sound
+        playThud();
+        setTimeout(()=>playResult(fl),200);
+
+        const dir=Math.random()>.5?'fall-right':'fall-left';
+        svg.classList.add(dir);
+        setTimeout(()=>{if(cb)cb()},1150);
+    }
 }
 
-// Stand the dreidel back up before next spin
 function resetDreidel(){
-    const svg=document.getElementById('dreidelSvg');
-    svg.classList.remove('fall-right','fall-left');
-    svg.classList.add('upright');
-    setTimeout(()=>{svg.classList.remove('upright')},400);
+    const s=document.getElementById('dreidelSvg');
+    s.classList.remove('fall-right','fall-left','result-נ','result-ג','result-ה','result-פ');
+    s.style.transform='';
+    s.classList.add('upright');
+    setTimeout(()=>s.classList.remove('upright'),400);
+}
+
+// ══════ AUDIO ENGINE ══════
+let _audioCtx=null;
+function getAudioCtx(){
+    if(!document.getElementById('soundOn')?.checked)return null;
+    if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}
+    if(_audioCtx.state==='suspended')_audioCtx.resume();
+    return _audioCtx;
+}
+function playClickSound(){
+    const ctx=getAudioCtx();if(!ctx)return;
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);
+    g.gain.setValueAtTime(0.15,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
+    o.start();o.stop(ctx.currentTime+0.12);
+}
+function playThud(){
+    const ctx=getAudioCtx();if(!ctx)return;
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.25,ctx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.06));
+    const s=ctx.createBufferSource(),g=ctx.createGain();
+    s.buffer=buf;s.connect(g);g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.35,ctx.currentTime);
+    s.start();
+}
+function playResult(letter){
+    const ctx=getAudioCtx();if(!ctx)return;
+    const freqs={'נ':[330,330],'ג':[330,440,550,660],'ה':[330,440,550],'פ':[330,220]};
+    const notes=freqs[letter]||[330];
+    notes.forEach((f,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='sine';o.frequency.value=f;
+        const t=ctx.currentTime+i*0.12;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.18,t+0.04);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+        o.start(t);o.stop(t+0.3);
+    });
+}
+
+// ══════ SETTINGS ══════
+function toggleSettings(){document.getElementById('settingsPanel').classList.toggle('hidden')}
+function updateFaceColor(letter,color){
+    document.querySelectorAll(`.face-${letter}`).forEach(el=>{
+        el.setAttribute('fill',color);
+    });
+}
+
+// ══════ LOG with power message ══════
+function logWithPower(playerName, power){
+    if(power===undefined||power===null)return;
+    let msg='';
+    if(power>0.85)msg=`💪 ${playerName} סיבב בכוח עצום!`;
+    else if(power>0.65)msg=`⚡ ${playerName} סיבב בחוזקה`;
+    else if(power>0.4)msg=`👌 ${playerName} סיבב בינוני`;
+    else if(power>0.2)msg=`😅 ${playerName} סיבב בעצלתיים...`;
+    else msg=`😴 ${playerName} בקושי הזיז את הסביבון`;
+    addLog(msg);
 }
 
 function applyLetter(l){
     const p=G.players[G.currentTurn];G.players.forEach(pl=>pl.change='');
+    
     switch(l){
         case'נ':p.change='—';addLog(`${p.name} ← נ׳ — כלום.`);break;
-        case'ג':{const w=G.pot;p.amount+=G.pot;p.change='+'+w;G.pot=0;addLog(`${p.name} ← ג׳ — לקח ${w}! 🎉`);G.players.forEach(pl=>{if(pl.alive){pl.amount-=G.ante;G.pot+=G.ante}});addLog(`כולם שמו ${G.ante} בקופה.`);break}
-        case'ה':{const h=Math.round(G.pot/2);p.amount+=h;G.pot-=h;p.change='+'+h;addLog(`${p.name} ← ה׳ — חצי (${h}).`);break}
-        case'פ':p.amount-=G.ante;G.pot+=G.ante;p.change='-'+G.ante;addLog(`${p.name} ← פ׳ — שילם ${G.ante}.`);break;
+        case'ג':{
+            const w=G.pot;
+            if(G.scoringMode==='family'&&p.family){
+                // Add to all family members
+                const fam=G.players.filter(pl=>pl.family===p.family&&pl.alive);
+                fam.forEach(m=>{m.amount+=w;m.change='+'+w});
+            }else{
+                p.amount+=w;p.change='+'+w;
+            }
+            G.pot=0;addLog(`${p.name} ← ג׳ — לקח ${w}! 🎉`);
+            G.players.forEach(pl=>{if(pl.alive){pl.amount-=G.ante;G.pot+=G.ante}});
+            addLog(`כולם שמו ${G.ante} בקופה.`);break;
+        }
+        case'ה':{
+            const h=Math.round(G.pot/2);
+            if(G.scoringMode==='family'&&p.family){
+                const fam=G.players.filter(pl=>pl.family===p.family&&pl.alive);
+                fam.forEach(m=>{m.amount+=h;m.change='+'+h});
+            }else{
+                p.amount+=h;p.change='+'+h;
+            }
+            G.pot-=h;addLog(`${p.name} ← ה׳ — חצי (${h}).`);break;
+        }
+        case'פ':
+            if(G.scoringMode==='family'&&p.family){
+                const fam=G.players.filter(pl=>pl.family===p.family&&pl.alive);
+                fam.forEach(m=>{m.amount-=G.ante;m.change='-'+G.ante;G.pot+=G.ante});
+            }else{
+                p.amount-=G.ante;G.pot+=G.ante;p.change='-'+G.ante;
+            }
+            addLog(`${p.name} ← פ׳ — שילם ${G.ante}.`);break;
     }
+
+    // Update family totals for 'both' mode
+    if(G.scoringMode==='both'&&G.familyScores){
+        G.families.forEach(f=>{
+            G.familyScores[f.id]=G.players.filter(pl=>pl.family===f.id&&pl.alive).reduce((s,pl)=>s+pl.amount,0);
+        });
+    }
+
+    // Elimination
     G.players.forEach(pl=>{if(pl.alive&&pl.amount<=0){pl.alive=false;pl.amount=0;addLog(`💀 ${pl.name} יצא!`)}});
+    
+    // Check family elimination in family scoring
+    if(G.scoringMode==='family'&&G.families){
+        G.families.forEach(f=>{
+            const fam=G.players.filter(pl=>pl.family===f.id);
+            if(fam.every(pl=>!pl.alive||pl.amount<=0)){
+                fam.forEach(pl=>{if(pl.alive){pl.alive=false;pl.amount=0}});
+            }
+        });
+    }
+
     const alive=G.players.filter(p=>p.alive);
     if(alive.length<=1){G.over=true;if(alive[0]){alive[0].amount+=G.pot;G.pot=0}return}
+    
+    // Check if only one family left (family mode)
+    if(G.scoringMode==='family'&&G.families&&G.families.length>0){
+        const aliveFams=new Set(alive.filter(p=>p.family).map(p=>p.family));
+        const aliveIndiv=alive.filter(p=>!p.family);
+        if(aliveFams.size+(aliveIndiv.length>0?1:0)<=1&&aliveIndiv.length<=1){
+            G.over=true;alive.forEach(p=>{p.amount+=Math.floor(G.pot/alive.length)});G.pot=0;return;
+        }
+    }
+
     do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive);
     if(G.pot===0){G.players.forEach(pl=>{if(pl.alive){pl.amount-=G.ante;G.pot+=G.ante}});G.players.forEach(pl=>{if(pl.alive&&pl.amount<=0){pl.alive=false;pl.amount=0;addLog(`💀 ${pl.name} יצא!`)}})}
 }
 
+// ═══════════ RENDER ═══════════
 function renderGame(){
     document.getElementById('potVal').textContent=G.pot;
-    const cp=G.players[G.currentTurn];document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?cp.name:'—'}</strong>`;
-    document.getElementById('playersGrid').innerHTML=G.players.map((p,i)=>`
-        <div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${G.over&&p.alive?'winner':''}">
-            <div class="p-name"><span class="crown">👑</span>${p.name}${!p.alive?' (בחוץ)':''}</div>
-            <div class="p-amt">${p.alive?p.amount:0}</div>
-            <div class="p-delta ${p.change.startsWith('+')?'plus':p.change.startsWith('-')?'minus':'zero'}">${p.change}</div>
-        </div>`).join('');
+    const cp=G.players[G.currentTurn];
+    document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?cp.name:'—'}</strong>`;
+
+    const area=document.getElementById('playersArea');
+
+    // Group by family if families exist
+    if(G.families&&G.families.length>0){
+        let html='';
+        G.families.forEach(f=>{
+            const members=G.players.filter(p=>p.family===f.id);
+            if(!members.length)return;
+            // Family total for 'both' or 'family' mode
+            let famTotal='';
+            if((G.scoringMode==='both'||G.scoringMode==='family')&&G.familyScores){
+                const total=G.scoringMode==='family'?members[0]?.amount:G.familyScores[f.id];
+                famTotal=`<span style="margin-right:auto;font-family:'Secular One';color:var(--gold);font-size:.8rem">סה״כ: ${total||0}</span>`;
+            }
+            html+=`<div class="family-group"><div class="family-group-title"><span class="fam-dot" style="background:${f.color}"></span>משפ׳ ${f.name} ${famTotal}</div><div class="players-grid">${members.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
+        });
+        const noFam=G.players.filter(p=>!p.family);
+        if(noFam.length)html+=`<div class="family-group"><div class="players-grid">${noFam.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
+        area.innerHTML=html;
+    }else{
+        area.innerHTML=`<div class="players-grid">${G.players.map((p,i)=>playerCard(p,i)).join('')}</div>`;
+    }
 }
 
-function showWinner(){const w=G.players.find(p=>p.alive);if(w){document.getElementById('winName').textContent='🎉 '+w.name+' ניצח!';document.getElementById('winModal').classList.add('show');addLog(`🏆 ${w.name} ניצח עם ${w.amount}!`)}}
+function playerCard(p,i){
+    return `<div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${G.over&&p.alive?'winner':''}">
+        <div class="p-name"><span class="crown">👑</span>${p.name}${!p.alive?' ❌':''}</div>
+        <div class="p-amt">${p.alive?p.amount:0}</div>
+        <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${p.change||''}</div>
+    </div>`;
+}
+
+function showWinner(){
+    const alive=G.players.filter(p=>p.alive);
+    if(!alive.length)return;
+    let winText;
+    if(G.scoringMode==='family'&&alive[0]?.family){
+        const fam=G.families.find(f=>f.id===alive[0].family);
+        winText='🎉 משפחת '+(fam?fam.name:'?')+' ניצחה!';
+    }else{
+        winText='🎉 '+alive[0].name+' ניצח!';
+    }
+    document.getElementById('winName').textContent=winText;
+    document.getElementById('winModal').classList.add('show');
+    addLog(`🏆 ${winText}`);
+}
 
 function addLog(text){addLogLocal(text);if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'game_log',payload:{text}})}
 function addLogLocal(text){const el=document.createElement('div');el.className='log-entry';el.textContent=text;const c=document.getElementById('logEntries');if(c.firstChild&&c.firstChild.textContent===text)return;c.insertBefore(el,c.firstChild)}
 
-// ══ WebRTC ══
-const RTC_CFG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+// ═══════════ WebRTC ═══════════
+const RTC={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 
 async function startCamera(){
     try{
@@ -436,60 +987,24 @@ async function startCamera(){
         document.getElementById('vidToggle').classList.remove('hidden');
         document.getElementById('micToggle').classList.remove('hidden');
         addLocalVideo();updateVidBtns();
-        if(MODE==='online'&&channel){
-            channel.send({type:'broadcast',event:'video_ready',payload:{id:MY_ID}});
-            initVideoConnections();
-        }
-    }catch(e){console.error('Camera:',e);alert('לא ניתן לגשת למצלמה. בדוק הרשאות.')}
+        if(MODE==='online'&&channel){channel.send({type:'broadcast',event:'video_ready',payload:{id:MY_ID}});initVideoConnections()}
+    }catch(e){alert('לא ניתן לגשת למצלמה.')}
 }
-
-function addLocalVideo(){
-    const g=document.getElementById('videoGrid');if(document.getElementById('vid_local'))return;
-    const t=document.createElement('div');t.className='video-tile';t.id='vid_local';
-    t.innerHTML='<video autoplay muted playsinline></video><div class="vid-name">אני</div>';
-    g.appendChild(t);t.querySelector('video').srcObject=localStream;
-}
-
+function addLocalVideo(){const g=document.getElementById('videoGrid');if(document.getElementById('vid_local'))return;const t=document.createElement('div');t.className='video-tile';t.id='vid_local';t.innerHTML='<video autoplay muted playsinline></video><div class="vid-name">אני</div>';g.appendChild(t);t.querySelector('video').srcObject=localStream}
 async function initVideoConnections(){
-    const mi=G.players.findIndex(p=>p.id===MY_ID);
-    for(let i=0;i<G.players.length;i++){if(i===mi)continue;const pid=G.players[i].id;if(peerConnections[pid])continue;if(mi<i)await createPeerConnection(pid,true)}
+    // In family mode, connect per family (MY_ID is the family ID)
+    // Find other family IDs or individual IDs
+    const otherIds=[...new Set(G.players.map(p=>p.family||p.id))].filter(id=>id!==MY_ID&&id!==MY_FAMILY);
+    for(const pid of otherIds){if(!peerConnections[pid])await createPeerConnection(pid,true)}
 }
-
-async function createPeerConnection(pid,init){
-    if(!localStream)return;
-    const pc=new RTCPeerConnection(RTC_CFG);peerConnections[pid]=pc;
-    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-    pc.onicecandidate=e=>{if(e.candidate)channel.send({type:'broadcast',event:'rtc_ice',payload:{from:MY_ID,target:pid,candidate:e.candidate}})};
-    pc.ontrack=e=>addRemoteVideo(pid,e.streams[0]);
-    if(init){const o=await pc.createOffer();await pc.setLocalDescription(o);channel.send({type:'broadcast',event:'rtc_offer',payload:{from:MY_ID,target:pid,offer:o}})}
-}
-
-async function handleOffer(from,offer){
-    if(!localStream)await startCamera();if(!localStream)return;
-    if(!peerConnections[from])await createPeerConnection(from,false);
-    const pc=peerConnections[from];await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    const a=await pc.createAnswer();await pc.setLocalDescription(a);
-    channel.send({type:'broadcast',event:'rtc_answer',payload:{from:MY_ID,target:from,answer:a}});
-}
+async function createPeerConnection(pid,init){if(!localStream)return;const pc=new RTCPeerConnection(RTC);peerConnections[pid]=pc;localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));pc.onicecandidate=e=>{if(e.candidate)channel.send({type:'broadcast',event:'rtc_ice',payload:{from:MY_ID,target:pid,candidate:e.candidate}})};pc.ontrack=e=>addRemoteVideo(pid,e.streams[0]);if(init){const o=await pc.createOffer();await pc.setLocalDescription(o);channel.send({type:'broadcast',event:'rtc_offer',payload:{from:MY_ID,target:pid,offer:o}})}}
+async function handleOffer(from,offer){if(!localStream)await startCamera();if(!localStream)return;if(!peerConnections[from])await createPeerConnection(from,false);const pc=peerConnections[from];await pc.setRemoteDescription(new RTCSessionDescription(offer));const a=await pc.createAnswer();await pc.setLocalDescription(a);channel.send({type:'broadcast',event:'rtc_answer',payload:{from:MY_ID,target:from,answer:a}})}
 async function handleAnswer(from,a){const pc=peerConnections[from];if(pc)await pc.setRemoteDescription(new RTCSessionDescription(a))}
 async function handleIce(from,c){const pc=peerConnections[from];if(pc)await pc.addIceCandidate(new RTCIceCandidate(c))}
-
-function addRemoteVideo(pid,stream){
-    const g=document.getElementById('videoGrid');if(document.getElementById('vid_'+pid))return;
-    document.getElementById('vidPlaceholder')?.classList.add('hidden');
-    const p=G.players.find(p=>p.id===pid);const t=document.createElement('div');t.className='video-tile';t.id='vid_'+pid;
-    t.innerHTML=`<video autoplay playsinline></video><div class="vid-name">${p?p.name:pid}</div>`;
-    g.appendChild(t);t.querySelector('video').srcObject=stream;
-}
-
+function addRemoteVideo(pid,stream){const g=document.getElementById('videoGrid');if(document.getElementById('vid_'+pid))return;document.getElementById('vidPlaceholder')?.classList.add('hidden');const fam=G.families?.find(f=>f.id===pid);const t=document.createElement('div');t.className='video-tile';t.id='vid_'+pid;t.innerHTML=`<video autoplay playsinline></video><div class="vid-name">${fam?'משפ׳ '+fam.name:pid}</div>`;g.appendChild(t);t.querySelector('video').srcObject=stream}
 function toggleVideo(){if(!localStream)return;videoEnabled=!videoEnabled;localStream.getVideoTracks().forEach(t=>t.enabled=videoEnabled);updateVidBtns()}
 function toggleMic(){if(!localStream)return;micEnabled=!micEnabled;localStream.getAudioTracks().forEach(t=>t.enabled=micEnabled);updateVidBtns()}
-function updateVidBtns(){
-    document.getElementById('vidToggle').textContent=videoEnabled?'📷 כבה':'📷 הפעל';
-    document.getElementById('vidToggle').classList.toggle('active',videoEnabled);
-    document.getElementById('micToggle').textContent=micEnabled?'🎤 השתק':'🔇 בטל';
-    document.getElementById('micToggle').classList.toggle('active',micEnabled);
-}
+function updateVidBtns(){document.getElementById('vidToggle').textContent=videoEnabled?'📷 כבה':'📷 הפעל';document.getElementById('vidToggle').classList.toggle('active',videoEnabled);document.getElementById('micToggle').textContent=micEnabled?'🎤 השתק':'🔇 בטל';document.getElementById('micToggle').classList.toggle('active',micEnabled)}
 
 function show(id){document.getElementById(id).classList.remove('hidden')}
 function hide(id){document.getElementById(id).classList.add('hidden')}
