@@ -21,7 +21,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* HEADER */
 .header{text-align:center;padding:14px 0 4px}
-.header h1{font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,4vw,2.4rem);color:#e0eaff;text-shadow:0 0 20px rgba(120,160,255,.6),0 0 40px rgba(80,120,255,.3)}
+.header h1,.header-title{font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,4vw,2.4rem);color:#e0eaff;text-shadow:0 0 20px rgba(120,160,255,.6),0 0 40px rgba(80,120,255,.3);display:flex;align-items:center;justify-content:center;gap:0;width:100%}
+.handle-gap{display:inline-block;width:clamp(40px,8vw,80px)}
 .header .sub{color:var(--text-dim);font-size:.8rem;margin-top:1px;font-weight:300}
 
 /* COMMON */
@@ -88,7 +89,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .game-main{display:flex;flex-direction:column;align-items:center;gap:12px}
 
 /* Dreidel */
-.dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative;margin-top:-105px;z-index:3;pointer-events:none}
+.dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative;margin-top:-105px;z-index:3;pointer-events:none;width:100%}
 .dreidel-wrap{width:180px;height:260px;display:flex;align-items:center;justify-content:center;overflow:visible}
 .dreidel-svg{width:150px;height:250px;filter:drop-shadow(0 0 16px rgba(245,200,66,.4));
              transform-origin:50% 96%;overflow:visible}
@@ -181,7 +182,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div class="app">
-<header class="header"><h1>משחק &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; סביבון</h1></header>
+<header class="header">
+  <h1 class="header-title">
+    <span>משחק</span>
+    <span class="handle-gap"></span>
+    <span>סביבון</span>
+  </h1>
+</header>
 
 <div id="modeScreen">
     <div class="mode-selector" id="modeSelector">
@@ -491,6 +498,11 @@ function joinChannel(onReady){
     });
 
     channel.on('broadcast',{event:'game_state'},({payload})=>{
+        if(IS_HOST){
+            // host only uses this to open game screen for themselves if needed
+            if(payload.started&&!G.started){hide('waitingRoom');show('gameScreen');document.getElementById('videoSection').classList.remove('hidden');renderGame();updateOnlineUI();}
+            return;
+        }
         G=payload;renderLobby();
         if(G.started){hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');renderGame();updateOnlineUI()}
     });
@@ -498,7 +510,8 @@ function joinChannel(onReady){
     channel.on('broadcast',{event:'spin_result'},({payload})=>{
         if(payload.spinnerId===MY_ID)return;
         G=payload.state;
-        showSpinAnimation(payload.letter,0.5,()=>{renderGame();updateOnlineUI();if(G.over)showWinner()});
+        spinning=true;
+        showSpinAnimation(payload.letter,0.5,()=>{spinning=false;renderGame();updateOnlineUI();if(G.over)showWinner()});
     });
 
     channel.on('broadcast',{event:'game_log'},({payload})=>{addLogLocal(payload.text)});
@@ -686,8 +699,13 @@ function doSpin(){
     G.players.forEach(p=>p.change='');
     if(MODE==='online'){
         applyLetter(letter);
-        channel.send({type:'broadcast',event:'spin_result',payload:{letter,state:G,spinnerId:MY_ID}});
-        showSpinAnimation(letter,spinPower,()=>{resetSpinUI();renderGame();updateOnlineUI();spinning=false;document.getElementById('spinBtn').disabled=false;if(G.over)showWinner()});
+        showSpinAnimation(letter,spinPower,()=>{
+            resetSpinUI();renderGame();updateOnlineUI();spinning=false;
+            document.getElementById('spinBtn').disabled=false;
+            // broadcast final state (with updated currentTurn) after animation
+            channel.send({type:'broadcast',event:'spin_result',payload:{letter,state:G,spinnerId:MY_ID}});
+            if(G.over)showWinner();
+        });
     }else{
         showSpinAnimation(letter,spinPower,()=>{applyLetter(letter);renderGame();spinning=false;document.getElementById('spinBtn').disabled=false;resetSpinUI();if(G.over)showWinner()});
     }
@@ -977,6 +995,11 @@ function addLogLocal(text){const el=document.createElement('div');el.className='
 const RTC={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 
 async function startCamera(){
+    // Check if browser can even access camera
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+        alert('הדפדפן שלך אינו תומך בגישה למצלמה.\nנסה Chrome או Edge.');
+        return;
+    }
     try{
         localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
         videoEnabled=true;micEnabled=true;
@@ -986,7 +1009,18 @@ async function startCamera(){
         document.getElementById('micToggle').classList.remove('hidden');
         addLocalVideo();updateVidBtns();
         if(MODE==='online'&&channel){channel.send({type:'broadcast',event:'video_ready',payload:{id:MY_ID}});initVideoConnections()}
-    }catch(e){alert('לא ניתן לגשת למצלמה.')}
+    }catch(e){
+        const isFirefox=navigator.userAgent.toLowerCase().includes('firefox');
+        if(isFirefox){
+            alert('פיירפוקס חוסם מצלמה על אתר זה.\n\nפתרון:\n1. לחץ על סמל המנעול/מידע בסרגל הכתובת\n2. בחר "הרשאות" ← "השתמש במצלמה" ← "אפשר"\n3. רענן את הדף ונסה שוב\n\nלחלופין — השתמש ב-Chrome או Edge.');
+        } else if(e.name==='NotAllowedError'){
+            alert('הגישה למצלמה נדחתה.\nאפשר הרשאות מצלמה בהגדרות הדפדפן ונסה שוב.');
+        } else if(e.name==='NotFoundError'){
+            alert('לא נמצאה מצלמה במכשיר זה.');
+        } else {
+            alert('שגיאה בגישה למצלמה: '+e.message);
+        }
+    }
 }
 function addLocalVideo(){const g=document.getElementById('videoGrid');if(document.getElementById('vid_local'))return;const t=document.createElement('div');t.className='video-tile';t.id='vid_local';t.innerHTML='<video autoplay muted playsinline></video><div class="vid-name">אני</div>';g.appendChild(t);t.querySelector('video').srcObject=localStream}
 async function initVideoConnections(){
