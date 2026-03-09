@@ -21,7 +21,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* HEADER */
 .header{text-align:center;padding:14px 0 4px}
-.header h1{font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,4vw,2.4rem);color:var(--gold);text-shadow:0 0 25px var(--gold-glow)}
+.header h1{font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,4vw,2.4rem);color:#e0eaff;text-shadow:0 0 20px rgba(120,160,255,.6),0 0 40px rgba(80,120,255,.3)}
 .header .sub{color:var(--text-dim);font-size:.8rem;margin-top:1px;font-weight:300}
 
 /* COMMON */
@@ -78,7 +78,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* ══════════ GAME SCREEN ══════════ */
 .game-layout{display:grid;grid-template-columns:1fr 180px;grid-template-rows:auto 1fr;gap:10px;align-items:start}
-.game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.new-game-btn{position:fixed;top:12px;left:12px;z-index:100}
 .pot-box{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--bg-card),var(--bg-card-alt));border:1px solid var(--border);border-radius:var(--r);padding:8px 16px}
 .pot-box .emoji{font-size:1.4rem}.pot-label{font-size:.7rem;color:var(--text-dim)}.pot-val{font-family:'Secular One',sans-serif;font-size:1.3rem;color:var(--gold)}
 .turn-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:8px 16px;font-size:.85rem}.turn-box strong{color:var(--gold)}
@@ -87,37 +88,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .game-main{display:flex;flex-direction:column;align-items:center;gap:12px}
 
 /* Dreidel */
-.dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative}
-.dreidel-wrap{perspective:800px;width:100px;height:150px;margin-bottom:4px;display:flex;align-items:center;justify-content:center}
-.dreidel-svg{width:100px;height:150px;filter:drop-shadow(0 0 12px var(--gold-glow));transform-origin:50% 85%;transform-style:preserve-3d}
-.dreidel-svg .body-rect{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
-.dreidel-svg .body-tri{fill:var(--bg-card-alt);stroke:var(--gold);stroke-width:2}
-.dreidel-svg .handle{fill:var(--gold-dim);stroke:var(--gold);stroke-width:1.5}
-.dreidel-svg .handle-knob{fill:var(--gold);stroke:var(--gold-dim);stroke-width:1}
-.dreidel-svg .letter{font-family:'Secular One',sans-serif;font-size:36px;fill:var(--gold);text-anchor:middle;dominant-baseline:central}
-/* JS-driven animation via canvas-style RAF — no CSS class needed for spin */
-.dreidel-svg.fall-right{animation:fr 1.1s cubic-bezier(.4,0,1,1) forwards}
-.dreidel-svg.fall-left {animation:fl 1.1s cubic-bezier(.4,0,1,1) forwards}
-@keyframes fr{
-  0%  {transform:rotate(0deg) translateX(0)}
-  15% {transform:rotate(6deg) translateX(3px)}
-  35% {transform:rotate(18deg) translateX(8px)}
-  60% {transform:rotate(55deg) translateX(18px)}
-  80% {transform:rotate(80deg) translateX(26px)}
-  100%{transform:rotate(85deg) translateX(30px)}
-}
-@keyframes fl{
-  0%  {transform:rotate(0deg) translateX(0)}
-  15% {transform:rotate(-6deg) translateX(-3px)}
-  35% {transform:rotate(-18deg) translateX(-8px)}
-  60% {transform:rotate(-55deg) translateX(-18px)}
-  80% {transform:rotate(-80deg) translateX(-26px)}
-  100%{transform:rotate(-85deg) translateX(-30px)}
-}
-.dreidel-svg.upright{animation:up .4s ease-out forwards}
-@keyframes up{0%{transform:rotate(var(--r,0))}100%{transform:rotate(0)}}
-.result-line{font-size:.85rem;font-weight:600;min-height:18px;text-align:center;white-space:nowrap;margin-top:20px;margin-bottom:4px}
+.dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative;margin-top:-105px;z-index:3;pointer-events:none}
+.dreidel-wrap{width:180px;height:260px;display:flex;align-items:center;justify-content:center;overflow:visible}
+.dreidel-svg{width:150px;height:250px;filter:drop-shadow(0 0 16px rgba(245,200,66,.4));
+             transform-origin:50% 96%;overflow:visible}
+.dreidel-controls{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:10;margin-top:4px}
+/* fall */
+.dreidel-svg.fall-right{animation:fr 1.2s cubic-bezier(.3,0,.7,1) forwards}
+.dreidel-svg.fall-left {animation:fl 1.2s cubic-bezier(.3,0,.7,1) forwards}
+@keyframes fr{0%{transform:rotate(0)}20%{transform:rotate(10deg)}55%{transform:rotate(50deg)}85%{transform:rotate(80deg)}100%{transform:rotate(84deg)}}
+@keyframes fl{0%{transform:rotate(0)}20%{transform:rotate(-10deg)}55%{transform:rotate(-50deg)}85%{transform:rotate(-80deg)}100%{transform:rotate(-84deg)}}
+.dreidel-svg.upright{animation:up .35s ease-out forwards}
+@keyframes up{0%{transform:rotate(0)}100%{transform:rotate(0)}}
+.result-line{font-size:.85rem;font-weight:600;min-height:22px;text-align:center;white-space:nowrap;margin-top:6px;margin-bottom:4px}
 .r-נ{color:var(--text-dim)}.r-ג{color:var(--green)}.r-ה{color:var(--blue)}.r-פ{color:var(--red)}
+/* spin btn */
 .spin-btn{padding:9px 34px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;border:none;border-radius:10px;font-family:'Secular One',sans-serif;font-size:1rem;cursor:pointer;box-shadow:0 3px 12px var(--gold-glow);transition:all .2s}
 .spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 5px 20px var(--gold-glow-s)}
 .spin-btn:disabled{opacity:.35;cursor:not-allowed}
@@ -127,13 +112,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .power-bar-bg{width:140px;height:10px;background:var(--bg-input);border-radius:5px;border:1px solid var(--border);overflow:hidden}
 .power-bar-fill{height:100%;width:0%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--gold),var(--red));transition:width 0.15s ease}
 .power-clicks{font-size:1rem;letter-spacing:6px;color:var(--gold)}
-/* Dreidel face highlight on result */
-.dreidel-svg .face-נ,.dreidel-svg .face-ג,.dreidel-svg .face-ה,.dreidel-svg .face-פ{transition:filter 0.5s,opacity 0.5s}
-.dreidel-svg.result-נ .face-נ{filter:brightness(3) drop-shadow(0 0 4px #aaa)}
-.dreidel-svg.result-ג .face-ג{filter:brightness(3) drop-shadow(0 0 6px #34d399)}
-.dreidel-svg.result-ה .face-ה{filter:brightness(3) drop-shadow(0 0 6px #3d7aed)}
-.dreidel-svg.result-פ .face-פ{filter:brightness(3) drop-shadow(0 0 6px #f87171)}
-/* Settings panel */
+/* Settings */
 .settings-toggle{position:fixed;bottom:18px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .2s}
 .settings-toggle:hover{border-color:var(--gold-dim);transform:rotate(30deg)}
 .settings-panel{position:fixed;bottom:72px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border-l);border-radius:var(--r);padding:16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideUp .2s ease-out}
@@ -147,6 +126,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .settings-row .val-label{font-size:.75rem;color:var(--gold);min-width:28px;text-align:left}
 .sound-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:.8rem;user-select:none}
 .sound-toggle input{accent-color:var(--gold)}
+.r-נ{color:var(--text-dim)}.r-ג{color:var(--green)}.r-ה{color:var(--blue)}.r-פ{color:var(--red)}
+.spin-btn{padding:9px 34px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;border:none;border-radius:10px;font-family:'Secular One',sans-serif;font-size:1rem;cursor:pointer;box-shadow:0 3px 12px var(--gold-glow);transition:all .2s}
+.spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 5px 20px var(--gold-glow-s)}
+.spin-btn:disabled{opacity:.35;cursor:not-allowed}
 .waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
 /* Players — full width grid, grouped by family */
@@ -198,7 +181,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 <div class="app">
-<header class="header"><h1>🕎 משחק סביבון</h1><p class="sub">נ ג ה פ — מקומי או אונליין עם חברים!</p></header>
+<header class="header"><h1>משחק &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; סביבון</h1></header>
 
 <div id="modeScreen">
     <div class="mode-selector" id="modeSelector">
@@ -300,54 +283,43 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="game-top">
             <div class="pot-box"><span class="emoji">🪙</span><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
             <div class="turn-box" id="turnBox">תור: <strong>—</strong></div>
-            <button class="btn btn-outline" onclick="location.reload()">משחק חדש</button>
         </div>
+        <button class="btn btn-outline new-game-btn" onclick="location.reload()">משחק חדש</button>
         <div class="game-main">
             <div class="dreidel-zone">
                 <div class="dreidel-wrap">
                     <svg class="dreidel-svg" id="dreidelSvg" viewBox="0 0 100 170" xmlns="http://www.w3.org/2000/svg">
-                        <!-- handle -->
-                        <circle class="handle-knob" cx="50" cy="6" r="5"/>
-                        <rect class="handle" x="46" y="10" width="8" height="40" rx="3"/>
-                        <!-- 4 colored sides of the body, clipped to square shape -->
+                        <!-- glow filter -->
                         <defs>
-                            <clipPath id="bodyClip">
-                                <rect x="15" y="52" width="70" height="70" rx="5"/>
-                            </clipPath>
-                            <clipPath id="triClip">
-                                <polygon points="20,122 80,122 50,162"/>
-                            </clipPath>
+                          <filter id="glow">
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                          </filter>
                         </defs>
-                        <!-- Top side — נ gray -->
-                        <rect class="face-נ" x="15" y="52" width="70" height="35" rx="0" clip-path="url(#bodyClip)" fill="#4a4a6a"/>
-                        <!-- Bottom side — ג green -->
-                        <rect class="face-ג" x="15" y="87" width="70" height="35" rx="0" clip-path="url(#bodyClip)" fill="#1a4a35"/>
-                        <!-- Left side — ה blue overlay -->
-                        <polygon class="face-ה" points="15,52 50,87 15,122" clip-path="url(#bodyClip)" fill="#1a3060"/>
-                        <!-- Right side — פ red overlay -->
-                        <polygon class="face-פ" points="85,52 50,87 85,122" clip-path="url(#bodyClip)" fill="#4a1a1a"/>
-                        <!-- border -->
-                        <rect class="body-rect" x="15" y="52" width="70" height="70" rx="5" fill="none" stroke="var(--gold)" stroke-width="2"/>
-                        <!-- diagonal lines -->
-                        <line x1="15" y1="52" x2="85" y2="122" stroke="var(--gold)" stroke-width="1" opacity="0.4"/>
-                        <line x1="85" y1="52" x2="15" y2="122" stroke="var(--gold)" stroke-width="1" opacity="0.4"/>
-                        <!-- triangle tip — split in 4 -->
-                        <polygon class="body-tri" points="20,122 80,122 50,162" fill="#1a1a3a" stroke="var(--gold)" stroke-width="2"/>
-                        <!-- Letter display, centered -->
-                        <text class="letter" x="50" y="92" id="dreidelLetter">?</text>
-                        <!-- small corner letters (dim) -->
-                        <text x="22" y="72" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">נ</text>
-                        <text x="50" y="116" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">ג</text>
-                        <text x="26" y="107" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">ה</text>
-                        <text x="74" y="107" font-size="11" fill="#7a7da0" font-family="'Secular One',sans-serif" text-anchor="middle">פ</text>
+                        <!-- handle knob -->
+                        <circle cx="50" cy="7" r="6" fill="#f5c842" stroke="#b8912a" stroke-width="1.5"/>
+                        <!-- handle stem -->
+                        <rect x="46" y="12" width="8" height="36" rx="3" fill="#b8912a" stroke="#f5c842" stroke-width="1.5"/>
+                        <!-- body -->
+                        <rect id="dreidelBody" x="14" y="50" width="72" height="72" rx="6" fill="#2a5abf" stroke="#f5c842" stroke-width="2"/>
+                        <!-- triangle tip -->
+                        <polygon id="dreidelTip" points="19,122 81,122 50,164" fill="#1a3a80" stroke="#f5c842" stroke-width="2"/>
+                        <!-- letter -->
+                        <text id="dreidelLetter" x="50" y="89"
+                              font-family="'Secular One',sans-serif" font-size="40" font-weight="bold"
+                              fill="#f5c842" text-anchor="middle" dominant-baseline="central"
+                              filter="url(#glow)">?</text>
                     </svg>
                 </div>
+            </div>
+            <!-- Controls sit BELOW the dreidel, always visible -->
+            <div class="dreidel-controls">
                 <div class="result-line" id="resultLine"></div>
                 <button class="spin-btn" id="spinBtn" onclick="handleSpinClick()">סובב!</button>
                 <div class="power-meter hidden" id="powerMeter">
                     <div class="power-label" id="powerLabel">לחץ שוב!</div>
                     <div class="power-bar-bg"><div class="power-bar-fill" id="powerFill"></div></div>
-                    <div class="power-clicks" id="powerClicks">● ○ ○</div>
+                    <div class="power-clicks" id="powerClicks">○ ○ ○</div>
                 </div>
                 <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
             </div>
@@ -366,24 +338,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon">🏆</div><h2 id="winName">—</h2><p>ניצח את המשחק!</p><button class="btn btn-gold" onclick="location.reload()">משחק חדש</button></div></div>
 </div>
 
-<!-- ══ SETTINGS PANEL ══ -->
-<button class="settings-toggle" id="settingsToggle" onclick="toggleSettings()" title="הגדרות">⚙️</button>
+<!-- ══ SETTINGS ══ -->
+<button class="settings-toggle" onclick="toggleSettings()">⚙️</button>
 <div class="settings-panel hidden" id="settingsPanel">
   <h4>⚙️ הגדרות <button onclick="toggleSettings()">✕</button></h4>
-
-  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px;letter-spacing:.5px">🎨 צבעי הסביבון</div>
-  <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun" value="#4a4a6a" oninput="updateFaceColor('נ',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">אפור</span></div>
-  <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1a4a35" oninput="updateFaceColor('ג',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">ירוק</span></div>
-  <div class="settings-row"><label>ה (חצי)</label><input type="color" id="colHeh" value="#1a3060" oninput="updateFaceColor('ה',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">כחול</span></div>
-  <div class="settings-row"><label>פ (לשלם)</label><input type="color" id="colPeh" value="#4a1a1a" oninput="updateFaceColor('פ',this.value)"><span style="font-size:.72rem;color:var(--text-dim)">אדום</span></div>
-
+  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎨 צבעי פאות הסביבון</div>
+  <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun"   value="#3a3a7a" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אפור-כחול</span></div>
+  <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1e6040" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">ירוק</span></div>
+  <div class="settings-row"><label>ה (חצי)</label><input type="color" id="colHeh"   value="#2a5abf" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">כחול</span></div>
+  <div class="settings-row"><label>פ (לשלם)</label><input type="color" id="colPeh"  value="#a02020" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אדום</span></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px;letter-spacing:.5px">⏱ זמן סיבוב</div>
-  <div class="settings-row"><label>מינ׳ (שניות)</label><input type="range" id="spinMin" min="0.5" max="3" step="0.5" value="1" oninput="document.getElementById('spinMinVal').textContent=this.value+'s'"><span class="val-label" id="spinMinVal">1s</span></div>
-  <div class="settings-row"><label>מקס׳ (שניות)</label><input type="range" id="spinMax" min="1" max="6" step="0.5" value="4" oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">4s</span></div>
-
+  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">⏱ זמן סיבוב</div>
+  <div class="settings-row"><label>מינ׳</label><input type="range" id="spinMin" min="0.5" max="3" step="0.5" value="1.5" oninput="document.getElementById('spinMinVal').textContent=this.value+'s'"><span class="val-label" id="spinMinVal">1.5s</span></div>
+  <div class="settings-row"><label>מקס׳</label><input type="range" id="spinMax" min="2"   max="7" step="0.5" value="4"   oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">4s</span></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-  <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים מופעלים</label>
+  <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -529,7 +498,7 @@ function joinChannel(onReady){
     channel.on('broadcast',{event:'spin_result'},({payload})=>{
         if(payload.spinnerId===MY_ID)return;
         G=payload.state;
-        showSpinAnimation(payload.letter,()=>{renderGame();updateOnlineUI();if(G.over)showWinner()});
+        showSpinAnimation(payload.letter,0.5,()=>{renderGame();updateOnlineUI();if(G.over)showWinner()});
     });
 
     channel.on('broadcast',{event:'game_log'},({payload})=>{addLogLocal(payload.text)});
@@ -626,11 +595,39 @@ function updateOnlineUI(){
     document.getElementById('waitingMsg').classList.toggle('hidden',isMyTurn);
 }
 
-// ═══════════ SPIN — 3-click power mechanic ═══════════
+// ═══════════ SPIN ═══════════
 const LETTERS=['נ','ג','ה','פ'];
 const LDESC={'נ':'נון — ניקס (כלום)','ג':'גימל — גנץ (הכל!)','ה':'הא — האלב (חצי)','פ':'פה — פיי (לשלם)'};
 
-let spinClicks=0, spinClickTimes=[], spinPower=0, spinClickTimer=null;
+// Face colors & tip shading
+const FACE_DEFAULTS={'נ':'#3a3a7a','ג':'#1e6040','ה':'#2a5abf','פ':'#a02020'};
+const TIP_DEFAULTS ={'נ':'#22226a','ג':'#103828','פ':'#6a1010','ה':'#1a3a8a'};
+
+function getFaceColor(l){return document.getElementById({נ:'colNun',ג:'colGimel',ה:'colHeh',פ:'colPeh'}[l])?.value||FACE_DEFAULTS[l]}
+function syncFaceColor(){/* called live from inputs — current face re-drawn next setFace */}
+
+function setFace(letter, dim){
+    const body=document.getElementById('dreidelBody');
+    const tip =document.getElementById('dreidelTip');
+    const le  =document.getElementById('dreidelLetter');
+    if(!body)return;
+    const col = getFaceColor(letter);
+    // darken for tip
+    const c=parseInt(col.replace('#',''),16);
+    const r=Math.max(0,((c>>16)&255)-40), g=Math.max(0,((c>>8)&255)-40), b=Math.max(0,(c&255)-40);
+    const tipCol=`rgb(${r},${g},${b})`;
+    if(dim){
+        // squeeze phase: darken slightly
+        body.setAttribute('fill', `rgb(${Math.max(0,((c>>16)&255)-20)},${Math.max(0,((c>>8)&255)-20)},${Math.max(0,(c&255)-20)})`);
+    } else {
+        body.setAttribute('fill', col);
+        tip.setAttribute('fill', tipCol);
+        if(le && letter) le.textContent = letter;
+    }
+}
+
+// ── 3-click power mechanic ──
+let spinClicks=0, spinClickTimes=[], spinPower=0.5, spinClickTimer=null;
 
 function handleSpinClick(){
     if(spinning||G.over)return;
@@ -638,10 +635,8 @@ function handleSpinClick(){
     const now=Date.now();
     spinClicks++;
     spinClickTimes.push(now);
-
-    // Update visual
     const dots=['○','○','○'];
-    for(let i=0;i<spinClicks;i++)dots[i]='●';
+    for(let i=0;i<spinClicks&&i<3;i++) dots[i]='●';
     document.getElementById('powerClicks').textContent=dots.join(' ');
     document.getElementById('powerMeter').classList.remove('hidden');
 
@@ -649,28 +644,33 @@ function handleSpinClick(){
         document.getElementById('spinBtn').textContent='עוד פעם!';
         document.getElementById('powerLabel').textContent='לחץ שוב!';
         document.getElementById('powerFill').style.width='33%';
-        // Auto-cancel if too slow
-        spinClickTimer=setTimeout(()=>{resetSpinUI()},3000);
-    }else if(spinClicks===2){
+        clearTimeout(spinClickTimer);
+        spinClickTimer=setTimeout(()=>resetSpinUI(),3000);
+    } else if(spinClicks===2){
         document.getElementById('powerFill').style.width='66%';
         document.getElementById('powerLabel').textContent='עוד אחת!';
-    }else if(spinClicks>=3){
+    } else if(spinClicks>=3){
         clearTimeout(spinClickTimer);
-        // Calculate power: time between click1 and click3
         const totalMs=spinClickTimes[2]-spinClickTimes[0];
-        // Fast = <400ms → power ~1.0, Slow = >2000ms → power ~0.1
-        spinPower=Math.max(0.1,Math.min(1.0,1-(totalMs-300)/1800));
+        spinPower=Math.max(0.08,Math.min(1.0,1-(totalMs-250)/1800));
         document.getElementById('powerFill').style.width='100%';
-        document.getElementById('powerLabel').textContent= spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':' עייף... 😴';
-        // Log power message
+        document.getElementById('powerLabel').textContent=spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':'😴 עייף...';
+        // Log
         const cp=G.players[G.currentTurn];
-        if(cp)logWithPower(cp.name, spinPower);
-        setTimeout(()=>doSpin(),250);
+        if(cp){
+            const msg=spinPower>0.85?`💪 ${cp.name} סיבב בכוח עצום!`
+                     :spinPower>0.65?`⚡ ${cp.name} סיבב בחוזקה`
+                     :spinPower>0.4 ?`👌 ${cp.name} סיבב בינוני`
+                     :spinPower>0.2 ?`😅 ${cp.name} סיבב בעצלתיים...`
+                     :`😴 ${cp.name} בקושי הזיז את הסביבון`;
+            addLog(msg);
+        }
+        setTimeout(()=>doSpin(),200);
     }
 }
 
 function resetSpinUI(){
-    spinClicks=0;spinClickTimes=[];spinPower=0.5;
+    spinClicks=0; spinClickTimes=[]; spinPower=0.5;
     document.getElementById('spinBtn').textContent='סובב!';
     document.getElementById('powerMeter').classList.add('hidden');
     document.getElementById('powerFill').style.width='0%';
@@ -681,7 +681,9 @@ function doSpin(){
     if(spinning||G.over)return;
     resetDreidel();
     const letter=LETTERS[Math.floor(Math.random()*4)];
-    spinning=true;document.getElementById('spinBtn').disabled=true;G.players.forEach(p=>p.change='');
+    spinning=true;
+    document.getElementById('spinBtn').disabled=true;
+    G.players.forEach(p=>p.change='');
     if(MODE==='online'){
         applyLetter(letter);
         channel.send({type:'broadcast',event:'spin_result',payload:{letter,state:G,spinnerId:MY_ID}});
@@ -691,159 +693,155 @@ function doSpin(){
     }
 }
 
-function showSpinAnimation(fl,power,cb){
-    const spinMinS=parseFloat(document.getElementById('spinMin')?.value||1);
+function showSpinAnimation(fl, power, cb){
+    const spinMinS=parseFloat(document.getElementById('spinMin')?.value||1.5);
     const spinMaxS=parseFloat(document.getElementById('spinMax')?.value||4);
-    const duration=Math.round((spinMinS+(power*(spinMaxS-spinMinS)))*1000);
+    const totalDur=Math.round((spinMinS + power*(spinMaxS-spinMinS))*1000);
 
-    const svg=document.getElementById('dreidelSvg'),le=document.getElementById('dreidelLetter'),rl=document.getElementById('resultLine');
-    rl.textContent='';rl.className='result-line';
-    svg.classList.remove('fall-right','fall-left','upright','result-נ','result-ג','result-ה','result-פ');
-    svg.style.transform='';svg.style.transition='none';
+    const svg=document.getElementById('dreidelSvg');
+    const rl=document.getElementById('resultLine');
+    rl.textContent=''; rl.className='result-line';
+    svg.classList.remove('fall-right','fall-left','upright');
+    svg.style.transform='';
 
-    // ── Physics spin via requestAnimationFrame ──
-    const start=performance.now();
-    let angle=0, tiltAngle=0, scaleX=1;
-    let lastLetter=0;
+    // Audio
     const soundCtx=getAudioCtx();
-
-    // Spin hum sound
     let hum=null;
     if(soundCtx){
         hum=soundCtx.createOscillator();
         const g=soundCtx.createGain();
-        hum.connect(g);g.connect(soundCtx.destination);
+        hum.connect(g); g.connect(soundCtx.destination);
         hum.type='sawtooth';
-        hum.frequency.setValueAtTime(120+power*180,soundCtx.currentTime);
-        g.gain.setValueAtTime(0.04,soundCtx.currentTime);
+        hum.frequency.setValueAtTime(90+power*150, soundCtx.currentTime);
+        g.gain.setValueAtTime(0.03, soundCtx.currentTime);
         hum.start();
+        hum.frequency.linearRampToValueAtTime(25, soundCtx.currentTime+totalDur/1000*0.88);
     }
 
-    function frame(now){
-        const elapsed=now-start;
-        const t=Math.min(elapsed/duration,1);
-        // ease-out: fast start, slow finish
-        const speedFactor=Math.pow(1-t,1.8);
+    // ── Spin via scaleX ──
+    // Each "half revolution" = SVG squeezes to 0 (edge), then expands back with new face.
+    // Speed starts fast, slows toward end.
+    const startTime=Date.now();
+    // How many half-revolutions total based on power
+    const totalHalfRevs = Math.round(4 + power*14); // 4..18
+    let halfRev=0;
+    // Face sequence: cycle through LETTERS repeatedly, end on fl
+    // Build sequence so last face = fl
+    const faceSeq=[];
+    for(let i=0;i<totalHalfRevs;i++) faceSeq.push(LETTERS[i%4]);
+    // Force last to be fl
+    faceSeq[faceSeq.length-1]=fl;
+    // Also ensure second-to-last differs for a proper swap
+    if(faceSeq.length>1 && faceSeq[faceSeq.length-2]===fl)
+        faceSeq[faceSeq.length-2]=LETTERS[(LETTERS.indexOf(fl)+1)%4];
 
-        // rotation speed: degrees per ms at full speed ~ 2.2 deg/ms
-        const degsPerMs=2.2*speedFactor*(0.5+power*0.5);
-        angle+=(now-(frame._last||now))*degsPerMs;
-        frame._last=now;
+    let currentFaceIdx=0;
+    setFace(faceSeq[0], false);
 
-        // Wobble tilt: increases as it slows
-        const wobble=t>0.55?Math.sin(elapsed/60)*(t-0.55)*28:0;
-        tiltAngle=wobble;
+    function nextHalfRev(){
+        if(halfRev>=totalHalfRevs) { finish(); return; }
+        const progress=halfRev/totalHalfRevs;
+        // Duration of this half-rev: starts fast, slows with ease-out
+        const speed=Math.pow(1-progress, 1.6);
+        const halfDur=Math.round(55 + (1-speed)*320); // 55ms..375ms
 
-        // scaleX: simulate rotation squish
-        const spinCycle=angle%360/360;
-        scaleX=Math.abs(Math.cos(spinCycle*Math.PI*2))*0.5+0.5;
+        // Phase A: squeeze to 0
+        svg.style.transition=`transform ${halfDur*0.45}ms ease-in`;
+        svg.style.transform='scaleX(0.04)';
 
-        svg.style.transition='none';
-        svg.style.transform=`rotate(${tiltAngle}deg) scaleX(${0.7+scaleX*0.3})`;
-
-        // Shuffle letter while fast
-        if(elapsed-lastLetter > 60+t*180){
-            le.textContent=LETTERS[Math.floor(Math.random()*4)];
-            lastLetter=elapsed;
-        }
-
-        // Pitch-down hum as it slows
-        if(hum&&soundCtx){
-            const freq=40+speedFactor*280;
-            hum.frequency.setValueAtTime(freq,soundCtx.currentTime);
-        }
-
-        if(t<1){requestAnimationFrame(frame)}
-        else{finish()}
+        setTimeout(()=>{
+            // At squeeze = 0: swap face
+            currentFaceIdx=halfRev % faceSeq.length;
+            setFace(faceSeq[currentFaceIdx], true);
+            // Phase B: expand back
+            svg.style.transition=`transform ${halfDur*0.45}ms ease-out`;
+            svg.style.transform='scaleX(1)';
+            setFace(faceSeq[currentFaceIdx], false);
+            halfRev++;
+            setTimeout(nextHalfRev, halfDur*0.5);
+        }, halfDur*0.45);
     }
-    requestAnimationFrame(frame);
+    nextHalfRev();
 
     function finish(){
         if(hum){try{hum.stop();hum.disconnect()}catch(e){}}
+        svg.style.transition='';
         svg.style.transform='';
-        le.textContent=fl;
-        rl.textContent=LDESC[fl];rl.className='result-line r-'+fl;
-        svg.classList.add('result-'+fl);
-
-        // Thud + result sound
+        setFace(fl, false);
+        rl.textContent=LDESC[fl]; rl.className='result-line r-'+fl;
         playThud();
-        setTimeout(()=>playResult(fl),200);
-
+        setTimeout(()=>playResult(fl), 160);
+        // Wobble before fall
+        let wobbleCount=0, wobbleDir=1;
+        function wobble(){
+            if(wobbleCount>=5){ doFall(); return; }
+            const deg=wobbleDir*(8-wobbleCount*1.2);
+            svg.style.transition=`transform ${120-wobbleCount*15}ms ease-in-out`;
+            svg.style.transform=`rotate(${deg}deg)`;
+            wobbleDir*=-1; wobbleCount++;
+            setTimeout(wobble, 130-wobbleCount*15);
+        }
+        wobble();
+    }
+    function doFall(){
+        svg.style.transition='';
+        svg.style.transform='';
         const dir=Math.random()>.5?'fall-right':'fall-left';
         svg.classList.add(dir);
-        setTimeout(()=>{if(cb)cb()},1150);
+        setTimeout(()=>{ if(cb) cb(); }, 1300);
     }
 }
 
 function resetDreidel(){
     const s=document.getElementById('dreidelSvg');
-    s.classList.remove('fall-right','fall-left','result-נ','result-ג','result-ה','result-פ');
-    s.style.transform='';
-    s.classList.add('upright');
-    setTimeout(()=>s.classList.remove('upright'),400);
+    s.classList.remove('fall-right','fall-left');
+    s.style.transition=''; s.style.transform='';
+    // Reset to neutral face
+    setFace('?'===document.getElementById('dreidelLetter')?.textContent?'נ':'נ', false);
 }
 
-// ══════ AUDIO ENGINE ══════
+// ══════ AUDIO ══════
 let _audioCtx=null;
 function getAudioCtx(){
-    if(!document.getElementById('soundOn')?.checked)return null;
+    if(!document.getElementById('soundOn')?.checked) return null;
     if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}
-    if(_audioCtx.state==='suspended')_audioCtx.resume();
+    if(_audioCtx.state==='suspended') _audioCtx.resume();
     return _audioCtx;
 }
 function playClickSound(){
-    const ctx=getAudioCtx();if(!ctx)return;
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);
-    o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);
-    g.gain.setValueAtTime(0.15,ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
-    o.start();o.stop(ctx.currentTime+0.12);
+    const ctx=getAudioCtx(); if(!ctx) return;
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type='sine'; o.frequency.value=900;
+    g.gain.setValueAtTime(0.12, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.1);
+    o.start(); o.stop(ctx.currentTime+0.1);
 }
 function playThud(){
-    const ctx=getAudioCtx();if(!ctx)return;
-    const buf=ctx.createBuffer(1,ctx.sampleRate*0.25,ctx.sampleRate);
-    const data=buf.getChannelData(0);
-    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.06));
-    const s=ctx.createBufferSource(),g=ctx.createGain();
-    s.buffer=buf;s.connect(g);g.connect(ctx.destination);
-    g.gain.setValueAtTime(0.35,ctx.currentTime);
-    s.start();
+    const ctx=getAudioCtx(); if(!ctx) return;
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.2,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.05));
+    const s=ctx.createBufferSource(), g=ctx.createGain();
+    s.buffer=buf; s.connect(g); g.connect(ctx.destination);
+    g.gain.value=0.3; s.start();
 }
 function playResult(letter){
-    const ctx=getAudioCtx();if(!ctx)return;
-    const freqs={'נ':[330,330],'ג':[330,440,550,660],'ה':[330,440,550],'פ':[330,220]};
-    const notes=freqs[letter]||[330];
-    notes.forEach((f,i)=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.connect(g);g.connect(ctx.destination);
-        o.type='sine';o.frequency.value=f;
-        const t=ctx.currentTime+i*0.12;
-        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.18,t+0.04);
-        g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
-        o.start(t);o.stop(t+0.3);
+    const ctx=getAudioCtx(); if(!ctx) return;
+    const freqs={'נ':[330],'ג':[330,440,550,660],'ה':[330,440,550],'פ':[330,220]};
+    (freqs[letter]||[330]).forEach((f,i)=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type='sine'; o.frequency.value=f;
+        const t=ctx.currentTime+i*0.13;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.15,t+0.04);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+        o.start(t); o.stop(t+0.28);
     });
 }
 
 // ══════ SETTINGS ══════
-function toggleSettings(){document.getElementById('settingsPanel').classList.toggle('hidden')}
-function updateFaceColor(letter,color){
-    document.querySelectorAll(`.face-${letter}`).forEach(el=>{
-        el.setAttribute('fill',color);
-    });
-}
-
-// ══════ LOG with power message ══════
-function logWithPower(playerName, power){
-    if(power===undefined||power===null)return;
-    let msg='';
-    if(power>0.85)msg=`💪 ${playerName} סיבב בכוח עצום!`;
-    else if(power>0.65)msg=`⚡ ${playerName} סיבב בחוזקה`;
-    else if(power>0.4)msg=`👌 ${playerName} סיבב בינוני`;
-    else if(power>0.2)msg=`😅 ${playerName} סיבב בעצלתיים...`;
-    else msg=`😴 ${playerName} בקושי הזיז את הסביבון`;
-    addLog(msg);
-}
+function toggleSettings(){ document.getElementById('settingsPanel').classList.toggle('hidden'); }
 
 function applyLetter(l){
     const p=G.players[G.currentTurn];G.players.forEach(pl=>pl.change='');
