@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#06080f">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico" sizes="32x32">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preload" href="dreidel.webp" as="image">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -94,6 +94,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .pot-box{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--bg-card),var(--bg-card-alt));border:1px solid var(--border);border-radius:var(--r);padding:8px 16px}
 .pot-box .emoji{font-size:1.4rem}.pot-label{font-size:.7rem;color:var(--text-dim)}.pot-val{font-family:'Secular One',sans-serif;font-size:1.3rem;color:var(--gold)}
 .turn-box.urgent strong{color:var(--red)}
+.turn-inline{padding:4px 14px;font-size:.85rem;margin-top:2px}
 .turn-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:8px 16px;font-size:.85rem}.turn-box strong{color:var(--gold)}
 
 /* Main area: dreidel centered, players below */
@@ -101,15 +102,29 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* Dreidel */
 .dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative;margin-top:-105px;z-index:3;pointer-events:none;width:100%}
-.dreidel-wrap{width:180px;height:260px;display:flex;align-items:center;justify-content:center;overflow:visible}
-.dreidel-svg{width:150px;height:250px;filter:drop-shadow(0 0 16px rgba(245,200,66,.4));
-             transform-origin:50% 96%;overflow:visible}
+.dreidel-wrap{width:180px;height:290px;display:flex;align-items:center;justify-content:center;overflow:visible}
+.dreidel-svg{width:148px;height:280px;filter:drop-shadow(0 0 14px rgba(245,200,66,.35)) drop-shadow(0 10px 14px rgba(0,0,0,.5));
+             transform-origin:50% 99%;overflow:visible}
+/* Picture dreidel: the image + letters overlaid on the two enamel panels */
+.dreidel-art{position:relative}
+.dreidel-art img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.dreidel-art .face{position:absolute;top:39.6%;height:32.2%;width:37.7%;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:2px}
+.dreidel-art .face-l{left:6.1%}
+.dreidel-art .face-r{left:56.1%}
+.dreidel-art .face-tint{position:absolute;inset:0;mix-blend-mode:color;opacity:.85;transition:background .15s}
+.dreidel-art .face-letter{position:relative;font-family:'Secular One','Heebo',sans-serif;font-size:58px;line-height:1;
+    background:linear-gradient(180deg,#fff4c8 0%,#f5c842 45%,#b8862a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 2px 1px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(245,200,66,.35));transition:opacity .3s}
+.dreidel-art .face-l .face-letter{filter:drop-shadow(0 2px 1px rgba(0,0,0,.55)) brightness(.8)} /* shadow side */
+.dreidel-art.settled .face-l .face-letter{opacity:.35}  /* the result is on the right face */
+.dreidel-art.dimmed{filter:brightness(.85) drop-shadow(0 10px 14px rgba(0,0,0,.5))}
 .dreidel-controls{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:10;margin-top:4px}
 /* fall */
 .dreidel-svg.fall-right{animation:fr 1.2s cubic-bezier(.3,0,.7,1) forwards}
 .dreidel-svg.fall-left {animation:fl 1.2s cubic-bezier(.3,0,.7,1) forwards}
-@keyframes fr{0%{transform:rotate(0)}20%{transform:rotate(10deg)}55%{transform:rotate(50deg)}85%{transform:rotate(80deg)}100%{transform:rotate(84deg)}}
-@keyframes fl{0%{transform:rotate(0)}20%{transform:rotate(-10deg)}55%{transform:rotate(-50deg)}85%{transform:rotate(-80deg)}100%{transform:rotate(-84deg)}}
+/* falls until the tip and the cube's edge touch the floor (~44°), small bounce */
+@keyframes fr{0%{transform:rotate(0)}25%{transform:rotate(8deg)}60%{transform:rotate(30deg)}82%{transform:rotate(47deg)}92%{transform:rotate(42deg)}100%{transform:rotate(44deg)}}
+@keyframes fl{0%{transform:rotate(0)}25%{transform:rotate(-8deg)}60%{transform:rotate(-30deg)}82%{transform:rotate(-47deg)}92%{transform:rotate(-42deg)}100%{transform:rotate(-44deg)}}
 .dreidel-svg.upright{animation:up .35s ease-out forwards}
 @keyframes up{0%{transform:rotate(0)}100%{transform:rotate(0)}}
 .result-line{font-size:.85rem;font-weight:600;min-height:22px;text-align:center;white-space:nowrap;margin-top:6px;margin-bottom:4px}
@@ -323,39 +338,23 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <div class="game-layout">
         <div class="game-top">
             <div class="pot-box"><span class="emoji">🪙</span><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
-            <div class="turn-box" id="turnBox">תור: <strong>—</strong></div>
             <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
         </div>
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
         <div class="game-main">
             <div class="dreidel-zone">
                 <div class="dreidel-wrap">
-                    <svg class="dreidel-svg" id="dreidelSvg" viewBox="0 0 100 170" xmlns="http://www.w3.org/2000/svg">
-                        <!-- glow filter -->
-                        <defs>
-                          <filter id="glow">
-                            <feGaussianBlur stdDeviation="3" result="blur"/>
-                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                          </filter>
-                        </defs>
-                        <!-- handle knob -->
-                        <circle cx="50" cy="7" r="6" fill="#f5c842" stroke="#b8912a" stroke-width="1.5"/>
-                        <!-- handle stem -->
-                        <rect x="46" y="12" width="8" height="36" rx="3" fill="#b8912a" stroke="#f5c842" stroke-width="1.5"/>
-                        <!-- body -->
-                        <rect id="dreidelBody" x="14" y="50" width="72" height="72" rx="6" fill="#2a5abf" stroke="#f5c842" stroke-width="2"/>
-                        <!-- triangle tip -->
-                        <polygon id="dreidelTip" points="19,122 81,122 50,164" fill="#1a3a80" stroke="#f5c842" stroke-width="2"/>
-                        <!-- letter -->
-                        <text id="dreidelLetter" x="50" y="89"
-                              font-family="'Secular One',sans-serif" font-size="40" font-weight="bold"
-                              fill="#f5c842" text-anchor="middle" dominant-baseline="central"
-                              filter="url(#glow)">?</text>
-                    </svg>
+                    <div class="dreidel-svg dreidel-art" id="dreidelSvg">
+                        <img src="dreidel.webp" alt="סביבון" draggable="false" onerror="this.onerror=null;this.src='dreidel.png'">
+                        <!-- faces are positioned over the two enamel panels of the picture (measured: 6–44% / 56–94% wide, 39.6–71.8% high) -->
+                        <div class="face face-l"><span class="face-tint" id="tintL"></span><span class="face-letter" id="dreidelLetter2"></span></div>
+                        <div class="face face-r"><span class="face-tint" id="tintR"></span><span class="face-letter" id="dreidelLetter">?</span></div>
+                    </div>
                 </div>
             </div>
             <!-- Controls sit BELOW the dreidel, always visible -->
             <div class="dreidel-controls">
+                <div class="turn-box turn-inline" id="turnBox">תור: <strong>—</strong></div>
                 <div class="result-line" id="resultLine"></div>
                 <button class="spin-btn" id="spinBtn" onclick="handleSpinClick()">סובב!</button>
                 <div class="power-meter hidden" id="powerMeter">
@@ -421,7 +420,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v26';
+const APP_VERSION='v27';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -921,24 +920,19 @@ const TIP_DEFAULTS ={'נ':'#22226a','ג':'#103828','פ':'#6a1010','ה':'#1a3a8a'
 function getFaceColor(l){return document.getElementById({נ:'colNun',ג:'colGimel',ה:'colHeh',פ:'colPeh'}[l])?.value||FACE_DEFAULTS[l]}
 function syncFaceColor(){if(CURRENT_FACE)setFace(CURRENT_FACE,false);saveSettings()}
 
+// Around a real dreidel the order is נ ג ה פ — the left face shows the letter after the one in front
+const FACE_ORDER=['נ','ג','ה','פ'];
+function nextFace(l){return FACE_ORDER[(FACE_ORDER.indexOf(l)+1)%4]}
 function setFace(letter, dim){
-    const body=document.getElementById('dreidelBody');
-    const tip =document.getElementById('dreidelTip');
-    const le  =document.getElementById('dreidelLetter');
-    if(!body)return;
-    const col = getFaceColor(letter);
-    // darken for tip
-    const c=parseInt(col.replace('#',''),16);
-    const r=Math.max(0,((c>>16)&255)-40), g=Math.max(0,((c>>8)&255)-40), b=Math.max(0,(c&255)-40);
-    const tipCol=`rgb(${r},${g},${b})`;
-    if(dim){
-        // squeeze phase: darken slightly
-        body.setAttribute('fill', `rgb(${Math.max(0,((c>>16)&255)-20)},${Math.max(0,((c>>8)&255)-20)},${Math.max(0,(c&255)-20)})`);
-    } else {
-        body.setAttribute('fill', col);
-        tip.setAttribute('fill', tipCol);
-        if(le && letter){ le.textContent = dispLetter(letter); CURRENT_FACE=letter; }
-    }
+    const art=document.getElementById('dreidelSvg');
+    if(!art||!LETTERS.includes(letter))return;
+    const n=nextFace(letter);
+    document.getElementById('tintR').style.background=getFaceColor(letter);
+    document.getElementById('tintL').style.background=getFaceColor(n);
+    document.getElementById('dreidelLetter').textContent=dispLetter(letter);
+    document.getElementById('dreidelLetter2').textContent=dispLetter(n);
+    CURRENT_FACE=letter;
+    art.classList.toggle('dimmed',!!dim);
 }
 
 // ── 3-click power mechanic ──
@@ -1125,6 +1119,7 @@ function showSpinAnimation(fl, opts, cb){
         svg.style.transition='';
         svg.style.transform='';
         setFace(fl, false);
+        svg.classList.add('settled');
         rl.textContent=ldesc(fl); rl.className='result-line r-'+fl;
         playThud();
         setTimeout(()=>playResult(fl), 160);
@@ -1150,7 +1145,7 @@ function showSpinAnimation(fl, opts, cb){
 
 function resetDreidel(){
     const s=document.getElementById('dreidelSvg');
-    s.classList.remove('fall-right','fall-left');
+    s.classList.remove('fall-right','fall-left','settled');
     s.style.transition=''; s.style.transform='';
     setFace('נ', false);
 }
