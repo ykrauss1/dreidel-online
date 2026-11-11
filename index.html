@@ -24,6 +24,7 @@
     --r:14px;--rs:8px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+html{overflow-x:hidden}
 body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 600px 400px at 15% 10%,rgba(61,122,237,.06),transparent),radial-gradient(ellipse 500px 500px at 85% 85%,rgba(245,200,66,.04),transparent);pointer-events:none}
 .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:12px}
@@ -108,11 +109,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 /* Picture dreidel: the image + letters overlaid on the two enamel panels */
 .dreidel-art{position:relative}
 .dreidel-art img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none}
-.dreidel-art .face{position:absolute;top:39.6%;height:32.2%;width:37.7%;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:2px}
-.dreidel-art .face-l{left:6.1%}
-.dreidel-art .face-r{left:56.1%}
+/* each face is a W×H box that JS maps onto the measured trapezoid of the panel (matrix3d) */
+.dreidel-art .face{position:absolute;left:0;top:0;width:56px;height:88px;transform-origin:0 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .dreidel-art .face-tint{position:absolute;inset:0;mix-blend-mode:color;opacity:.85;transition:background .15s}
-.dreidel-art .face-letter{position:relative;font-family:'Secular One','Heebo',sans-serif;font-size:58px;line-height:1;
+.dreidel-art .face-letter{position:relative;font-family:'Secular One','Heebo',sans-serif;font-size:60px;line-height:1;
     background:linear-gradient(180deg,#fff4c8 0%,#f5c842 45%,#b8862a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 2px 1px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(245,200,66,.35));transition:opacity .3s}
 .dreidel-art .face-l .face-letter{filter:drop-shadow(0 2px 1px rgba(0,0,0,.55)) brightness(.8)} /* shadow side */
@@ -163,6 +163,18 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .install-banner .ib-close{background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:2px 6px}
 .install-help{font-size:.75rem;color:var(--text-dim);line-height:1.7}
 .install-help b{color:var(--text)}
+/* ═══ FX ═══ */
+.pot-coin{width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.pot-box.bump,.p-card.bump{animation:bump .45s ease-out}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.12)}100%{transform:scale(1)}}
+.p-card.gain{box-shadow:0 0 22px rgba(52,211,153,.55)!important;border-color:var(--green)!important}
+.p-card.shake{animation:shake .5s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.fx-coin{position:fixed;left:0;top:0;width:26px;height:26px;margin:-13px 0 0 -13px;pointer-events:none;z-index:900;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.fx-float{direction:ltr;unicode-bidi:isolate;position:fixed;left:0;top:0;pointer-events:none;z-index:901;font-family:'Secular One',sans-serif;font-size:1.3rem;transform:translate(-50%,-50%);text-shadow:0 2px 6px rgba(0,0,0,.7)}
+.fx-float.plus{color:var(--green)}.fx-float.minus{color:var(--red)}
+.fx-conf{position:fixed;left:0;top:0;width:8px;height:12px;pointer-events:none;z-index:902;border-radius:2px}
+.fx-big{position:fixed;left:50%;top:38%;pointer-events:none;z-index:903;font-family:'Secular One',sans-serif;font-size:5rem;color:#f5c842;text-shadow:0 0 30px rgba(245,200,66,.8),0 4px 12px rgba(0,0,0,.7);transform:translate(-50%,-50%)}
 .app-version{position:fixed;bottom:6px;right:10px;font-size:.65rem;color:var(--text-dim);opacity:.6;z-index:50;pointer-events:none;direction:ltr}
 .waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
@@ -179,7 +191,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .p-card .p-name{font-weight:700;font-size:.78rem;display:flex;align-items:center;gap:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-card .p-name .crown{display:none}.p-card.winner .p-name .crown{display:inline}
 .p-card .p-amt{font-family:'Secular One',sans-serif;font-size:1.05rem;color:var(--gold)}
-.p-card .p-delta{font-size:.7rem;min-height:14px;margin-top:1px}
+.p-card .p-delta{direction:ltr;text-align:right;font-size:.7rem;min-height:14px;margin-top:1px}
 .p-delta.plus{color:var(--green)}.p-delta.minus{color:var(--red)}.p-delta.zero{color:var(--text-dim)}
 
 /* Sidebar */
@@ -216,6 +228,21 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="coinG" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fff6c9"/><stop offset=".35" stop-color="#f5c842"/><stop offset=".8" stop-color="#b8862a"/><stop offset="1" stop-color="#7a5414"/></radialGradient>
+    <linearGradient id="coinRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b0"/><stop offset=".5" stop-color="#c9952e"/><stop offset="1" stop-color="#6e4a10"/></linearGradient>
+    <symbol id="coin" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="19" fill="url(#coinRim)"/>
+      <circle cx="20" cy="20" r="15.5" fill="url(#coinG)"/>
+      <circle cx="20" cy="20" r="13.2" fill="none" stroke="#a7781f" stroke-width="1" stroke-dasharray="1.6 1.4" opacity=".8"/>
+      <g fill="none" stroke="#8a5f17" stroke-width="1.6" stroke-linecap="round" opacity=".9">
+        <path d="M20 13v14M13 15.5v3a7 7 0 0 0 14 0v-3M16.5 15.5v3a3.5 3.5 0 0 0 7 0v-3M16 27h8"/>
+      </g>
+      <ellipse cx="14" cy="11" rx="6" ry="3" fill="#fff" opacity=".35" transform="rotate(-25 14 11)"/>
+    </symbol>
+  </defs>
+</svg>
 <div class="app">
 <header class="header">
   <h1 class="header-title">
@@ -337,7 +364,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 <div class="hidden" id="gameScreen">
     <div class="game-layout">
         <div class="game-top">
-            <div class="pot-box"><span class="emoji">🪙</span><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
+            <div class="pot-box"><svg class="pot-coin" id="potCoin" viewBox="0 0 40 40"><use href="#coin"/></svg><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
             <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
         </div>
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
@@ -420,7 +447,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v27';
+const APP_VERSION='v28';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -920,6 +947,63 @@ const TIP_DEFAULTS ={'נ':'#22226a','ג':'#103828','פ':'#6a1010','ה':'#1a3a8a'
 function getFaceColor(l){return document.getElementById({נ:'colNun',ג:'colGimel',ה:'colHeh',פ:'colPeh'}[l])?.value||FACE_DEFAULTS[l]}
 function syncFaceColor(){if(CURRENT_FACE)setFace(CURRENT_FACE,false);saveSettings()}
 
+// ── Fit the letters onto the picture's panels ──
+// Panel corners measured on the image (fractions of width/height): TL, TR, BR, BL
+const FACE_QUADS={
+    L:[[0.0582,0.3956],[0.4372,0.3975],[0.4372,0.7266],[0.0615,0.7072]],
+    R:[[0.5604,0.3975],[0.9396,0.3952],[0.9364,0.7079],[0.5608,0.7276]]
+};
+// 2D projective transform (homography) from a w×h box to 4 points → CSS matrix3d
+function _adj(m){return[m[4]*m[8]-m[5]*m[7],m[2]*m[7]-m[1]*m[8],m[1]*m[5]-m[2]*m[4],m[5]*m[6]-m[3]*m[8],m[0]*m[8]-m[2]*m[6],m[2]*m[3]-m[0]*m[5],m[3]*m[7]-m[4]*m[6],m[1]*m[6]-m[0]*m[7],m[0]*m[4]-m[1]*m[3]]}
+function _mm(a,b){const c=[];for(let i=0;i<3;i++)for(let j=0;j<3;j++){let s=0;for(let k=0;k<3;k++)s+=a[3*i+k]*b[3*k+j];c[3*i+j]=s}return c}
+function _mv(m,v){return[m[0]*v[0]+m[1]*v[1]+m[2]*v[2],m[3]*v[0]+m[4]*v[1]+m[5]*v[2],m[6]*v[0]+m[7]*v[1]+m[8]*v[2]]}
+function _basis(p){const m=[p[0],p[2],p[4],p[1],p[3],p[5],1,1,1];const v=_mv(_adj(m),[p[6],p[7],1]);return _mm(m,[v[0],0,0,0,v[1],0,0,0,v[2]])}
+function quadMatrix(w,h,q){ // q: TL,TR,BR,BL in px
+    const src=[0,0,w,0,0,h,w,h], dst=[q[0][0],q[0][1],q[1][0],q[1][1],q[3][0],q[3][1],q[2][0],q[2][1]];
+    const t=_mm(_basis(dst),_adj(_basis(src)));for(let i=0;i<9;i++)t[i]/=t[8];
+    return `matrix3d(${[t[0],t[3],0,t[6],t[1],t[4],0,t[7],0,0,1,0,t[2],t[5],0,t[8]].map(n=>+n.toFixed(6)).join(',')})`;
+}
+function fitFaces(){
+    const art=document.getElementById('dreidelSvg');if(!art)return;
+    // sizes are fixed in CSS (.dreidel-svg 148×280, .face 56×88) — works even while the screen is hidden
+    const W=148,H=280,FW=56,FH=88;
+    [['L','.face-l'],['R','.face-r']].forEach(([k,sel])=>{
+        const el=art.querySelector(sel);
+        const q=FACE_QUADS[k].map(([x,y])=>[x*W,y*H]);
+        el.style.transform=quadMatrix(FW,FH,q);
+    });
+    centerLetters();
+}
+// Center each letter by its actual ink, not by the font's line box (Hebrew glyphs sit unevenly)
+const _inkCache={};
+function inkOffset(ch,el){
+    const cs=getComputedStyle(el),key=ch+cs.fontFamily+cs.fontSize;
+    if(_inkCache[key])return _inkCache[key];
+    let off=[0,0];
+    try{
+        const c=(inkOffset._c=inkOffset._c||document.createElement('canvas')).getContext('2d');
+        const size=parseFloat(cs.fontSize);
+        c.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;c.direction='ltr';c.textAlign='left';c.textBaseline='alphabetic';
+        const m=c.measureText(ch);
+        if(m.actualBoundingBoxAscent!==undefined&&m.fontBoundingBoxAscent!==undefined){
+            const baseY=(size-(m.fontBoundingBoxAscent+m.fontBoundingBoxDescent))/2+m.fontBoundingBoxAscent; // baseline inside a line-height:1 box
+            const inkMidY=baseY-(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2;
+            const inkMidX=(m.actualBoundingBoxRight-m.actualBoundingBoxLeft)/2;
+            off=[m.width/2-inkMidX,size/2-inkMidY];
+        }
+    }catch(e){}
+    return _inkCache[key]=off;
+}
+function centerLetters(){
+    document.querySelectorAll('.dreidel-art .face-letter').forEach(el=>{
+        const ch=el.textContent;if(!ch)return;
+        const [dx,dy]=inkOffset(ch,el);
+        el.style.transform=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px)`;
+    });
+}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{for(const k in _inkCache)delete _inkCache[k];fitFaces()});
+window.addEventListener('load',fitFaces);
+
 // Around a real dreidel the order is נ ג ה פ — the left face shows the letter after the one in front
 const FACE_ORDER=['נ','ג','ה','פ'];
 function nextFace(l){return FACE_ORDER[(FACE_ORDER.indexOf(l)+1)%4]}
@@ -931,6 +1015,7 @@ function setFace(letter, dim){
     document.getElementById('tintL').style.background=getFaceColor(n);
     document.getElementById('dreidelLetter').textContent=dispLetter(letter);
     document.getElementById('dreidelLetter2').textContent=dispLetter(n);
+    centerLetters();
     CURRENT_FACE=letter;
     art.classList.toggle('dimmed',!!dim);
 }
@@ -1017,10 +1102,10 @@ function doSpin(){
 
     showSpinAnimation(letter,opts,()=>{
         logs.forEach(addLogLocal);
-        resetSpinUI();renderGame();spinning=false;
+        resetSpinUI();renderGame(true);spinning=false;
         document.getElementById('spinBtn').disabled=false;
         if(MODE==='online')updateOnlineUI();
-        if(G.over)showWinner();
+        if(G.over)setTimeout(showWinner,FX_ON?1400:0); // let the coins land first
     });
 }
 
@@ -1035,8 +1120,9 @@ function playNextRemoteSpin(){
     showSpinAnimation(p.letter,p.opts||{power:.5},()=>{
         G=p.state;
         (p.logs||[]).forEach(addLogLocal);
-        spinning=false;renderGame();updateOnlineUI();
-        if(G.over)showWinner();else playNextRemoteSpin();
+        spinning=false;renderGame(true);updateOnlineUI();
+        if(G.over)setTimeout(showWinner,FX_ON?1400:0);
+        playNextRemoteSpin();
     });
 }
 
@@ -1150,6 +1236,104 @@ function resetDreidel(){
     setFace('נ', false);
 }
 
+// ══════ FX: coins, counters, confetti ══════
+const FX_ON=!!(document.body.animate)&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+function centerOf(el){const r=el.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}
+function cardEl(id){return [...document.querySelectorAll('.p-card[data-pid]')].find(e=>e.dataset.pid===id)||null}
+
+// coins fly from → to along an arc; resolves when the last one lands
+function flyCoins(fromEl,toEl,count,delay){
+    if(!FX_ON||!fromEl||!toEl)return Promise.resolve();
+    const [x0,y0]=centerOf(fromEl),[x1,y1]=centerOf(toEl);
+    const lift=60+Math.random()*40;
+    const jobs=[];
+    for(let i=0;i<count;i++){
+        const c=document.createElementNS('http://www.w3.org/2000/svg','svg');
+        c.setAttribute('viewBox','0 0 40 40');c.setAttribute('class','fx-coin');
+        c.innerHTML='<use href="#coin"/>';document.body.appendChild(c);
+        const jx=(Math.random()-.5)*26,jy=(Math.random()-.5)*16, spin=(Math.random()>.5?1:-1)*(360+Math.random()*360);
+        const a=c.animate([
+            {transform:`translate(${x0+jx}px,${y0+jy}px) scale(.5) rotate(0deg)`,opacity:0},
+            {transform:`translate(${x0+jx}px,${y0+jy-8}px) scale(.9) rotate(${spin*.1}deg)`,opacity:1,offset:.12},
+            {transform:`translate(${(x0+x1)/2}px,${Math.min(y0,y1)-lift}px) scale(1.15) rotate(${spin*.6}deg)`,opacity:1,offset:.55},
+            {transform:`translate(${x1}px,${y1}px) scale(.75) rotate(${spin}deg)`,opacity:1}
+        ],{duration:700,delay:(delay||0)+i*75,easing:'cubic-bezier(.3,.1,.4,1)',fill:'both'});
+        jobs.push(a.finished.then(()=>{c.remove();playCoinSound()}).catch(()=>c.remove()));
+    }
+    return Promise.all(jobs);
+}
+// number counts from a to b
+function countTo(el,a,b,dur){
+    if(!el)return;
+    if(!FX_ON||a===b){el.textContent=b;return}
+    const t0=performance.now();
+    const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=Math.round(a+(b-a)*e);if(k<1)requestAnimationFrame(step)};
+    el.textContent=a;requestAnimationFrame(step);
+}
+function floatText(el,text,cls){
+    if(!FX_ON||!el||!el.isConnected)return;
+    const [x,y]=centerOf(el);const f=document.createElement('div');f.className='fx-float '+cls;f.textContent=text;document.body.appendChild(f);
+    f.animate([{transform:`translate(${x}px,${y}px) translate(-50%,-50%) scale(.6)`,opacity:0},{transform:`translate(${x}px,${y-30}px) translate(-50%,-50%) scale(1.15)`,opacity:1,offset:.25},{transform:`translate(${x}px,${y-70}px) translate(-50%,-50%) scale(1)`,opacity:0}],{duration:1300,easing:'ease-out'}).finished.then(()=>f.remove()).catch(()=>f.remove());
+}
+function pulse(el,cls,ms){if(!el)return;el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),ms||600)}
+const CONF_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#ffffff','#c084fc'];
+function confetti(x,y,n,spread){
+    if(!FX_ON)return;
+    for(let i=0;i<n;i++){
+        const d=document.createElement('div');d.className='fx-conf';d.style.background=CONF_COLORS[i%CONF_COLORS.length];document.body.appendChild(d);
+        const ang=Math.random()*Math.PI*2,v=(spread||160)*(.4+Math.random()*.8);
+        const dx=Math.cos(ang)*v,dy=Math.sin(ang)*v-80, rot=Math.random()*720-360;
+        d.animate([{transform:`translate(${x}px,${y}px) rotate(0deg)`,opacity:1},{transform:`translate(${x+dx}px,${y+dy}px) rotate(${rot/2}deg)`,opacity:1,offset:.45},{transform:`translate(${x+dx*1.2}px,${y+dy+260}px) rotate(${rot}deg)`,opacity:0}],{duration:1400+Math.random()*700,easing:'cubic-bezier(.2,.6,.4,1)'}).finished.then(()=>d.remove()).catch(()=>d.remove());
+    }
+}
+function confettiRain(){if(!FX_ON)return;const W=innerWidth;for(let k=0;k<5;k++)setTimeout(()=>confetti(W*(.15+Math.random()*.7),innerHeight*.15,30,220),k*250)}
+function bigText(text){
+    if(!FX_ON)return;const b=document.createElement('div');b.className='fx-big';b.textContent=text;document.body.appendChild(b);
+    b.animate([{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.25)',opacity:1,offset:.3},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.7},{transform:'translate(-50%,-80%) scale(1.1)',opacity:0}],{duration:1500,easing:'ease-out'}).finished.then(()=>b.remove()).catch(()=>b.remove());
+}
+
+// Play the difference between two screens: who paid, who took, who is out
+function playMoneyFx(prev,cur){
+    const potEl=document.getElementById('potCoin'),potVal=document.getElementById('potVal');
+    const ante=G.ante||10;
+    const payers=[],takers=[],out=[];
+    G.players.forEach(p=>{
+        const d=(cur.amt[p.id]??0)-(prev.amt[p.id]??0);
+        if(prev.alive[p.id]&&!cur.alive[p.id])out.push(p.id);
+        if(d<0)payers.push([p.id,d]);else if(d>0)takers.push([p.id,d]);
+    });
+    const nCoins=d=>Math.max(1,Math.min(10,Math.round(Math.abs(d)/ante)));
+    // numbers start from the old values
+    potVal.textContent=prev.pot;
+    G.players.forEach(p=>{const el=cardEl(p.id)?.querySelector('.p-amt');if(el)el.textContent=prev.amt[p.id]??0});
+    if(!FX_ON){countTo(potVal,prev.pot,cur.pot);G.players.forEach(p=>countTo(cardEl(p.id)?.querySelector('.p-amt'),prev.amt[p.id],cur.amt[p.id]));return}
+    // 1) winnings fly out of the pot
+    const big=takers.some(([,d])=>d>=Math.max(ante*3,prev.pot*.6));
+    if(big){const [x,y]=centerOf(potEl);confetti(x,y,40,180);bigText(dispLetter('ג')+'!');playJackpotSound()}
+    const t1=takers.map(([id,d],i)=>{
+        const card=cardEl(id);
+        return flyCoins(potEl,card,nCoins(d),i*60).then(()=>{
+            const card=cardEl(id); // re-query: the cards may have been redrawn meanwhile
+            countTo(card?.querySelector('.p-amt'),prev.amt[id],cur.amt[id],500);
+            pulse(card,'bump');pulse(card,'gain',900);floatText(card,'+'+d,'plus');
+        });
+    });
+    // 2) payments fly into the pot (a little after)
+    const t2=payers.map(([id,d],i)=>{
+        const card=cardEl(id);
+        return flyCoins(card,potEl,nCoins(d),(takers.length?350:0)+i*90).then(()=>{
+            const card=cardEl(id);
+            countTo(card?.querySelector('.p-amt'),prev.amt[id],cur.amt[id],400);
+            floatText(card,String(d),'minus');
+        });
+    });
+    // pot counter follows the coins
+    Promise.all([...t1,...t2]).then(()=>{countTo(potVal,Number(potVal.textContent)||0,cur.pot,450);pulse(potVal.closest('.pot-box'),'bump')});
+    if(takers.length&&!payers.length)setTimeout(()=>countTo(potVal,prev.pot,cur.pot,500),300);
+    // 3) knocked out
+    out.forEach(id=>setTimeout(()=>pulse(cardEl(id),'shake',600),900));
+}
+
 // ══════ AUDIO ══════
 let _audioCtx=null;
 function getAudioCtx(){
@@ -1175,6 +1359,26 @@ function playThud(){
     const s=ctx.createBufferSource(), g=ctx.createGain();
     s.buffer=buf; s.connect(g); g.connect(ctx.destination);
     g.gain.value=0.3; s.start();
+}
+let _lastClink=0;
+function playCoinSound(){
+    const ctx=getAudioCtx();if(!ctx)return;
+    const now=performance.now();if(now-_lastClink<45)return;_lastClink=now;
+    [2600+Math.random()*500,3900+Math.random()*400].forEach((f,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+        o.type='sine';o.frequency.value=f;const t=ctx.currentTime+i*0.012;
+        g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.06,t+0.004);g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+        o.start(t);o.stop(t+0.17);
+    });
+}
+function playJackpotSound(){
+    const ctx=getAudioCtx();if(!ctx)return;
+    [523,659,784,1047,1319].forEach((f,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+        o.type='triangle';o.frequency.value=f;const t=ctx.currentTime+0.25+i*0.09;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.12,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+        o.start(t);o.stop(t+0.36);
+    });
 }
 function playResult(letter){
     const ctx=getAudioCtx(); if(!ctx) return;
@@ -1275,7 +1479,14 @@ function isWinner(p){
 }
 
 // ═══════════ RENDER ═══════════
-function renderGame(){
+let PREV_VIEW=null; // what the screen showed last time — the animations play the difference
+function viewSnapshot(){return{pot:G.pot,amt:Object.fromEntries(G.players.map(p=>[p.id,p.alive?(Number(p.amount)||0):0])),alive:Object.fromEntries(G.players.map(p=>[p.id,p.alive]))}}
+function renderGame(animate){
+    const prev=PREV_VIEW;PREV_VIEW=viewSnapshot();
+    renderGameNow();
+    if(animate&&prev)playMoneyFx(prev,PREV_VIEW);
+}
+function renderGameNow(){
     if(MODE==='online'&&G.started&&!G.over)saveSession();
     document.getElementById('potVal').textContent=G.pot;
     const cp=G.players[G.currentTurn];
@@ -1307,7 +1518,7 @@ function renderGame(){
 
 function playerCard(p,i){
     const off=MODE==='online'&&G.started&&ONLINE.size>0&&!isOnline(p)&&p.alive;
-    return `<div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${isWinner(p)?'winner':''} ${off?'offline':''}">
+    return `<div data-pid="${esc(p.id)}" class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${isWinner(p)?'winner':''} ${off?'offline':''}">
         <div class="p-name"><span class="crown">👑</span>${esc(p.name)}${!p.alive?' ❌':''}${off?' <span title="לא מחובר">📴</span>':''}</div>
         <div class="p-amt">${p.alive?(Number(p.amount)||0):0}</div>
         <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${esc(p.change)}</div>
@@ -1338,6 +1549,7 @@ function showWinner(){
     document.getElementById('rematchWait').classList.toggle('hidden',can||MODE!=='online');
     document.getElementById('winName').textContent=winText;
     document.getElementById('winModal').classList.add('show');
+    confettiRain();
     addLogLocal(`🏆 ${winText}`); // every client shows it locally — no broadcast duplicates
 }
 
