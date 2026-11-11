@@ -409,7 +409,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v24';
+const APP_VERSION='v25';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1224,12 +1224,16 @@ function addLogLocal(text){const el=document.createElement('div');el.className='
 //  • Every connection has a session id (sid) so ICE from an old connection never mixes in.
 //  • TURN: fill TURN_CRED_URL (Metered Open Relay) to relay video when a direct path fails
 //    (common on cellular). Without it — STUN only.
-const TURN_CRED_URL=''; // e.g. 'https://YOURAPP.metered.live/api/v1/turn/credentials?apiKey=XXXX'
+// Metered Open Relay (free 20GB/month) — credential 'dreidel-online' in workspace ykrauss. Key is meant for front-end use.
+const TURN_CRED_URL='https://ykrauss.metered.live/api/v1/turn/credentials?apiKey=db521690642afe4bf9a563fe7bc9727dd06e';
 let ICE_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
 let iceLoaded=null;
 function loadIce(){
     if(!iceLoaded)iceLoaded=TURN_CRED_URL
-        ?fetch(TURN_CRED_URL).then(r=>r.json()).then(list=>{if(Array.isArray(list)&&list.length)ICE_SERVERS=list}).catch(()=>{})
+        ?Promise.race([
+            fetch(TURN_CRED_URL).then(r=>r.json()).then(list=>{if(Array.isArray(list)&&list.length)ICE_SERVERS=list.concat(ICE_SERVERS)}),
+            new Promise(r=>setTimeout(r,4000)) // never hold video up for more than 4s — fall back to STUN
+          ]).catch(()=>{})
         :Promise.resolve();
     return iceLoaded;
 }

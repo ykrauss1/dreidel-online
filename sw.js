@@ -10,7 +10,7 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v24';
+const CACHE = 'dreidel-v25';
 const FALLBACK = './index.html';
 const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
