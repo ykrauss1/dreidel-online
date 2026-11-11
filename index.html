@@ -1591,6 +1591,7 @@ function sideName(k){
     return G.players.find(p=>p.id===k)?.name||'?';
 }
 function showWinner(){
+    if(!G.over)return; // a rematch may have started while this call was waiting for the coins to land
     const alive=G.players.filter(p=>p.alive);
     if(!alive.length)return;
     let winText;
