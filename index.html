@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>סביבון — מקומי ואונליין</title>
+<meta name="description" content="משחק סביבון לכל המשפחה — על מכשיר אחד או אונליין עם קוד חדר">
+<meta name="theme-color" content="#06080f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="סביבון">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Secular+One&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -127,6 +137,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .settings-row .val-label{font-size:.75rem;color:var(--gold);min-width:28px;text-align:left}
 .sound-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:.8rem;user-select:none}
 .sound-toggle input{accent-color:var(--gold)}
+/* Mobile: no double-tap zoom / grey flash on buttons (matters for the 3-tap spin) */
+button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.spin-btn{user-select:none;-webkit-user-select:none}
+/* Install */
+.install-banner{display:none;align-items:center;gap:10px;max-width:500px;margin:10px auto;background:var(--bg-card);border:1px solid var(--gold-dim);border-radius:var(--r);padding:10px 14px;font-size:.82rem}
+.install-banner.show{display:flex}
+.install-banner .ib-text{flex:1;line-height:1.5}
+.install-banner .ib-close{background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:2px 6px}
+.install-help{font-size:.75rem;color:var(--text-dim);line-height:1.7}
+.install-help b{color:var(--text)}
 .app-version{position:fixed;bottom:6px;right:10px;font-size:.65rem;color:var(--text-dim);opacity:.6;z-index:50;pointer-events:none;direction:ltr}
 .waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
@@ -173,6 +193,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     .game-sidebar{flex-direction:row;flex-wrap:wrap}
     .sidebar-panel{flex:1;min-width:140px}
     .players-grid{grid-template-columns:repeat(3,1fr)}
+    .new-game-btn{top:auto;bottom:24px;left:70px}
 }
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 </style>
@@ -192,6 +213,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="back-wrap"><button class="btn btn-outline" onclick="resetMode()">◂ חזרה</button></div>
         <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
         <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
+    </div>
+    <div class="install-banner" id="installBanner">
+        <span style="font-size:1.4rem">📲</span>
+        <div class="ib-text" id="installBannerText"><b>התקן את הסביבון כאפליקציה</b><br>אייקון במסך הבית, מסך מלא, ומשחק מקומי גם בלי אינטרנט.</div>
+        <button class="btn btn-gold btn-sm" id="installBannerBtn" onclick="installApp()">התקן</button>
+        <button class="ib-close" onclick="dismissInstall()" aria-label="סגור">✕</button>
     </div>
 </div>
 
@@ -288,7 +315,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="pot-box"><span class="emoji">🪙</span><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
             <div class="turn-box" id="turnBox">תור: <strong>—</strong></div>
         </div>
-        <button class="btn btn-outline new-game-btn" onclick="location.reload()">משחק חדש</button>
+        <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
         <div class="game-main">
             <div class="dreidel-zone">
                 <div class="dreidel-wrap">
@@ -358,6 +385,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="settings-row"><label>מקס׳</label><input type="range" id="spinMax" min="2"   max="7" step="0.5" value="4"   oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">4s</span></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
+  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px">📲 אפליקציה</div>
+  <div class="install-help" id="installHelp"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -372,7 +402,7 @@ let localStream=null, videoEnabled=false, micEnabled=true, peerConnections={};
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v22';
+const APP_VERSION='v23';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -919,7 +949,7 @@ function playResult(letter){
 }
 
 // ══════ SETTINGS ══════
-function toggleSettings(){ document.getElementById('settingsPanel').classList.toggle('hidden'); }
+function toggleSettings(){ renderInstallHelp(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
 
 // ── Money helpers ──
 // In shared family scoring, every alive member holds a mirror of the family pool,
@@ -1087,7 +1117,60 @@ function toggleVideo(){if(!localStream)return;videoEnabled=!videoEnabled;localSt
 function toggleMic(){if(!localStream)return;micEnabled=!micEnabled;localStream.getAudioTracks().forEach(t=>t.enabled=micEnabled);updateVidBtns()}
 function updateVidBtns(){document.getElementById('vidToggle').textContent=videoEnabled?'📷 כבה':'📷 הפעל';document.getElementById('vidToggle').classList.toggle('active',videoEnabled);document.getElementById('micToggle').textContent=micEnabled?'🎤 השתק':'🔇 בטל';document.getElementById('micToggle').classList.toggle('active',micEnabled)}
 
-function show(id){document.getElementById(id).classList.remove('hidden')}
+// ═══════════ APP (PWA) ═══════════
+let deferredPrompt=null;
+function isInstalled(){return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}
+function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+function showInstallBanner(){
+    if(isInstalled()||lsGet('installDismissed'))return;
+    const btn=document.getElementById('installBannerBtn');
+    if(!deferredPrompt){
+        // iPhone has no install prompt — explain instead
+        if(!isIOS())return;
+        btn.classList.add('hidden');
+        document.getElementById('installBannerText').innerHTML='<b>התקן את הסביבון כאפליקציה</b><br>לחץ על <b>שיתוף</b> ⬆️ בתחתית ספארי ← <b>הוספה למסך הבית</b>.';
+    }else btn.classList.remove('hidden');
+    document.getElementById('installBanner').classList.add('show');
+}
+function installApp(){
+    document.getElementById('installBanner').classList.remove('show');
+    if(!deferredPrompt){renderInstallHelp();document.getElementById('settingsPanel').classList.remove('hidden');return}
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(()=>{deferredPrompt=null;renderInstallHelp()});
+}
+function dismissInstall(){document.getElementById('installBanner').classList.remove('show');lsSet('installDismissed','1')}
+function renderInstallHelp(){
+    const el=document.getElementById('installHelp');if(!el)return;
+    if(isInstalled()){el.innerHTML='✅ האפליקציה מותקנת.';return}
+    let how;
+    if(isIOS())how='באייפון: <b>שיתוף</b> ⬆️ בספארי ← <b>הוספה למסך הבית</b>.';
+    else if(/Android/.test(navigator.userAgent))how='באנדרואיד: תפריט <b>⋮</b> ← <b>התקנת אפליקציה</b> / <b>הוספה למסך הבית</b>.';
+    else how='במחשב: סמל ההתקנה בשורת הכתובת, או תפריט <b>⋮</b> ← <b>התקנה</b>.';
+    el.innerHTML=(deferredPrompt?'<button class="btn btn-gold btn-sm" style="margin-bottom:6px" onclick="installApp()">📲 התקן עכשיו</button><br>':'')+how+'<br>משחק מקומי עובד גם בלי אינטרנט.';
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstallBanner()});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;document.getElementById('installBanner').classList.remove('show')});
+window.addEventListener('load',()=>{
+    if(isIOS())showInstallBanner();
+    if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+
+// Keep the screen on during a game (phones dim/lock mid-spin otherwise)
+let wakeLock=null;
+async function keepAwake(){
+    if(!('wakeLock' in navigator)||(wakeLock&&!wakeLock.released))return;
+    try{wakeLock=await navigator.wakeLock.request('screen')}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'&&!document.getElementById('gameScreen').classList.contains('hidden'))keepAwake();
+});
+
+function confirmNewGame(){if(G.over||confirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?'))location.reload()}
+
+function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen')keepAwake()}
 function hide(id){document.getElementById(id).classList.add('hidden')}
 function toggle(id,v){document.getElementById(id).classList.toggle('hidden',!v)}
 </script>
