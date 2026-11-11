@@ -10,9 +10,9 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v29';
+const CACHE = 'dreidel-v30';
 const FALLBACK = './index.html';
-const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png'];
+const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png', './bg-table.webp', './bg-table.jpg'];
 
 // Third-party static assets that are safe to keep (fonts + the supabase-js library)
 const CACHEABLE_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];
@@ -75,7 +75,7 @@ self.addEventListener('fetch', function (e) {
   }
 
   // Own static files (icons, manifest) and fonts / library
-  const ownStatic = url.origin === self.location.origin && /\.(png|webp|ico|svg|json)$/.test(url.pathname);
+  const ownStatic = url.origin === self.location.origin && /\.(png|webp|jpg|ico|svg|json)$/.test(url.pathname);
   if (ownStatic || CACHEABLE_HOSTS.indexOf(url.hostname) !== -1) {
     e.respondWith(staleWhileRevalidate(req));
   }

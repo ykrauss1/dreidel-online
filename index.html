@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="preload" href="dreidel.webp" as="image">
+<link rel="preload" href="bg-table.webp" as="image" type="image/webp">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -17,7 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Secular+One&display=swap" rel="stylesheet">
 <style>
 :root{
-    --bg:#06080f;--bg-card:#0e1225;--bg-card-alt:#141938;--bg-input:#0a0d1a;
+    --bg:#06080f;--bg-card:rgba(14,18,37,.78);--bg-card-alt:rgba(22,27,60,.86);--bg-input:#0a0d1a;
     --gold:#f5c842;--gold-dim:#b8912a;--gold-glow:rgba(245,200,66,.25);--gold-glow-s:rgba(245,200,66,.5);
     --blue:#3d7aed;--blue-glow:rgba(61,122,237,.25);--green:#34d399;--red:#f87171;
     --text:#e4e4f0;--text-dim:#7a7da0;--border:#1e2348;--border-l:#2a3060;
@@ -26,7 +27,20 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html{overflow-x:hidden}
 body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 600px 400px at 15% 10%,rgba(61,122,237,.06),transparent),radial-gradient(ellipse 500px 500px at 85% 85%,rgba(245,200,66,.04),transparent);pointer-events:none}
+/* Background: Hanukkah table (Gemini). Darkened at the top for the title, and around the edges */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      linear-gradient(180deg,rgba(6,8,15,.82) 0%,rgba(6,8,15,.45) 28%,rgba(6,8,15,.30) 55%,rgba(6,8,15,.55) 100%),
+      radial-gradient(ellipse 70% 60% at 50% 55%,transparent 40%,rgba(6,8,15,.55) 100%),
+      url(bg-table.jpg) center 60%/cover no-repeat;
+    background:
+      linear-gradient(180deg,rgba(6,8,15,.82) 0%,rgba(6,8,15,.45) 28%,rgba(6,8,15,.30) 55%,rgba(6,8,15,.55) 100%),
+      radial-gradient(ellipse 70% 60% at 50% 55%,transparent 40%,rgba(6,8,15,.55) 100%),
+      image-set(url(bg-table.webp) type('image/webp'),url(bg-table.jpg) type('image/jpeg')) center 60%/cover no-repeat}
+/* phone (portrait): show the menorah side of the picture */
+@media(max-aspect-ratio:4/5){body::before{background-position:center,center,82% 55%}}
+/* glass panels over the table */
+.card,.mode-card,.p-card,.pot-box,.turn-box,.sidebar-panel,.lobby-family,.install-banner{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:12px}
 .fs-btn{position:fixed;top:12px;left:120px;z-index:100}
 .hidden{display:none!important}
@@ -490,7 +504,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v29';
+const APP_VERSION='v30';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
