@@ -28,6 +28,7 @@ html{overflow-x:hidden}
 body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 600px 400px at 15% 10%,rgba(61,122,237,.06),transparent),radial-gradient(ellipse 500px 500px at 85% 85%,rgba(245,200,66,.04),transparent);pointer-events:none}
 .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:12px}
+.fs-btn{position:fixed;top:12px;left:120px;z-index:100}
 .hidden{display:none!important}
 
 /* HEADER */
@@ -103,7 +104,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* Dreidel */
 .dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative;margin-top:-105px;z-index:3;pointer-events:none;width:100%}
-.dreidel-wrap{width:180px;height:290px;display:flex;align-items:center;justify-content:center;overflow:visible}
+.dreidel-wrap{--k:1;width:calc(180px*var(--k));height:calc(290px*var(--k));display:flex;justify-content:center;overflow:visible}
+.dreidel-scale{width:148px;height:280px;flex-shrink:0;transform:scale(var(--k));transform-origin:top center}
 .dreidel-svg{width:148px;height:280px;filter:drop-shadow(0 0 14px rgba(245,200,66,.35)) drop-shadow(0 10px 14px rgba(0,0,0,.5));
              transform-origin:50% 99%;overflow:visible}
 /* Picture dreidel: the image + letters overlaid on the two enamel panels */
@@ -216,6 +218,44 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 @keyframes mp{0%{transform:scale(.6) translateY(30px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
 .win-modal .big-icon{font-size:3rem;margin-bottom:4px}.win-modal h2{font-family:'Secular One',sans-serif;color:var(--gold);font-size:1.3rem;margin-bottom:3px}.win-modal p{color:var(--text-dim);margin-bottom:14px}
 
+/* ══════ BIG SCREEN (family around a computer / TV) ══════
+   three columns: players | dreidel | video+log, everything larger */
+@media(min-width:1000px) and (min-height:620px){
+    .app{max-width:1700px;padding:12px 24px}
+    .game-layout{grid-template-columns:minmax(260px,330px) 1fr minmax(260px,330px);grid-template-rows:auto auto 1fr;
+        grid-template-areas:"top top top" "players dreidel side" "players controls side";column-gap:24px;row-gap:6px}
+    .game-main{display:contents}
+    .game-top{grid-area:top}
+    .dreidel-zone{grid-area:dreidel}
+    .dreidel-controls{grid-area:controls;align-self:start}
+    .players-area{grid-area:players;align-self:start;margin-top:10px}
+    .game-sidebar{grid-area:side;align-self:start;margin-top:10px}
+    .dreidel-wrap{--k:1.35}
+    .players-grid{grid-template-columns:1fr 1fr}
+    .p-card{padding:12px 14px}
+    .p-card .p-name{font-size:1.05rem}
+    .p-card .p-amt{font-size:1.7rem}
+    .p-card .p-delta{font-size:.9rem}
+    .family-group-title{font-size:.95rem}
+    .pot-box{padding:10px 22px}.pot-val{font-size:2rem}.pot-label{font-size:.85rem}.pot-coin{width:42px;height:42px}
+    .turn-box{font-size:1.1rem}.turn-inline{padding:6px 20px;font-size:1.15rem}
+    .result-line{font-size:1.25rem;min-height:30px}
+    .spin-btn{padding:14px 56px;font-size:1.4rem;border-radius:14px}
+    .power-bar-bg{width:200px;height:12px}.power-label{font-size:1rem}
+    .waiting-text{font-size:1rem}
+    .video-tile{max-height:none}
+    .log-entries{max-height:260px}.log-entry{font-size:.85rem}
+    .sidebar-panel h3{font-size:.9rem}
+    .key-hint{display:block!important}
+}
+@media(min-width:1400px) and (min-height:820px){
+    .dreidel-wrap{--k:2}
+    .p-card .p-amt{font-size:2rem}
+    .pot-val{font-size:2.4rem}
+    .header h1,.header-title{font-size:3rem}
+}
+.key-hint{display:none;font-size:.75rem;color:var(--text-dim);margin-top:6px;text-align:center}
+.key-hint kbd{background:var(--bg-input);border:1px solid var(--border-l);border-radius:4px;padding:1px 6px;font-family:inherit}
 @media(max-width:768px){
     .mode-selector{flex-direction:column}
     .game-layout{grid-template-columns:1fr}
@@ -223,6 +263,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .sidebar-panel{flex:1;min-width:140px}
     .players-grid{grid-template-columns:repeat(3,1fr)}
     .new-game-btn{top:auto;bottom:24px;left:70px}
+    .fs-btn{display:none}
 }
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 </style>
@@ -368,14 +409,15 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
             <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
         </div>
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
+        <button class="btn btn-outline fs-btn" id="fsBtn" onclick="toggleFullscreen()" title="מסך מלא">⛶ מסך מלא</button>
         <div class="game-main">
             <div class="dreidel-zone">
-                <div class="dreidel-wrap">
+                <div class="dreidel-wrap"><div class="dreidel-scale">
                     <div class="dreidel-svg dreidel-art" id="dreidelSvg">
                         <img src="dreidel.webp" alt="סביבון" draggable="false" onerror="this.onerror=null;this.src='dreidel.png'">
                         <!-- faces are positioned over the two enamel panels of the picture (measured: 6–44% / 56–94% wide, 39.6–71.8% high) -->
                         <div class="face face-l"><span class="face-tint" id="tintL"></span><span class="face-letter" id="dreidelLetter2"></span></div>
-                        <div class="face face-r"><span class="face-tint" id="tintR"></span><span class="face-letter" id="dreidelLetter">?</span></div>
+                        <div class="face face-r"><span class="face-tint" id="tintR"></span><span class="face-letter" id="dreidelLetter">?</span></div></div>
                     </div>
                 </div>
             </div>
@@ -390,6 +432,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                     <div class="power-clicks" id="powerClicks">○ ○ ○</div>
                 </div>
                 <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
+                <div class="key-hint">אפשר גם במקלדת: <kbd>רווח</kbd> שלוש פעמים מהר = סיבוב חזק</div>
             </div>
             <div class="players-area" id="playersArea"></div>
         </div>
@@ -447,7 +490,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v28';
+const APP_VERSION='v29';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1062,6 +1105,23 @@ function handleSpinClick(){
         setTimeout(()=>doSpin(),200);
     }
 }
+
+// Keyboard: space / enter act like the spin button (three quick presses = strong spin)
+document.addEventListener('keydown',e=>{
+    if(e.key!==' '&&e.key!=='Enter')return;
+    const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.tagName==='BUTTON'))return;
+    if(document.getElementById('gameScreen').classList.contains('hidden'))return;
+    if(document.getElementById('winModal').classList.contains('show'))return;
+    const btn=document.getElementById('spinBtn');
+    if(btn.classList.contains('hidden')||btn.disabled)return;
+    e.preventDefault();if(!e.repeat)handleSpinClick();
+});
+function toggleFullscreen(){
+    const d=document,el=d.documentElement;
+    if(!d.fullscreenElement&&!d.webkitFullscreenElement){(el.requestFullscreen||el.webkitRequestFullscreen||(()=>{})).call(el)}
+    else{(d.exitFullscreen||d.webkitExitFullscreen).call(d)}
+}
+document.addEventListener('fullscreenchange',()=>{document.getElementById('fsBtn').textContent=document.fullscreenElement?'⛶ צא ממסך מלא':'⛶ מסך מלא'});
 
 function resetSpinUI(){
     spinClicks=0; spinClickTimes=[]; spinPower=0.5;
