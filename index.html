@@ -158,7 +158,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;width:100%}
 .p-card{background:var(--bg-card);border:2px solid var(--border);border-radius:10px;padding:8px 10px;transition:all .3s}
 .p-card.active{border-color:var(--gold);box-shadow:0 0 14px var(--gold-glow);background:var(--bg-card-alt)}
-.p-card.out{opacity:.3}.p-card.winner{border-color:var(--gold)}
+.p-card.out{opacity:.3}.p-card.offline{opacity:.55;border-style:dashed}
+.lobby-player.off .dot{background:var(--text-dim);animation:none}.p-card.winner{border-color:var(--gold)}
 .p-card .p-name{font-weight:700;font-size:.78rem;display:flex;align-items:center;gap:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-card .p-name .crown{display:none}.p-card.winner .p-name .crown{display:inline}
 .p-card .p-amt{font-family:'Secular One',sans-serif;font-size:1.05rem;color:var(--gold)}
@@ -213,6 +214,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div class="back-wrap"><button class="btn btn-outline" onclick="resetMode()">◂ חזרה</button></div>
         <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
         <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
+    </div>
+    <div class="install-banner" id="rejoinBanner" style="border-color:var(--blue)">
+        <span style="font-size:1.4rem">🔄</span>
+        <div class="ib-text" id="rejoinText"><b>יש לך משחק פתוח</b></div>
+        <button class="btn btn-blue btn-sm" onclick="rejoinGame()">חזור למשחק</button>
+        <button class="ib-close" onclick="dismissRejoin()" aria-label="סגור">✕</button>
     </div>
     <div class="install-banner" id="installBanner">
         <span style="font-size:1.4rem">📲</span>
@@ -300,7 +307,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 
     <!-- WAITING ROOM -->
     <div id="waitingRoom" class="setup-panel card hidden">
-        <h2 class="section-title">ממתינים לשחקנים...</h2>
+        <h2 class="section-title" id="waitingTitle">ממתינים לשחקנים...</h2>
         <div class="room-code-display" id="roomCodeDisplay">----</div>
         <p style="text-align:center;color:var(--text-dim);font-size:.75rem;margin-bottom:8px">שתף את הקוד עם החברים</p>
         <div id="lobbyPlayers"></div>
@@ -367,7 +374,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </div>
 
 <div class="app-version" id="appVersion"></div>
-<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon">🏆</div><h2 id="winName">—</h2><p>ניצח את המשחק!</p><button class="btn btn-gold" onclick="location.reload()">משחק חדש</button></div></div>
+<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon">🏆</div><h2 id="winName">—</h2><p>ניצח את המשחק!</p><button class="btn btn-gold" onclick="clearSession();location.reload()">משחק חדש</button></div></div>
 </div>
 
 <!-- ══ SETTINGS ══ -->
@@ -397,12 +404,12 @@ let MODE=null, sb=null, channel=null;
 let ONLINE_TYPE='individual'; // 'individual' | 'family'
 let G={players:[],families:[],pot:0,currentTurn:0,startAmt:100,ante:10,over:false,started:false};
 let MY_ID=null, MY_FAMILY=null, IS_HOST=false, ROOM_CODE=null, spinning=false;
-let localStream=null, videoEnabled=false, micEnabled=true, peerConnections={};
+let localStream=null, videoEnabled=false, micEnabled=true;
 
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v23';
+const APP_VERSION='v24';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -485,7 +492,7 @@ async function createRoom(){
 
     hide('onlineLobby');show('waitingRoom');document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
     document.getElementById('startOnlineBtn').classList.remove('hidden');
-    joinChannel();renderLobby();
+    joinChannel();renderLobby();saveSession();
 }
 
 async function joinRoom(){
@@ -512,20 +519,22 @@ async function joinRoom(){
     joinChannel(()=>{
         channel.send({type:'broadcast',event:'player_join',payload});
     });
+    saveSession();
     // If no host answers within 8s — the room probably doesn't exist
     clearTimeout(JOIN_TIMER);
     JOIN_TIMER=setTimeout(()=>{alert('לא נמצא חדר עם הקוד '+ROOM_CODE+'.\nבדוק את הקוד ונסה שוב.');leaveRoom()},8000);
 }
 
 function leaveRoom(){
-    clearTimeout(JOIN_TIMER);
+    clearTimeout(JOIN_TIMER);clearSession();
     if(channel){try{sb.removeChannel(channel)}catch(e){}channel=null}
     G={players:[],families:[],pot:0,currentTurn:0,startAmt:100,ante:10,over:false,started:false};
     hide('waitingRoom');show('onlineLobby');
 }
 
 function joinChannel(onReady){
-    channel=sb.channel('room_'+ROOM_CODE,{config:{broadcast:{self:true}}});
+    channel=sb.channel('room_'+ROOM_CODE,{config:{broadcast:{self:true},presence:{key:MY_ID}}});
+    let subscribedOnce=false;
 
     channel.on('broadcast',{event:'player_join'},({payload:p})=>{
         if(!IS_HOST)return renderLobby();
@@ -551,11 +560,11 @@ function joinChannel(onReady){
     });
 
     channel.on('broadcast',{event:'game_state'},({payload})=>{
-        if(IS_HOST)return; // host opens its game screen directly in startOnlineGame
+        if(IS_HOST||REJOINING)return; // host opens its game screen directly in startOnlineGame
         clearTimeout(JOIN_TIMER);
         if(G.started&&payload.started)return; // ignore late/duplicate state once playing
-        G=payload;renderLobby();
-        if(G.started){hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');renderGame();updateOnlineUI()}
+        G=payload;renderLobby();if(G.started)LAST_STATE=clone(G);
+        if(G.started)enterOnlineGameScreen();
     });
 
     channel.on('broadcast',{event:'join_rejected'},({payload})=>{
@@ -566,22 +575,152 @@ function joinChannel(onReady){
 
     // Remote spins: everyone animates the same spin (same letter, power, duration, fall direction)
     channel.on('broadcast',{event:'spin_result'},({payload})=>{
-        if(payload.spinnerId===MY_ID)return;
+        if(payload.spinnerId===MY_ID||REJOINING)return;
+        LAST_STATE=payload.state;
         spinQueue.push(payload);
         if(!spinning)playNextRemoteSpin();
     });
+    // State change without a spin (a skipped turn)
+    channel.on('broadcast',{event:'state_update'},({payload})=>{
+        if(payload.from===MY_ID||REJOINING)return;
+        LAST_STATE=payload.state;
+        spinQueue.push({kind:'state',state:payload.state});
+        if(!spinning)playNextRemoteSpin();
+    });
 
-    channel.on('broadcast',{event:'game_log'},({payload})=>{addLogLocal(payload.text)});
-    channel.on('broadcast',{event:'rtc_offer'},async({payload})=>{if(payload.target!==MY_ID)return;await handleOffer(payload.from,payload.offer)});
-    channel.on('broadcast',{event:'rtc_answer'},async({payload})=>{if(payload.target!==MY_ID)return;await handleAnswer(payload.from,payload.answer)});
-    channel.on('broadcast',{event:'rtc_ice'},async({payload})=>{if(payload.target!==MY_ID)return;await handleIce(payload.from,payload.candidate)});
-    channel.on('broadcast',{event:'video_ready'},async({payload})=>{if(payload.id===MY_ID)return;if(localStream&&!peerConnections[payload.id])await createPeerConnection(payload.id,true)});
+    // Someone came back (refresh / app reopened) and asks for the current state.
+    // Exactly one client answers: the lowest online id other than the asker.
+    channel.on('broadcast',{event:'sync_request'},({payload})=>{
+        if(payload.from===MY_ID||REJOINING)return;
+        const L=leaderId(payload.from);
+        if(L&&L!==MY_ID)return;
+        channel.send({type:'broadcast',event:'sync_state',payload:{target:payload.from,state:clone(knownState())}});
+    });
+    channel.on('broadcast',{event:'sync_state'},({payload})=>{
+        if(payload.target!==MY_ID||!REJOINING)return;
+        finishResync(payload.state);
+    });
 
-    channel.subscribe(s=>{if(s==='SUBSCRIBED'&&onReady)onReady()});
+    // Who is connected right now
+    channel.on('presence',{event:'sync'},()=>{
+        const prev=ONLINE;
+        ONLINE=new Set(Object.keys(channel.presenceState()));
+        prev.forEach(k=>{if(!ONLINE.has(k))closePeer(k)});
+        if(G.started){renderGame();updateOnlineUI();syncPeers()}else renderLobby();
+    });
+
+    channel.on('broadcast',{event:'game_log'},({payload})=>{if(!REJOINING)addLogLocal(payload.text)});
+    channel.on('broadcast',{event:'rtc_offer'},({payload})=>{if(payload.target===MY_ID)handleOffer(payload.from,payload.sid,payload.desc)});
+    channel.on('broadcast',{event:'rtc_answer'},({payload})=>{if(payload.target===MY_ID)handleAnswer(payload.from,payload.sid,payload.desc)});
+    // A device that just reloaded says hello — if I'm the offering side, build a fresh connection to it
+    channel.on('broadcast',{event:'rtc_hello'},({payload})=>{if(payload.from!==MY_ID&&G.started&&MY_ID<payload.from&&window.RTCPeerConnection)loadIce().then(()=>makeOffer(payload.from))});
+    channel.on('broadcast',{event:'rtc_ice'},({payload})=>{if(payload.target===MY_ID)handleIce(payload.from,payload.sid,payload.candidate)});
+
+    channel.subscribe(st=>{
+        if(st!=='SUBSCRIBED')return;
+        channel.track({id:MY_ID,t:Date.now()});
+        if(!subscribedOnce){subscribedOnce=true;if(onReady)onReady()}
+        else if(G.started&&!G.over)startResync(false); // connection dropped and came back — we may have missed spins
+    });
+}
+
+// ═══════════ PRESENCE / REJOIN ═══════════
+let ONLINE=new Set(), offlineSince={}, REJOINING=false, SYNC_RETRY=null;
+let LAST_STATE=null; // newest game state we know of — may be ahead of G while a remote spin is still animating
+function knownState(){return G.started&&LAST_STATE?LAST_STATE:G}
+const SKIP_SEC=20;                 // seconds to wait for a disconnected player before skipping their turn
+const SESSION_KEY='dreidel_session';
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function onlineKey(p){return p.family||p.id}           // a family plays from one device
+function isOnline(p){return ONLINE.has(onlineKey(p))}
+function leaderId(exclude){return [...ONLINE].filter(k=>k!==exclude).sort()[0]}
+
+// sessionStorage = this tab (survives refresh; two tabs on one computer stay separate)
+// localStorage   = fallback for when the app/browser was closed and reopened
+function saveSession(){
+    if(MODE!=='online'||!ROOM_CODE||!MY_ID)return;
+    const v=JSON.stringify({code:ROOM_CODE,id:MY_ID,fam:MY_FAMILY,host:IS_HOST,t:Date.now()});
+    try{sessionStorage.setItem(SESSION_KEY,v)}catch(e){}
+    lsSet(SESSION_KEY,v);
+}
+function clearSession(){try{sessionStorage.removeItem(SESSION_KEY)}catch(e){}try{localStorage.removeItem(SESSION_KEY)}catch(e){}}
+function loadSession(){
+    const parse=v=>{try{const x=JSON.parse(v||'null');if(x&&x.code&&x.id&&Date.now()-x.t<12*3600e3)return x}catch(e){}return null};
+    let ss=null;try{ss=sessionStorage.getItem(SESSION_KEY)}catch(e){}
+    return parse(ss)||parse(lsGet(SESSION_KEY));
+}
+
+function enterOnlineGameScreen(){
+    hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');
+    renderGame();updateOnlineUI();syncPeers();
+}
+
+// Back into a game after refresh / closing the app
+function rejoinGame(){
+    const x=loadSession();if(!x)return;
+    hide('rejoinBanner');
+    MODE='online';ROOM_CODE=x.code;MY_ID=x.id;MY_FAMILY=x.fam;IS_HOST=!!x.host;
+    if(!sb){try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){alert(e.message);return}}
+    hide('modeScreen');show('onlineSetup');hide('onlineLobby');show('waitingRoom');
+    document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
+    document.getElementById('waitingTitle').textContent='מתחבר מחדש...';
+    joinChannel(()=>startResync(true));
+}
+function dismissRejoin(){clearSession();hide('rejoinBanner')}
+
+function startResync(explicit){
+    REJOINING=true;
+    const ask=()=>channel&&channel.send({type:'broadcast',event:'sync_request',payload:{from:MY_ID}});
+    ask();clearInterval(SYNC_RETRY);SYNC_RETRY=setInterval(ask,2500);
+    clearTimeout(JOIN_TIMER);
+    JOIN_TIMER=setTimeout(()=>{
+        clearInterval(SYNC_RETRY);REJOINING=false;
+        if(explicit){alert('המשחק בחדר '+ROOM_CODE+' כבר לא פעיל.');clearSession();location.reload()}
+    },explicit?10000:8000);
+}
+function finishResync(state){
+    REJOINING=false;clearTimeout(JOIN_TIMER);clearInterval(SYNC_RETRY);
+    spinQueue=[];LAST_STATE=clone(state);
+    const wasStarted=!document.getElementById('gameScreen').classList.contains('hidden');
+    G=state;
+    const mine=G.players.find(p=>onlineKey(p)===MY_ID);
+    if(!mine){alert('לא נמצאת ברשימת השחקנים של החדר הזה.');clearSession();location.reload();return}
+    document.getElementById('waitingTitle').textContent='ממתינים לשחקנים...';
+    if(G.started){
+        enterOnlineGameScreen();
+        if(!wasStarted)rtcSend('rtc_hello',{});
+        if(!wasStarted)addLog(`🔄 ${MY_FAMILY?'משפ׳ '+(G.families.find(f=>f.id===MY_FAMILY)?.name||''):mine.name} חזר/ה למשחק`);
+        if(G.over)showWinner();
+    }else{renderLobby();toggle('startOnlineBtn',IS_HOST)}
+    saveSession();
+}
+
+// Every second: if the current player is offline, count down and (one client) skips the turn
+function presenceTick(){
+    if(MODE!=='online'||!G.started||G.over||REJOINING)return;
+    const cp=G.players[G.currentTurn];if(!cp)return;
+    const k=onlineKey(cp);
+    const msg=document.getElementById('waitingMsg');
+    if(ONLINE.has(k)||!ONLINE.size){delete offlineSince[k];msg.textContent='ממתין לתור...';return}
+    offlineSince[k]=offlineSince[k]||Date.now();
+    const left=Math.max(0,SKIP_SEC-Math.floor((Date.now()-offlineSince[k])/1000));
+    msg.textContent=`📴 ${cp.name} לא מחובר/ת — מדלגים בעוד ${left} שנ׳`;
+    if(left===0&&!spinning&&leaderId()===MY_ID)skipTurn(cp);
+}
+setInterval(presenceTick,1000);
+function advanceTurn(){do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive)}
+function skipTurn(cp){
+    G.players.forEach(p=>p.change='');
+    advanceTurn();
+    addLog(`⏭️ ${cp.name} לא מחובר/ת — דילגנו על התור`);
+    renderGame();updateOnlineUI();
+    LAST_STATE=clone(G);
+    channel.send({type:'broadcast',event:'state_update',payload:{state:LAST_STATE,from:MY_ID}});
 }
 
 function broadcastState(){channel.send({type:'broadcast',event:'game_state',payload:G})}
 
+function lobbyOff(p){return ONLINE.size&&!isOnline(p)?'off':''}
 function renderLobby(){
     const el=document.getElementById('lobbyPlayers');
     if(G.families&&G.families.length>0){
@@ -595,9 +734,9 @@ function renderLobby(){
         }).join('');
         // Also show non-family players if mixed
         const noFam=G.players.filter(p=>!p.family);
-        if(noFam.length)el.innerHTML+=noFam.map(p=>`<div class="lobby-player"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
+        if(noFam.length)el.innerHTML+=noFam.map(p=>`<div class="lobby-player ${lobbyOff(p)}"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
     }else{
-        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''}"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
+        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''} ${lobbyOff(p)}"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
     }
 }
 
@@ -653,10 +792,10 @@ function startOnlineGame(){
     }
 
     G.pot=G.ante*G.players.length;G.currentTurn=0;G.over=false;G.started=true;
+    LAST_STATE=clone(G);
     broadcastState();
     // Host opens its own game screen directly (its own echoed broadcast is ignored)
-    hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');
-    renderGame();updateOnlineUI();
+    enterOnlineGameScreen();
     addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');
 }
 
@@ -776,7 +915,8 @@ function doSpin(){
 
     // Online: broadcast at the START so everyone watches the same spin together
     if(MODE==='online'&&channel){
-        channel.send({type:'broadcast',event:'spin_result',payload:{letter,opts,logs,state:JSON.parse(JSON.stringify(G)),spinnerId:MY_ID}});
+        LAST_STATE=clone(G);
+        channel.send({type:'broadcast',event:'spin_result',payload:{letter,opts,logs,state:LAST_STATE,spinnerId:MY_ID}});
     }
 
     showSpinAnimation(letter,opts,()=>{
@@ -790,6 +930,7 @@ function doSpin(){
 
 function playNextRemoteSpin(){
     const p=spinQueue.shift();if(!p)return;
+    if(p.kind==='state'){G=p.state;renderGame();updateOnlineUI();playNextRemoteSpin();return}
     spinning=true;resetDreidel();
     showSpinAnimation(p.letter,p.opts||{power:.5},()=>{
         G=p.state;
@@ -1010,12 +1151,13 @@ function applyLetter(l){
     // Empty pot → everyone antes again
     if(G.pot===0){anteAll();addLog(`הקופה ריקה — כולם שמו ${G.ante}.`);eliminate();if(checkOver()){updateFamScores();return}}
 
-    do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive);
+    advanceTurn();
     updateFamScores();
 }
 
 // ═══════════ RENDER ═══════════
 function renderGame(){
+    if(MODE==='online'&&G.started&&!G.over)saveSession();
     document.getElementById('potVal').textContent=G.pot;
     const cp=G.players[G.currentTurn];
     document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?esc(cp.name):'—'}</strong>`;
@@ -1045,8 +1187,9 @@ function renderGame(){
 }
 
 function playerCard(p,i){
-    return `<div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${G.over&&p.alive?'winner':''}">
-        <div class="p-name"><span class="crown">👑</span>${esc(p.name)}${!p.alive?' ❌':''}</div>
+    const off=MODE==='online'&&G.started&&ONLINE.size>0&&!isOnline(p)&&p.alive;
+    return `<div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${G.over&&p.alive?'winner':''} ${off?'offline':''}">
+        <div class="p-name"><span class="crown">👑</span>${esc(p.name)}${!p.alive?' ❌':''}${off?' <span title="לא מחובר">📴</span>':''}</div>
         <div class="p-amt">${p.alive?(Number(p.amount)||0):0}</div>
         <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${esc(p.change)}</div>
     </div>`;
@@ -1064,6 +1207,7 @@ function showWinner(){
     }
     document.getElementById('winName').textContent=winText;
     document.getElementById('winModal').classList.add('show');
+    clearSession();
     addLogLocal(`🏆 ${winText}`); // every client shows it locally — no broadcast duplicates
 }
 
@@ -1071,23 +1215,136 @@ function addLog(text){if(LOG_BUF){LOG_BUF.push(text);return}addLogLocal(text);if
 function addLogLocal(text){const el=document.createElement('div');el.className='log-entry';el.textContent=text;const c=document.getElementById('logEntries');if(c.firstChild&&c.firstChild.textContent===text)return;c.insertBefore(el,c.firstChild)}
 
 // ═══════════ WebRTC ═══════════
-const RTC={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+// Design:
+//  • Every pair of devices in the game gets ONE connection, as soon as both are online —
+//    even before anyone turns a camera on (so you can watch without a camera).
+//  • The device with the smaller id always makes the offer → no offer collisions.
+//  • Turning the camera on just plugs the tracks into the existing connections (replaceTrack),
+//    no renegotiation. The camera never turns on by itself.
+//  • Every connection has a session id (sid) so ICE from an old connection never mixes in.
+//  • TURN: fill TURN_CRED_URL (Metered Open Relay) to relay video when a direct path fails
+//    (common on cellular). Without it — STUN only.
+const TURN_CRED_URL=''; // e.g. 'https://YOURAPP.metered.live/api/v1/turn/credentials?apiKey=XXXX'
+let ICE_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+let iceLoaded=null;
+function loadIce(){
+    if(!iceLoaded)iceLoaded=TURN_CRED_URL
+        ?fetch(TURN_CRED_URL).then(r=>r.json()).then(list=>{if(Array.isArray(list)&&list.length)ICE_SERVERS=list}).catch(()=>{})
+        :Promise.resolve();
+    return iceLoaded;
+}
+const peers={};      // pid -> {pc, sid, pendingIce:[]}
+const earlyIce={};   // pid+sid -> candidates that arrived before their offer was processed
+function rtcSend(event,payload){if(channel)channel.send({type:'broadcast',event,payload:Object.assign({from:MY_ID},payload)})}
+function newSid(){return Math.random().toString(36).slice(2,10)}
+
+async function syncPeers(){
+    if(MODE!=='online'||!G.started||!channel||!window.RTCPeerConnection)return;
+    await loadIce();
+    ONLINE.forEach(pid=>{
+        if(pid===MY_ID||!G.players.some(p=>onlineKey(p)===pid))return;
+        const st=peers[pid];
+        if(MY_ID<pid&&(!st||['failed','closed'].includes(st.pc.connectionState)))makeOffer(pid);
+    });
+}
+function newPeer(pid,sid){
+    closePeer(pid);
+    const pc=new RTCPeerConnection({iceServers:ICE_SERVERS});
+    const st={pc,sid,pendingIce:(earlyIce[pid+sid]||[])};
+    delete earlyIce[pid+sid];
+    peers[pid]=st;
+    pc.onicecandidate=e=>{if(e.candidate)rtcSend('rtc_ice',{target:pid,sid,candidate:e.candidate.toJSON?e.candidate.toJSON():e.candidate})};
+    pc.ontrack=e=>attachRemote(pid,e.track);
+    pc.onconnectionstatechange=()=>{
+        // the offering side rebuilds a failed connection
+        if(pc.connectionState==='failed'&&MY_ID<pid)setTimeout(()=>{if(peers[pid]&&peers[pid].pc===pc&&ONLINE.has(pid))makeOffer(pid)},2000);
+    };
+    return st;
+}
+function applyLocalTracks(pc){
+    pc.getTransceivers().forEach(tr=>{
+        if(tr.stopped||tr.currentDirection==='stopped')return;
+        const kind=tr.receiver.track.kind;
+        const t=localStream?localStream.getTracks().find(x=>x.kind===kind):null;
+        tr.direction='sendrecv';
+        tr.sender.replaceTrack(t||null).catch(()=>{});
+    });
+}
+async function makeOffer(pid){
+    const sid=newSid();const st=newPeer(pid,sid);const pc=st.pc;
+    pc.addTransceiver('audio',{direction:'sendrecv'});pc.addTransceiver('video',{direction:'sendrecv'});
+    applyLocalTracks(pc);
+    try{const o=await pc.createOffer();await pc.setLocalDescription(o);rtcSend('rtc_offer',{target:pid,sid,desc:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}})}catch(e){console.warn('offer',e)}
+}
+async function handleOffer(from,sid,desc){
+    if(!window.RTCPeerConnection)return;
+    await loadIce();
+    const st=newPeer(from,sid);const pc=st.pc;
+    try{
+        await pc.setRemoteDescription(desc);
+        applyLocalTracks(pc);
+        const a=await pc.createAnswer();await pc.setLocalDescription(a);
+        rtcSend('rtc_answer',{target:from,sid,desc:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}});
+        flushIce(st);
+    }catch(e){console.warn('answer',e)}
+}
+async function handleAnswer(from,sid,desc){
+    const st=peers[from];if(!st||st.sid!==sid)return;
+    try{await st.pc.setRemoteDescription(desc);flushIce(st)}catch(e){console.warn('setAnswer',e)}
+}
+function handleIce(from,sid,c){
+    const st=peers[from];
+    if(!st||st.sid!==sid){(earlyIce[from+sid]=earlyIce[from+sid]||[]).push(c);return}
+    if(!st.pc.remoteDescription){st.pendingIce.push(c);return}
+    st.pc.addIceCandidate(c).catch(()=>{});
+}
+function flushIce(st){const q=st.pendingIce;st.pendingIce=[];q.forEach(c=>st.pc.addIceCandidate(c).catch(()=>{}))}
+function closePeer(pid){
+    const st=peers[pid];
+    if(st){try{st.pc.close()}catch(e){}delete peers[pid]}
+    document.getElementById('vid_'+pid)?.remove();updateVidPlaceholder();
+}
+function peerLabel(pid){
+    const fam=G.families?.find(f=>f.id===pid);if(fam)return 'משפ׳ '+fam.name;
+    return G.players.find(p=>p.id===pid)?.name||'שחקן';
+}
+function attachRemote(pid,track){
+    let tile=document.getElementById('vid_'+pid);
+    if(!tile){
+        tile=document.createElement('div');tile.className='video-tile hidden';tile.id='vid_'+pid;
+        tile.innerHTML='<video autoplay playsinline></video><div class="vid-name"></div>';
+        document.getElementById('videoGrid').appendChild(tile);
+        tile._stream=new MediaStream();tile.querySelector('video').srcObject=tile._stream;
+    }
+    tile.querySelector('.vid-name').textContent=peerLabel(pid);
+    tile._stream.getTracks().filter(t=>t.kind===track.kind).forEach(t=>tile._stream.removeTrack(t));
+    tile._stream.addTrack(track);
+    if(track.kind==='video'){
+        // tile shows only while the other side actually sends video
+        const upd=()=>{tile.classList.toggle('hidden',track.muted);updateVidPlaceholder()};
+        track.onmute=upd;track.onunmute=upd;upd();
+    }
+    const v=tile.querySelector('video');if(v.play)v.play().catch(()=>{});
+}
+function updateVidPlaceholder(){
+    const any=localStream||document.querySelector('#videoGrid .video-tile:not(.hidden)');
+    document.getElementById('vidPlaceholder')?.classList.toggle('hidden',!!any);
+}
 
 async function startCamera(){
-    // Check if browser can even access camera
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
         alert('הדפדפן שלך אינו תומך בגישה למצלמה.\nנסה Chrome או Edge.');
         return;
     }
     try{
-        localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+        localStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:320},height:{ideal:240}},audio:true});
         videoEnabled=true;micEnabled=true;
-        document.getElementById('vidPlaceholder').classList.add('hidden');
         document.getElementById('camStartBtn').classList.add('hidden');
         document.getElementById('vidToggle').classList.remove('hidden');
         document.getElementById('micToggle').classList.remove('hidden');
-        addLocalVideo();updateVidBtns();
-        if(MODE==='online'&&channel){channel.send({type:'broadcast',event:'video_ready',payload:{id:MY_ID}});initVideoConnections()}
+        addLocalVideo();updateVidBtns();updateVidPlaceholder();
+        // plug the camera into every existing connection
+        Object.values(peers).forEach(st=>applyLocalTracks(st.pc));
     }catch(e){
         const isFirefox=navigator.userAgent.toLowerCase().includes('firefox');
         if(isFirefox){
@@ -1102,17 +1359,6 @@ async function startCamera(){
     }
 }
 function addLocalVideo(){const g=document.getElementById('videoGrid');if(document.getElementById('vid_local'))return;const t=document.createElement('div');t.className='video-tile';t.id='vid_local';t.innerHTML='<video autoplay muted playsinline></video><div class="vid-name">אני</div>';g.appendChild(t);t.querySelector('video').srcObject=localStream}
-async function initVideoConnections(){
-    // In family mode, connect per family (MY_ID is the family ID)
-    // Find other family IDs or individual IDs
-    const otherIds=[...new Set(G.players.map(p=>p.family||p.id))].filter(id=>id!==MY_ID&&id!==MY_FAMILY);
-    for(const pid of otherIds){if(!peerConnections[pid])await createPeerConnection(pid,true)}
-}
-async function createPeerConnection(pid,init){if(!localStream)return;const pc=new RTCPeerConnection(RTC);peerConnections[pid]=pc;localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));pc.onicecandidate=e=>{if(e.candidate)channel.send({type:'broadcast',event:'rtc_ice',payload:{from:MY_ID,target:pid,candidate:e.candidate}})};pc.ontrack=e=>addRemoteVideo(pid,e.streams[0]);if(init){const o=await pc.createOffer();await pc.setLocalDescription(o);channel.send({type:'broadcast',event:'rtc_offer',payload:{from:MY_ID,target:pid,offer:o}})}}
-async function handleOffer(from,offer){if(!localStream)await startCamera();if(!localStream)return;if(!peerConnections[from])await createPeerConnection(from,false);const pc=peerConnections[from];await pc.setRemoteDescription(new RTCSessionDescription(offer));const a=await pc.createAnswer();await pc.setLocalDescription(a);channel.send({type:'broadcast',event:'rtc_answer',payload:{from:MY_ID,target:from,answer:a}})}
-async function handleAnswer(from,a){const pc=peerConnections[from];if(pc)await pc.setRemoteDescription(new RTCSessionDescription(a))}
-async function handleIce(from,c){const pc=peerConnections[from];if(pc)await pc.addIceCandidate(new RTCIceCandidate(c))}
-function addRemoteVideo(pid,stream){const g=document.getElementById('videoGrid');if(document.getElementById('vid_'+pid))return;document.getElementById('vidPlaceholder')?.classList.add('hidden');const fam=G.families?.find(f=>f.id===pid);const pl=G.players.find(p=>p.id===pid);const t=document.createElement('div');t.className='video-tile';t.id='vid_'+pid;t.innerHTML=`<video autoplay playsinline></video><div class="vid-name">${esc(fam?'משפ׳ '+fam.name:(pl?pl.name:'שחקן'))}</div>`;g.appendChild(t);t.querySelector('video').srcObject=stream}
 function toggleVideo(){if(!localStream)return;videoEnabled=!videoEnabled;localStream.getVideoTracks().forEach(t=>t.enabled=videoEnabled);updateVidBtns()}
 function toggleMic(){if(!localStream)return;micEnabled=!micEnabled;localStream.getAudioTracks().forEach(t=>t.enabled=micEnabled);updateVidBtns()}
 function updateVidBtns(){document.getElementById('vidToggle').textContent=videoEnabled?'📷 כבה':'📷 הפעל';document.getElementById('vidToggle').classList.toggle('active',videoEnabled);document.getElementById('micToggle').textContent=micEnabled?'🎤 השתק':'🔇 בטל';document.getElementById('micToggle').classList.toggle('active',micEnabled)}
@@ -1154,6 +1400,8 @@ function renderInstallHelp(){
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstallBanner()});
 window.addEventListener('appinstalled',()=>{deferredPrompt=null;document.getElementById('installBanner').classList.remove('show')});
 window.addEventListener('load',()=>{
+    const ses=loadSession();
+    if(ses){document.getElementById('rejoinText').innerHTML='<b>יש לך משחק פתוח</b><br>בחדר <b dir="ltr">'+esc(ses.code)+'</b> — לחזור אליו?';document.getElementById('rejoinBanner').classList.add('show')}
     if(isIOS())showInstallBanner();
     if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
@@ -1165,10 +1413,12 @@ async function keepAwake(){
     try{wakeLock=await navigator.wakeLock.request('screen')}catch(e){}
 }
 document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'&&!document.getElementById('gameScreen').classList.contains('hidden'))keepAwake();
+    if(document.visibilityState!=='visible')return;
+    if(!document.getElementById('gameScreen').classList.contains('hidden'))keepAwake();
+    if(MODE==='online'&&channel&&G.started&&!G.over&&!REJOINING)startResync(false); // may have missed spins while in background
 });
 
-function confirmNewGame(){if(G.over||confirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?'))location.reload()}
+function confirmNewGame(){if(G.over||confirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?')){clearSession();location.reload()}}
 
 function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen')keepAwake()}
 function hide(id){document.getElementById(id).classList.add('hidden')}
