@@ -127,10 +127,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .settings-row .val-label{font-size:.75rem;color:var(--gold);min-width:28px;text-align:left}
 .sound-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:.8rem;user-select:none}
 .sound-toggle input{accent-color:var(--gold)}
-.r-נ{color:var(--text-dim)}.r-ג{color:var(--green)}.r-ה{color:var(--blue)}.r-פ{color:var(--red)}
-.spin-btn{padding:9px 34px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;border:none;border-radius:10px;font-family:'Secular One',sans-serif;font-size:1rem;cursor:pointer;box-shadow:0 3px 12px var(--gold-glow);transition:all .2s}
-.spin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 5px 20px var(--gold-glow-s)}
-.spin-btn:disabled{opacity:.35;cursor:not-allowed}
+.app-version{position:fixed;bottom:6px;right:10px;font-size:.65rem;color:var(--text-dim);opacity:.6;z-index:50;pointer-events:none;direction:ltr}
 .waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
 /* Players — full width grid, grouped by family */
@@ -227,11 +224,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div id="createPanel">
             <!-- Individual mode -->
             <div id="createIndividual">
-                <div class="form-row"><label>השם שלך:</label><input type="text" id="hostName" class="input" placeholder="שם..."></div>
+                <div class="form-row"><label>השם שלך:</label><input type="text" id="hostName" maxlength="20" class="input" placeholder="שם..."></div>
             </div>
             <!-- Family mode -->
             <div id="createFamily" class="hidden">
-                <div class="form-row"><label>שם משפחה:</label><input type="text" id="hostFamilyName" class="input" placeholder="כהן, לוי..."></div>
+                <div class="form-row"><label>שם משפחה:</label><input type="text" id="hostFamilyName" maxlength="20" class="input" placeholder="כהן, לוי..."></div>
                 <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:6px">בני משפחה:</div>
                 <div id="hostMembers"></div>
                 <button type="button" class="add-member-btn" onclick="addHostMember()">+ הוסף בן משפחה</button>
@@ -260,11 +257,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div id="joinPanel" class="hidden">
             <!-- Individual mode -->
             <div id="joinIndividual">
-                <div class="form-row"><label>השם שלך:</label><input type="text" id="joinName" class="input" placeholder="שם..."></div>
+                <div class="form-row"><label>השם שלך:</label><input type="text" id="joinName" maxlength="20" class="input" placeholder="שם..."></div>
             </div>
             <!-- Family mode -->
             <div id="joinFamily" class="hidden">
-                <div class="form-row"><label>שם משפחה:</label><input type="text" id="joinFamilyName" class="input" placeholder="כהן, לוי..."></div>
+                <div class="form-row"><label>שם משפחה:</label><input type="text" id="joinFamilyName" maxlength="20" class="input" placeholder="כהן, לוי..."></div>
                 <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:6px">בני משפחה:</div>
                 <div id="joinMembers"></div>
                 <button type="button" class="add-member-btn" onclick="addJoinMember()">+ הוסף בן משפחה</button>
@@ -342,6 +339,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
 </div>
 
+<div class="app-version" id="appVersion"></div>
 <div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon">🏆</div><h2 id="winName">—</h2><p>ניצח את המשחק!</p><button class="btn btn-gold" onclick="location.reload()">משחק חדש</button></div></div>
 </div>
 
@@ -374,6 +372,14 @@ let localStream=null, videoEnabled=false, micEnabled=true, peerConnections={};
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
+const APP_VERSION='v22';
+document.getElementById('appVersion').textContent=APP_VERSION;
+
+// Escape any text that goes into innerHTML (names arrive from other players!)
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function safeColor(c){return /^#[0-9a-f]{6}$/i.test(c||'')?c:'#7a7da0'}
+function cleanName(n,fallback){return String(n??'').trim().slice(0,20)||fallback}
+let JOIN_TIMER=null;
 
 function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){alert(e.message);return false}}
 
@@ -390,7 +396,7 @@ function setOnlineType(t){
 }
 
 // ═══════════ LOCAL ═══════════
-function renderLocalNames(){const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');d.innerHTML='';for(let i=0;i<n;i++)d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" placeholder="שחקן ${i+1}"></div>`}
+function renderLocalNames(){const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');d.innerHTML='';for(let i=0;i<n;i++)d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" maxlength="20" placeholder="שחקן ${i+1}"></div>`}
 renderLocalNames();
 
 function startLocalGame(){
@@ -413,7 +419,7 @@ function addMemberInput(containerId){
     const d=document.getElementById(containerId);
     const idx=d.children.length+1;
     const row=document.createElement('div');row.className='family-member-row';
-    row.innerHTML=`<input class="input input-sm member-name" placeholder="בן משפחה ${idx}" style="padding:6px 10px;font-size:.85rem"><button class="remove-member" onclick="this.parentElement.remove()">✕</button>`;
+    row.innerHTML=`<input class="input input-sm member-name" maxlength="20" placeholder="בן משפחה ${idx}" style="padding:6px 10px;font-size:.85rem"><button class="remove-member" onclick="this.parentElement.remove()">✕</button>`;
     d.appendChild(row);
 }
 // Init with 2 members each
@@ -476,6 +482,16 @@ async function joinRoom(){
     joinChannel(()=>{
         channel.send({type:'broadcast',event:'player_join',payload});
     });
+    // If no host answers within 8s — the room probably doesn't exist
+    clearTimeout(JOIN_TIMER);
+    JOIN_TIMER=setTimeout(()=>{alert('לא נמצא חדר עם הקוד '+ROOM_CODE+'.\nבדוק את הקוד ונסה שוב.');leaveRoom()},8000);
+}
+
+function leaveRoom(){
+    clearTimeout(JOIN_TIMER);
+    if(channel){try{sb.removeChannel(channel)}catch(e){}channel=null}
+    G={players:[],families:[],pot:0,currentTurn:0,startAmt:100,ante:10,over:false,started:false};
+    hide('waitingRoom');show('onlineLobby');
 }
 
 function joinChannel(onReady){
@@ -484,34 +500,45 @@ function joinChannel(onReady){
     channel.on('broadcast',{event:'player_join'},({payload:p})=>{
         if(!IS_HOST)return renderLobby();
         // Host processes join
+        if(G.started){
+            channel.send({type:'broadcast',event:'join_rejected',payload:{target:p.id}});
+            return;
+        }
         if(p.type==='family'){
             if(G.families.find(f=>f.id===p.id))return;
             const color=FAM_COLORS[G.families.length%FAM_COLORS.length];
-            G.families.push({id:p.id,name:p.name,color});
-            p.members.forEach((m,i)=>{G.players.push({id:p.id+'_'+i,name:m,family:p.id,amount:0,alive:true,change:''})});
+            const famName=cleanName(p.name,'משפחה');
+            G.families.push({id:p.id,name:famName,color});
+            const members=(Array.isArray(p.members)?p.members:[]).slice(0,10).map(m=>cleanName(m,'')).filter(Boolean);
+            if(!members.length)members.push(famName);
+            members.forEach((m,i)=>{G.players.push({id:p.id+'_'+i,name:m,family:p.id,amount:0,alive:true,change:''})});
         }else{
             if(G.players.find(pl=>pl.id===p.id))return;
-            G.players.push({id:p.id,name:p.name,family:null,amount:0,alive:true,change:''});
+            G.players.push({id:p.id,name:cleanName(p.name,'שחקן'),family:null,amount:0,alive:true,change:''});
         }
         broadcastState();
         renderLobby();
     });
 
     channel.on('broadcast',{event:'game_state'},({payload})=>{
-        if(IS_HOST){
-            // host only uses this to open game screen for themselves if needed
-            if(payload.started&&!G.started){hide('waitingRoom');show('gameScreen');document.getElementById('videoSection').classList.remove('hidden');renderGame();updateOnlineUI();}
-            return;
-        }
+        if(IS_HOST)return; // host opens its game screen directly in startOnlineGame
+        clearTimeout(JOIN_TIMER);
+        if(G.started&&payload.started)return; // ignore late/duplicate state once playing
         G=payload;renderLobby();
         if(G.started){hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');renderGame();updateOnlineUI()}
     });
 
+    channel.on('broadcast',{event:'join_rejected'},({payload})=>{
+        if(payload.target!==MY_ID)return;
+        alert('המשחק בחדר הזה כבר התחיל — אי אפשר להצטרף באמצע.');
+        leaveRoom();
+    });
+
+    // Remote spins: everyone animates the same spin (same letter, power, duration, fall direction)
     channel.on('broadcast',{event:'spin_result'},({payload})=>{
         if(payload.spinnerId===MY_ID)return;
-        G=payload.state;
-        spinning=true;
-        showSpinAnimation(payload.letter,0.5,()=>{spinning=false;renderGame();updateOnlineUI();if(G.over)showWinner()});
+        spinQueue.push(payload);
+        if(!spinning)playNextRemoteSpin();
     });
 
     channel.on('broadcast',{event:'game_log'},({payload})=>{addLogLocal(payload.text)});
@@ -532,15 +559,15 @@ function renderLobby(){
         el.innerHTML=G.families.map(f=>{
             const members=G.players.filter(p=>p.family===f.id);
             return `<div class="lobby-family">
-                <div class="lobby-family-name"><span style="color:${f.color}">●</span> משפ׳ ${f.name}</div>
-                <div class="lobby-family-members">${members.map(m=>`<span>${m.name}</span>`).join('')}</div>
+                <div class="lobby-family-name"><span style="color:${safeColor(f.color)}">●</span> משפ׳ ${esc(f.name)}</div>
+                <div class="lobby-family-members">${members.map(m=>`<span>${esc(m.name)}</span>`).join('')}</div>
             </div>`;
         }).join('');
         // Also show non-family players if mixed
         const noFam=G.players.filter(p=>!p.family);
-        if(noFam.length)el.innerHTML+=noFam.map(p=>`<div class="lobby-player"><span class="dot"></span> ${p.name}</div>`).join('');
+        if(noFam.length)el.innerHTML+=noFam.map(p=>`<div class="lobby-player"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
     }else{
-        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''}"><span class="dot"></span> ${p.name}</div>`).join('');
+        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''}"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
     }
 }
 
@@ -596,7 +623,11 @@ function startOnlineGame(){
     }
 
     G.pot=G.ante*G.players.length;G.currentTurn=0;G.over=false;G.started=true;
-    broadcastState();addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');
+    broadcastState();
+    // Host opens its own game screen directly (its own echoed broadcast is ignored)
+    hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');
+    renderGame();updateOnlineUI();
+    addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');
 }
 
 function updateOnlineUI(){
@@ -617,7 +648,7 @@ const FACE_DEFAULTS={'נ':'#3a3a7a','ג':'#1e6040','ה':'#2a5abf','פ':'#a02020'
 const TIP_DEFAULTS ={'נ':'#22226a','ג':'#103828','פ':'#6a1010','ה':'#1a3a8a'};
 
 function getFaceColor(l){return document.getElementById({נ:'colNun',ג:'colGimel',ה:'colHeh',פ:'colPeh'}[l])?.value||FACE_DEFAULTS[l]}
-function syncFaceColor(){/* called live from inputs — current face re-drawn next setFace */}
+function syncFaceColor(){const l=document.getElementById('dreidelLetter')?.textContent;if(LETTERS.includes(l))setFace(l,false)}
 
 function setFace(letter, dim){
     const body=document.getElementById('dreidelBody');
@@ -690,6 +721,17 @@ function resetSpinUI(){
     document.getElementById('powerClicks').textContent='○ ○ ○';
 }
 
+// Spin duration from settings (safe even if min > max)
+function getSpinDur(power){
+    const a=parseFloat(document.getElementById('spinMin')?.value||1.5);
+    const b=parseFloat(document.getElementById('spinMax')?.value||4);
+    const lo=Math.min(a,b), hi=Math.max(a,b);
+    return Math.round((lo+power*(hi-lo))*1000);
+}
+
+let LOG_BUF=null;     // while non-null, addLog() collects instead of showing (no spoilers before the dreidel stops)
+let spinQueue=[];     // remote spins waiting to be animated
+
 function doSpin(){
     if(spinning||G.over)return;
     resetDreidel();
@@ -697,24 +739,40 @@ function doSpin(){
     spinning=true;
     document.getElementById('spinBtn').disabled=true;
     G.players.forEach(p=>p.change='');
-    if(MODE==='online'){
-        applyLetter(letter);
-        showSpinAnimation(letter,spinPower,()=>{
-            resetSpinUI();renderGame();updateOnlineUI();spinning=false;
-            document.getElementById('spinBtn').disabled=false;
-            // broadcast final state (with updated currentTurn) after animation
-            channel.send({type:'broadcast',event:'spin_result',payload:{letter,state:G,spinnerId:MY_ID}});
-            if(G.over)showWinner();
-        });
-    }else{
-        showSpinAnimation(letter,spinPower,()=>{applyLetter(letter);renderGame();spinning=false;document.getElementById('spinBtn').disabled=false;resetSpinUI();if(G.over)showWinner()});
+    const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left'};
+
+    // Compute the result now, but hold the log lines until the animation ends
+    LOG_BUF=[];applyLetter(letter);const logs=LOG_BUF;LOG_BUF=null;
+
+    // Online: broadcast at the START so everyone watches the same spin together
+    if(MODE==='online'&&channel){
+        channel.send({type:'broadcast',event:'spin_result',payload:{letter,opts,logs,state:JSON.parse(JSON.stringify(G)),spinnerId:MY_ID}});
     }
+
+    showSpinAnimation(letter,opts,()=>{
+        logs.forEach(addLogLocal);
+        resetSpinUI();renderGame();spinning=false;
+        document.getElementById('spinBtn').disabled=false;
+        if(MODE==='online')updateOnlineUI();
+        if(G.over)showWinner();
+    });
 }
 
-function showSpinAnimation(fl, power, cb){
-    const spinMinS=parseFloat(document.getElementById('spinMin')?.value||1.5);
-    const spinMaxS=parseFloat(document.getElementById('spinMax')?.value||4);
-    const totalDur=Math.round((spinMinS + power*(spinMaxS-spinMinS))*1000);
+function playNextRemoteSpin(){
+    const p=spinQueue.shift();if(!p)return;
+    spinning=true;resetDreidel();
+    showSpinAnimation(p.letter,p.opts||{power:.5},()=>{
+        G=p.state;
+        (p.logs||[]).forEach(addLogLocal);
+        spinning=false;renderGame();updateOnlineUI();
+        if(G.over)showWinner();else playNextRemoteSpin();
+    });
+}
+
+function showSpinAnimation(fl, opts, cb){
+    const power=(opts&&typeof opts.power==='number')?opts.power:.5;
+    const totalDur=(opts&&opts.dur)||getSpinDur(power);
+    const fallDir=(opts&&opts.dir)||(Math.random()>.5?'fall-right':'fall-left');
 
     const svg=document.getElementById('dreidelSvg');
     const rl=document.getElementById('resultLine');
@@ -753,15 +811,19 @@ function showSpinAnimation(fl, power, cb){
     if(faceSeq.length>1 && faceSeq[faceSeq.length-2]===fl)
         faceSeq[faceSeq.length-2]=LETTERS[(LETTERS.indexOf(fl)+1)%4];
 
+    // Base duration per half-rev: starts fast, slows with ease-out (55ms..375ms),
+    // then scaled so the whole spin matches the duration from settings
+    const baseDurs=[];
+    for(let i=0;i<totalHalfRevs;i++){const speed=Math.pow(1-i/totalHalfRevs,1.6);baseDurs.push(55+(1-speed)*320)}
+    const baseTotal=baseDurs.reduce((a,b)=>a+b,0)*0.95;
+    const durScale=totalDur/baseTotal;
+
     let currentFaceIdx=0;
     setFace(faceSeq[0], false);
 
     function nextHalfRev(){
         if(halfRev>=totalHalfRevs) { finish(); return; }
-        const progress=halfRev/totalHalfRevs;
-        // Duration of this half-rev: starts fast, slows with ease-out
-        const speed=Math.pow(1-progress, 1.6);
-        const halfDur=Math.round(55 + (1-speed)*320); // 55ms..375ms
+        const halfDur=Math.max(30,Math.round(baseDurs[halfRev]*durScale));
 
         // Phase A: squeeze to 0
         svg.style.transition=`transform ${halfDur*0.45}ms ease-in`;
@@ -804,8 +866,7 @@ function showSpinAnimation(fl, power, cb){
     function doFall(){
         svg.style.transition='';
         svg.style.transform='';
-        const dir=Math.random()>.5?'fall-right':'fall-left';
-        svg.classList.add(dir);
+        svg.classList.add(fallDir);
         setTimeout(()=>{ if(cb) cb(); }, 1300);
     }
 }
@@ -814,8 +875,7 @@ function resetDreidel(){
     const s=document.getElementById('dreidelSvg');
     s.classList.remove('fall-right','fall-left');
     s.style.transition=''; s.style.transform='';
-    // Reset to neutral face
-    setFace('?'===document.getElementById('dreidelLetter')?.textContent?'נ':'נ', false);
+    setFace('נ', false);
 }
 
 // ══════ AUDIO ══════
@@ -861,85 +921,74 @@ function playResult(letter){
 // ══════ SETTINGS ══════
 function toggleSettings(){ document.getElementById('settingsPanel').classList.toggle('hidden'); }
 
+// ── Money helpers ──
+// In shared family scoring, every alive member holds a mirror of the family pool,
+// so a change is applied to all of them — but counted ONCE.
+function famScoring(p){return G.scoringMode==='family'&&p&&p.family}
+function adjust(p,delta,showChange){
+    const targets=famScoring(p)?G.players.filter(pl=>pl.family===p.family&&pl.alive):[p];
+    targets.forEach(m=>{m.amount+=delta;if(showChange)m.change=delta>0?'+'+delta:delta<0?'-'+(-delta):'—'});
+}
+// Pay into the pot — never more than the player (or family pool) has
+function payToPot(p,amt,showChange){
+    const pay=Math.max(0,Math.min(amt,p.amount));
+    adjust(p,-pay,showChange);G.pot+=pay;return pay;
+}
+// Every alive player antes (a family in shared scoring pays once per member)
+function anteAll(){G.players.forEach(pl=>{if(pl.alive)payToPot(pl,G.ante,false)})}
+function eliminate(){G.players.forEach(pl=>{if(pl.alive&&pl.amount<=0){pl.alive=false;pl.amount=0;addLog(`💀 ${pl.name} יצא!`)}})}
+function updateFamScores(){
+    if(G.scoringMode==='both'&&G.familyScores){
+        G.families.forEach(f=>{G.familyScores[f.id]=G.players.filter(pl=>pl.family===f.id&&pl.alive).reduce((s,pl)=>s+pl.amount,0)});
+    }
+}
+// Game over when only one "side" is left (a single player, or a single family in shared scoring)
+function checkOver(){
+    const alive=G.players.filter(p=>p.alive);
+    const sides=new Set(alive.map(p=>famScoring(p)?p.family:p.id));
+    if(sides.size<=1){
+        G.over=true;
+        if(alive[0]&&G.pot>0){adjust(alive[0],G.pot,false);G.pot=0}
+        return true;
+    }
+    return false;
+}
+
 function applyLetter(l){
     const p=G.players[G.currentTurn];G.players.forEach(pl=>pl.change='');
-    
+
     switch(l){
         case'נ':p.change='—';addLog(`${p.name} ← נ׳ — כלום.`);break;
         case'ג':{
-            const w=G.pot;
-            if(G.scoringMode==='family'&&p.family){
-                // Add to all family members
-                const fam=G.players.filter(pl=>pl.family===p.family&&pl.alive);
-                fam.forEach(m=>{m.amount+=w;m.change='+'+w});
-            }else{
-                p.amount+=w;p.change='+'+w;
-            }
-            G.pot=0;addLog(`${p.name} ← ג׳ — לקח ${w}! 🎉`);
-            G.players.forEach(pl=>{if(pl.alive){pl.amount-=G.ante;G.pot+=G.ante}});
-            addLog(`כולם שמו ${G.ante} בקופה.`);break;
+            const w=G.pot;G.pot=0;adjust(p,w,true);
+            addLog(`${p.name} ← ג׳ — לקח ${w}! 🎉`);
+            anteAll();addLog(`כולם שמו ${G.ante} בקופה.`);break;
         }
         case'ה':{
-            const h=Math.round(G.pot/2);
-            if(G.scoringMode==='family'&&p.family){
-                const fam=G.players.filter(pl=>pl.family===p.family&&pl.alive);
-                fam.forEach(m=>{m.amount+=h;m.change='+'+h});
-            }else{
-                p.amount+=h;p.change='+'+h;
-            }
-            G.pot-=h;addLog(`${p.name} ← ה׳ — חצי (${h}).`);break;
+            const h=Math.ceil(G.pot/2);G.pot-=h;adjust(p,h,true);
+            addLog(`${p.name} ← ה׳ — חצי (${h}).`);break;
         }
-        case'פ':
-            if(G.scoringMode==='family'&&p.family){
-                const fam=G.players.filter(pl=>pl.family===p.family&&pl.alive);
-                fam.forEach(m=>{m.amount-=G.ante;m.change='-'+G.ante;G.pot+=G.ante});
-            }else{
-                p.amount-=G.ante;G.pot+=G.ante;p.change='-'+G.ante;
-            }
-            addLog(`${p.name} ← פ׳ — שילם ${G.ante}.`);break;
-    }
-
-    // Update family totals for 'both' mode
-    if(G.scoringMode==='both'&&G.familyScores){
-        G.families.forEach(f=>{
-            G.familyScores[f.id]=G.players.filter(pl=>pl.family===f.id&&pl.alive).reduce((s,pl)=>s+pl.amount,0);
-        });
-    }
-
-    // Elimination
-    G.players.forEach(pl=>{if(pl.alive&&pl.amount<=0){pl.alive=false;pl.amount=0;addLog(`💀 ${pl.name} יצא!`)}});
-    
-    // Check family elimination in family scoring
-    if(G.scoringMode==='family'&&G.families){
-        G.families.forEach(f=>{
-            const fam=G.players.filter(pl=>pl.family===f.id);
-            if(fam.every(pl=>!pl.alive||pl.amount<=0)){
-                fam.forEach(pl=>{if(pl.alive){pl.alive=false;pl.amount=0}});
-            }
-        });
-    }
-
-    const alive=G.players.filter(p=>p.alive);
-    if(alive.length<=1){G.over=true;if(alive[0]){alive[0].amount+=G.pot;G.pot=0}return}
-    
-    // Check if only one family left (family mode)
-    if(G.scoringMode==='family'&&G.families&&G.families.length>0){
-        const aliveFams=new Set(alive.filter(p=>p.family).map(p=>p.family));
-        const aliveIndiv=alive.filter(p=>!p.family);
-        if(aliveFams.size+(aliveIndiv.length>0?1:0)<=1&&aliveIndiv.length<=1){
-            G.over=true;alive.forEach(p=>{p.amount+=Math.floor(G.pot/alive.length)});G.pot=0;return;
+        case'פ':{
+            const paid=payToPot(p,G.ante,true);
+            addLog(`${p.name} ← פ׳ — שילם ${paid}.`);break;
         }
     }
+
+    eliminate();
+    if(checkOver()){updateFamScores();return}
+
+    // Empty pot → everyone antes again
+    if(G.pot===0){anteAll();addLog(`הקופה ריקה — כולם שמו ${G.ante}.`);eliminate();if(checkOver()){updateFamScores();return}}
 
     do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive);
-    if(G.pot===0){G.players.forEach(pl=>{if(pl.alive){pl.amount-=G.ante;G.pot+=G.ante}});G.players.forEach(pl=>{if(pl.alive&&pl.amount<=0){pl.alive=false;pl.amount=0;addLog(`💀 ${pl.name} יצא!`)}})}
+    updateFamScores();
 }
 
 // ═══════════ RENDER ═══════════
 function renderGame(){
     document.getElementById('potVal').textContent=G.pot;
     const cp=G.players[G.currentTurn];
-    document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?cp.name:'—'}</strong>`;
+    document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?esc(cp.name):'—'}</strong>`;
 
     const area=document.getElementById('playersArea');
 
@@ -953,9 +1002,9 @@ function renderGame(){
             let famTotal='';
             if((G.scoringMode==='both'||G.scoringMode==='family')&&G.familyScores){
                 const total=G.scoringMode==='family'?members[0]?.amount:G.familyScores[f.id];
-                famTotal=`<span style="margin-right:auto;font-family:'Secular One';color:var(--gold);font-size:.8rem">סה״כ: ${total||0}</span>`;
+                famTotal=`<span style="margin-right:auto;font-family:'Secular One';color:var(--gold);font-size:.8rem">סה״כ: ${Number(total)||0}</span>`;
             }
-            html+=`<div class="family-group"><div class="family-group-title"><span class="fam-dot" style="background:${f.color}"></span>משפ׳ ${f.name} ${famTotal}</div><div class="players-grid">${members.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
+            html+=`<div class="family-group"><div class="family-group-title"><span class="fam-dot" style="background:${safeColor(f.color)}"></span>משפ׳ ${esc(f.name)} ${famTotal}</div><div class="players-grid">${members.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
         });
         const noFam=G.players.filter(p=>!p.family);
         if(noFam.length)html+=`<div class="family-group"><div class="players-grid">${noFam.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
@@ -967,9 +1016,9 @@ function renderGame(){
 
 function playerCard(p,i){
     return `<div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${G.over&&p.alive?'winner':''}">
-        <div class="p-name"><span class="crown">👑</span>${p.name}${!p.alive?' ❌':''}</div>
-        <div class="p-amt">${p.alive?p.amount:0}</div>
-        <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${p.change||''}</div>
+        <div class="p-name"><span class="crown">👑</span>${esc(p.name)}${!p.alive?' ❌':''}</div>
+        <div class="p-amt">${p.alive?(Number(p.amount)||0):0}</div>
+        <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${esc(p.change)}</div>
     </div>`;
 }
 
@@ -985,10 +1034,10 @@ function showWinner(){
     }
     document.getElementById('winName').textContent=winText;
     document.getElementById('winModal').classList.add('show');
-    addLog(`🏆 ${winText}`);
+    addLogLocal(`🏆 ${winText}`); // every client shows it locally — no broadcast duplicates
 }
 
-function addLog(text){addLogLocal(text);if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'game_log',payload:{text}})}
+function addLog(text){if(LOG_BUF){LOG_BUF.push(text);return}addLogLocal(text);if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'game_log',payload:{text}})}
 function addLogLocal(text){const el=document.createElement('div');el.className='log-entry';el.textContent=text;const c=document.getElementById('logEntries');if(c.firstChild&&c.firstChild.textContent===text)return;c.insertBefore(el,c.firstChild)}
 
 // ═══════════ WebRTC ═══════════
@@ -1033,7 +1082,7 @@ async function createPeerConnection(pid,init){if(!localStream)return;const pc=ne
 async function handleOffer(from,offer){if(!localStream)await startCamera();if(!localStream)return;if(!peerConnections[from])await createPeerConnection(from,false);const pc=peerConnections[from];await pc.setRemoteDescription(new RTCSessionDescription(offer));const a=await pc.createAnswer();await pc.setLocalDescription(a);channel.send({type:'broadcast',event:'rtc_answer',payload:{from:MY_ID,target:from,answer:a}})}
 async function handleAnswer(from,a){const pc=peerConnections[from];if(pc)await pc.setRemoteDescription(new RTCSessionDescription(a))}
 async function handleIce(from,c){const pc=peerConnections[from];if(pc)await pc.addIceCandidate(new RTCIceCandidate(c))}
-function addRemoteVideo(pid,stream){const g=document.getElementById('videoGrid');if(document.getElementById('vid_'+pid))return;document.getElementById('vidPlaceholder')?.classList.add('hidden');const fam=G.families?.find(f=>f.id===pid);const t=document.createElement('div');t.className='video-tile';t.id='vid_'+pid;t.innerHTML=`<video autoplay playsinline></video><div class="vid-name">${fam?'משפ׳ '+fam.name:pid}</div>`;g.appendChild(t);t.querySelector('video').srcObject=stream}
+function addRemoteVideo(pid,stream){const g=document.getElementById('videoGrid');if(document.getElementById('vid_'+pid))return;document.getElementById('vidPlaceholder')?.classList.add('hidden');const fam=G.families?.find(f=>f.id===pid);const pl=G.players.find(p=>p.id===pid);const t=document.createElement('div');t.className='video-tile';t.id='vid_'+pid;t.innerHTML=`<video autoplay playsinline></video><div class="vid-name">${esc(fam?'משפ׳ '+fam.name:(pl?pl.name:'שחקן'))}</div>`;g.appendChild(t);t.querySelector('video').srcObject=stream}
 function toggleVideo(){if(!localStream)return;videoEnabled=!videoEnabled;localStream.getVideoTracks().forEach(t=>t.enabled=videoEnabled);updateVidBtns()}
 function toggleMic(){if(!localStream)return;micEnabled=!micEnabled;localStream.getAudioTracks().forEach(t=>t.enabled=micEnabled);updateVidBtns()}
 function updateVidBtns(){document.getElementById('vidToggle').textContent=videoEnabled?'📷 כבה':'📷 הפעל';document.getElementById('vidToggle').classList.toggle('active',videoEnabled);document.getElementById('micToggle').textContent=micEnabled?'🎤 השתק':'🔇 בטל';document.getElementById('micToggle').classList.toggle('active',micEnabled)}
