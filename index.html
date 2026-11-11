@@ -93,6 +93,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .new-game-btn{position:fixed;top:12px;left:12px;z-index:100}
 .pot-box{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--bg-card),var(--bg-card-alt));border:1px solid var(--border);border-radius:var(--r);padding:8px 16px}
 .pot-box .emoji{font-size:1.4rem}.pot-label{font-size:.7rem;color:var(--text-dim)}.pot-val{font-family:'Secular One',sans-serif;font-size:1.3rem;color:var(--gold)}
+.turn-box.urgent strong{color:var(--red)}
 .turn-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:8px 16px;font-size:.85rem}.turn-box strong{color:var(--gold)}
 
 /* Main area: dreidel centered, players below */
@@ -234,6 +235,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <h2 class="section-title">משחק מקומי</h2>
     <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
     <div class="form-row"><label>סכום התחלתי:</label><input type="number" id="localStartAmt" class="input" value="100" min="10" step="10"></div>
+    <div class="form-row"><label>זמן משחק:</label><select id="localTime" class="input"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option></select></div>
     <hr class="divider"><div id="localNames"></div>
     <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="startLocalGame()">🎲 התחל!</button>
 </div>
@@ -284,6 +286,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                 </div>
             </div>
             <div class="form-row" style="margin-top:12px"><label>סכום התחלתי:</label><input type="number" id="onlineStartAmt" class="input" value="100" min="10" step="10"></div>
+            <div class="form-row"><label>זמן משחק:</label><select id="onlineTime" class="input"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option></select></div>
             <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="createRoom()">צור חדר</button>
         </div>
 
@@ -321,6 +324,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div class="game-top">
             <div class="pot-box"><span class="emoji">🪙</span><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
             <div class="turn-box" id="turnBox">תור: <strong>—</strong></div>
+            <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
         </div>
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
         <div class="game-main">
@@ -374,7 +378,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </div>
 
 <div class="app-version" id="appVersion"></div>
-<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon">🏆</div><h2 id="winName">—</h2><p>ניצח את המשחק!</p><button class="btn btn-gold" onclick="clearSession();location.reload()">משחק חדש</button></div></div>
+<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-gold" id="rematchBtn" onclick="rematch()">🔁 משחק חוזר — אותם שחקנים</button>
+        <div id="rematchWait" class="hidden" style="font-size:.8rem;color:var(--text-dim)">המארח יכול להתחיל משחק חוזר באותו חדר</div>
+        <button class="btn btn-outline" onclick="clearSession();location.reload()">משחק חדש</button>
+    </div></div></div>
 </div>
 
 <!-- ══ SETTINGS ══ -->
@@ -385,11 +394,14 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun"   value="#3a3a7a" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אפור-כחול</span></div>
   <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1e6040" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">ירוק</span></div>
   <div class="settings-row"><label>ה (חצי)</label><input type="color" id="colHeh"   value="#2a5abf" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">כחול</span></div>
-  <div class="settings-row"><label>פ (לשלם)</label><input type="color" id="colPeh"  value="#a02020" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אדום</span></div>
+  <div class="settings-row"><label id="colPehLabel">פ (לשלם)</label><input type="color" id="colPeh"  value="#a02020" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אדום</span></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">⏱ זמן סיבוב</div>
   <div class="settings-row"><label>מינ׳</label><input type="range" id="spinMin" min="0.5" max="3" step="0.5" value="1.5" oninput="document.getElementById('spinMinVal').textContent=this.value+'s'"><span class="val-label" id="spinMinVal">1.5s</span></div>
   <div class="settings-row"><label>מקס׳</label><input type="range" id="spinMax" min="2"   max="7" step="0.5" value="4"   oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">4s</span></div>
+  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">✡️ האות הרביעית</div>
+  <div class="settings-row"><select id="fourthLetter" class="input" style="padding:5px 8px;font-size:.8rem" onchange="applyFourthLetter()"><option value="פ">פ — נס גדול היה פה (ארץ ישראל)</option><option value="ש">ש — נס גדול היה שם (חוץ לארץ)</option></select></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
@@ -409,7 +421,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v25';
+const APP_VERSION='v26';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -433,13 +445,15 @@ function setOnlineType(t){
 }
 
 // ═══════════ LOCAL ═══════════
-function renderLocalNames(){const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');d.innerHTML='';for(let i=0;i<n;i++)d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" maxlength="20" placeholder="שחקן ${i+1}"></div>`}
+function renderLocalNames(){const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');const keep=[...d.querySelectorAll('.local-name')].map(i=>i.value);d.innerHTML='';for(let i=0;i<n;i++)d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" maxlength="20" placeholder="שחקן ${i+1}" value="${esc(keep[i]||'')}"></div>`}
 renderLocalNames();
 
 function startLocalGame(){
     G.startAmt=parseInt(document.getElementById('localStartAmt').value)||100;G.ante=Math.round(G.startAmt*.1);
-    G.players=[];G.families=[];G.pot=0;G.currentTurn=0;G.over=false;
-    document.querySelectorAll('.local-name').forEach((inp,i)=>{G.players.push({id:'p'+i,name:inp.value.trim()||`שחקן ${i+1}`,family:null,amount:G.startAmt-G.ante,alive:true,change:''});G.pot+=G.ante});
+    G.players=[];G.families=[];G.scoringMode='individual';G.firstTurn=0;G.round=1;
+    G.timeLimitMin=parseInt(document.getElementById('localTime').value)||0;
+    document.querySelectorAll('.local-name').forEach((inp,i)=>{G.players.push({id:'p'+i,name:cleanName(inp.value,`שחקן ${i+1}`),family:null,amount:0,alive:true,change:''})});
+    resetRound();
     hide('modeScreen');hide('localSetup');show('gameScreen');document.getElementById('videoSection').classList.add('hidden');
     document.getElementById('spinBtn').classList.remove('hidden');document.getElementById('waitingMsg').classList.add('hidden');
     addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');renderGame();
@@ -580,6 +594,12 @@ function joinChannel(onReady){
         spinQueue.push(payload);
         if(!spinning)playNextRemoteSpin();
     });
+    channel.on('broadcast',{event:'game_restart'},({payload})=>{
+        if(payload.from===MY_ID||REJOINING)return;
+        LAST_STATE=payload.state;
+        spinQueue.push({kind:'state',state:payload.state,restart:true});
+        if(!spinning)playNextRemoteSpin();
+    });
     // State change without a spin (a skipped turn)
     channel.on('broadcast',{event:'state_update'},({payload})=>{
         if(payload.from===MY_ID||REJOINING)return;
@@ -708,6 +728,41 @@ function presenceTick(){
     if(left===0&&!spinning&&leaderId()===MY_ID)skipTurn(cp);
 }
 setInterval(presenceTick,1000);
+
+// Countdown in the top bar
+function timerTick(){
+    const box=document.getElementById('timerBox');
+    if(!G.endsAt||document.getElementById('gameScreen').classList.contains('hidden')){box.classList.add('hidden');return}
+    box.classList.remove('hidden');
+    const ms=Math.max(0,G.endsAt-Date.now());
+    const m=Math.floor(ms/60000),sec=Math.floor(ms/1000)%60;
+    document.getElementById('timerVal').textContent=ms>0?`${m}:${String(sec).padStart(2,'0')}`:(G.over?'0:00':'סיבוב אחרון!');
+    box.classList.toggle('urgent',ms<60000);
+}
+setInterval(timerTick,1000);
+
+// ═══════════ SETTINGS PERSISTENCE ═══════════
+const SETTINGS_KEY='dreidel_settings';
+const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
+function saveSettings(){
+    const o={};
+    SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
+    o.localNames=[...document.querySelectorAll('.local-name')].map(i=>i.value);
+    lsSet(SETTINGS_KEY,JSON.stringify(o));
+}
+function loadSettings(){
+    let o=null;try{o=JSON.parse(lsGet(SETTINGS_KEY)||'null')}catch(e){}
+    if(!o)return;
+    SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(!el||!(id in o))return;if(el.type==='checkbox')el.checked=!!o[id];else el.value=o[id]});
+    document.getElementById('spinMinVal').textContent=document.getElementById('spinMin').value+'s';
+    document.getElementById('spinMaxVal').textContent=document.getElementById('spinMax').value+'s';
+    document.getElementById('colPehLabel').textContent=dispLetter('פ')+' (לשלם)';
+    renderLocalNames();
+    (o.localNames||[]).forEach((v,i)=>{const inp=document.querySelectorAll('.local-name')[i];if(inp)inp.value=v});
+}
+loadSettings();
+document.getElementById('localNames').addEventListener('change',saveSettings);
+SETTING_IDS.forEach(id=>document.getElementById(id)?.addEventListener('change',saveSettings));
 function advanceTurn(){do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive)}
 function skipTurn(cp){
     G.players.forEach(p=>p.change='');
@@ -766,7 +821,20 @@ function startOnlineGame(){
         G.players=ordered;
     }
 
-    // Init scoring
+    G.hostId=MY_ID;
+    G.timeLimitMin=parseInt(document.getElementById('onlineTime').value)||0;
+    G.firstTurn=0;
+    resetRound();
+    G.started=true;
+    LAST_STATE=clone(G);
+    broadcastState();
+    // Host opens its own game screen directly (its own echoed broadcast is ignored)
+    enterOnlineGameScreen();
+    addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');
+}
+
+// Fresh amounts/pot for a new round with the same players (first game and rematches)
+function resetRound(){
     if(G.scoringMode==='family'){
         // Family scoring: all members share one pool per family
         G.familyScores={};
@@ -791,12 +859,35 @@ function startOnlineGame(){
         }
     }
 
-    G.pot=G.ante*G.players.length;G.currentTurn=0;G.over=false;G.started=true;
-    LAST_STATE=clone(G);
-    broadcastState();
-    // Host opens its own game screen directly (its own echoed broadcast is ignored)
-    enterOnlineGameScreen();
-    addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');
+    G.pot=G.ante*G.players.length;
+    G.currentTurn=(G.firstTurn||0)%G.players.length;
+    G.over=false;G.endedByTime=false;G.winners=null;
+    G.endsAt=G.timeLimitMin?Date.now()+G.timeLimitMin*60000:null;
+}
+
+// Who may start a rematch: local — anyone; online — the host, or (if the host left) the leader
+function canRematch(){
+    if(MODE!=='online')return true;
+    if(IS_HOST)return true;
+    const hostOnline=G.hostId&&ONLINE.has(G.hostId);
+    return !hostOnline&&leaderId()===MY_ID;
+}
+function rematch(){
+    if(!canRematch())return;
+    G.firstTurn=((G.firstTurn||0)+1)%G.players.length; // a different player starts each round
+    resetRound();
+    G.round=(G.round||1)+1;
+    document.getElementById('winModal').classList.remove('show');
+    resetDreidel();document.getElementById('resultLine').textContent='';
+    renderGame();
+    if(MODE==='online'){
+        LAST_STATE=clone(G);
+        channel.send({type:'broadcast',event:'game_restart',payload:{state:LAST_STATE,from:MY_ID}});
+        updateOnlineUI();
+    }else{
+        document.getElementById('spinBtn').disabled=false;
+    }
+    addLog(`🔁 משחק ${G.round} מתחיל! כל שחקן שם ${G.ante} בקופה.`);
 }
 
 function updateOnlineUI(){
@@ -810,14 +901,25 @@ function updateOnlineUI(){
 
 // ═══════════ SPIN ═══════════
 const LETTERS=['נ','ג','ה','פ'];
-const LDESC={'נ':'נון — ניקס (כלום)','ג':'גימל — גנץ (הכל!)','ה':'הא — האלב (חצי)','פ':'פה — פיי (לשלם)'};
+// Internally the 4th letter is always 'פ'. On screen it can be shown as ש (diaspora dreidel) — a per-device setting.
+function shinMode(){return document.getElementById('fourthLetter')?.value==='ש'}
+function dispLetter(l){return l==='פ'&&shinMode()?'ש':l}
+function ldesc(l){
+    if(l==='פ')return shinMode()?'שין — שטעל (לשלם)':'פה — פיי (לשלם)';
+    return {'נ':'נון — ניקס (כלום)','ג':'גימל — גנץ (הכל!)','ה':'הא — האלב (חצי)'}[l]||'';
+}
+function applyFourthLetter(){
+    document.getElementById('colPehLabel').textContent=dispLetter('פ')+' (לשלם)';
+    syncFaceColor();saveSettings();
+}
+let CURRENT_FACE=null;
 
 // Face colors & tip shading
 const FACE_DEFAULTS={'נ':'#3a3a7a','ג':'#1e6040','ה':'#2a5abf','פ':'#a02020'};
 const TIP_DEFAULTS ={'נ':'#22226a','ג':'#103828','פ':'#6a1010','ה':'#1a3a8a'};
 
 function getFaceColor(l){return document.getElementById({נ:'colNun',ג:'colGimel',ה:'colHeh',פ:'colPeh'}[l])?.value||FACE_DEFAULTS[l]}
-function syncFaceColor(){const l=document.getElementById('dreidelLetter')?.textContent;if(LETTERS.includes(l))setFace(l,false)}
+function syncFaceColor(){if(CURRENT_FACE)setFace(CURRENT_FACE,false);saveSettings()}
 
 function setFace(letter, dim){
     const body=document.getElementById('dreidelBody');
@@ -835,7 +937,7 @@ function setFace(letter, dim){
     } else {
         body.setAttribute('fill', col);
         tip.setAttribute('fill', tipCol);
-        if(le && letter) le.textContent = letter;
+        if(le && letter){ le.textContent = dispLetter(letter); CURRENT_FACE=letter; }
     }
 }
 
@@ -930,7 +1032,11 @@ function doSpin(){
 
 function playNextRemoteSpin(){
     const p=spinQueue.shift();if(!p)return;
-    if(p.kind==='state'){G=p.state;renderGame();updateOnlineUI();playNextRemoteSpin();return}
+    if(p.kind==='state'){
+        G=p.state;
+        if(p.restart){document.getElementById('winModal').classList.remove('show');resetDreidel();document.getElementById('resultLine').textContent='';addLogLocal(`🔁 משחק ${G.round||2} מתחיל!`)}
+        renderGame();updateOnlineUI();playNextRemoteSpin();return;
+    }
     spinning=true;resetDreidel();
     showSpinAnimation(p.letter,p.opts||{power:.5},()=>{
         G=p.state;
@@ -1019,7 +1125,7 @@ function showSpinAnimation(fl, opts, cb){
         svg.style.transition='';
         svg.style.transform='';
         setFace(fl, false);
-        rl.textContent=LDESC[fl]; rl.className='result-line r-'+fl;
+        rl.textContent=ldesc(fl); rl.className='result-line r-'+fl;
         playThud();
         setTimeout(()=>playResult(fl), 160);
         // Wobble before fall
@@ -1141,7 +1247,7 @@ function applyLetter(l){
         }
         case'פ':{
             const paid=payToPot(p,G.ante,true);
-            addLog(`${p.name} ← פ׳ — שילם ${paid}.`);break;
+            addLog(`${p.name} ← {P}׳ — שילם ${paid}.`);break; // {P} → פ or ש, per device
         }
     }
 
@@ -1151,8 +1257,26 @@ function applyLetter(l){
     // Empty pot → everyone antes again
     if(G.pot===0){anteAll();addLog(`הקופה ריקה — כולם שמו ${G.ante}.`);eliminate();if(checkOver()){updateFamScores();return}}
 
+    if(G.endsAt&&Date.now()>=G.endsAt){endByTime();updateFamScores();return}
+
     advanceTurn();
     updateFamScores();
+}
+
+// Time is up → the spin that just happened was the last one. Richest side wins (ties share the win).
+function endByTime(){
+    const alive=G.players.filter(p=>p.alive);
+    const sides={};
+    alive.forEach(p=>{const k=famScoring(p)?p.family:p.id;sides[k]=famScoring(p)?p.amount:p.amount});
+    const best=Math.max(...Object.values(sides));
+    G.winners=Object.keys(sides).filter(k=>sides[k]===best);
+    G.over=true;G.endedByTime=true;
+    addLog('⏰ הזמן נגמר!');
+}
+function isWinner(p){
+    if(!G.over||!p.alive)return false;
+    if(!G.winners)return true;
+    return G.winners.includes(famScoring(p)?p.family:p.id);
 }
 
 // ═══════════ RENDER ═══════════
@@ -1188,31 +1312,42 @@ function renderGame(){
 
 function playerCard(p,i){
     const off=MODE==='online'&&G.started&&ONLINE.size>0&&!isOnline(p)&&p.alive;
-    return `<div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${G.over&&p.alive?'winner':''} ${off?'offline':''}">
+    return `<div class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${isWinner(p)?'winner':''} ${off?'offline':''}">
         <div class="p-name"><span class="crown">👑</span>${esc(p.name)}${!p.alive?' ❌':''}${off?' <span title="לא מחובר">📴</span>':''}</div>
         <div class="p-amt">${p.alive?(Number(p.amount)||0):0}</div>
         <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${esc(p.change)}</div>
     </div>`;
 }
 
+function sideName(k){
+    const fam=G.families?.find(f=>f.id===k);
+    if(fam&&G.scoringMode==='family')return 'משפחת '+fam.name;
+    return G.players.find(p=>p.id===k)?.name||'?';
+}
 function showWinner(){
     const alive=G.players.filter(p=>p.alive);
     if(!alive.length)return;
     let winText;
-    if(G.scoringMode==='family'&&alive[0]?.family){
-        const fam=G.families.find(f=>f.id===alive[0].family);
-        winText='🎉 משפחת '+(fam?fam.name:'?')+' ניצחה!';
+    if(G.endedByTime&&G.winners){
+        const names=G.winners.map(sideName);
+        winText='🎉 '+names.join(' ו')+(names.length>1?' — תיקו!':'');
+        document.getElementById('winIcon').textContent='⏰';
+        document.getElementById('winSub').textContent=names.length>1?'הזמן נגמר — חולקים את הניצחון':'הזמן נגמר — הכי הרבה מטבעות!';
     }else{
-        winText='🎉 '+alive[0].name+' ניצח!';
+        winText=(G.scoringMode==='family'&&alive[0]?.family)?'🎉 משפחת '+(G.families.find(f=>f.id===alive[0].family)?.name||'?')+' ניצחה!':'🎉 '+alive[0].name+' ניצח!';
+        document.getElementById('winIcon').textContent='🏆';
+        document.getElementById('winSub').textContent='ניצח את המשחק!';
     }
+    const can=canRematch();
+    document.getElementById('rematchBtn').classList.toggle('hidden',!can);
+    document.getElementById('rematchWait').classList.toggle('hidden',can||MODE!=='online');
     document.getElementById('winName').textContent=winText;
     document.getElementById('winModal').classList.add('show');
-    clearSession();
     addLogLocal(`🏆 ${winText}`); // every client shows it locally — no broadcast duplicates
 }
 
 function addLog(text){if(LOG_BUF){LOG_BUF.push(text);return}addLogLocal(text);if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'game_log',payload:{text}})}
-function addLogLocal(text){const el=document.createElement('div');el.className='log-entry';el.textContent=text;const c=document.getElementById('logEntries');if(c.firstChild&&c.firstChild.textContent===text)return;c.insertBefore(el,c.firstChild)}
+function addLogLocal(text){text=String(text).replace(/\{P\}/g,dispLetter('פ'));const el=document.createElement('div');el.className='log-entry';el.textContent=text;const c=document.getElementById('logEntries');if(c.firstChild&&c.firstChild.textContent===text)return;c.insertBefore(el,c.firstChild)}
 
 // ═══════════ WebRTC ═══════════
 // Design:
