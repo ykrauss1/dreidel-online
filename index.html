@@ -172,7 +172,7 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .d3-face>img,.d3-tip>img{position:absolute;inset:0;width:100%;height:100%;display:block}
 .d3-top{position:absolute;left:70.5px;top:156px;width:324px;height:324px;transform:rotateY(45deg) rotateX(90deg);
     background:radial-gradient(circle,#e9c766 0,#c99a3a 35%,#9a7024 75%,#6a4a12 100%);box-shadow:inset 0 0 0 10px #8a6418,inset 0 0 0 16px #d4a94a}
-.d3-handle{position:absolute;left:171.5px;top:12px;width:122px;height:298px;display:block}
+.d3-handle{position:absolute;left:171.5px;top:12px;width:122px;height:298px;display:block;transform-origin:50% 100%;pointer-events:none}
 .d3-shade,.d3-gloss{position:absolute;inset:0;pointer-events:none}
 .d3-shade{background:#000;opacity:0}
 .d3-gloss{background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 48%,rgba(255,250,220,.25) 55%,transparent 70%);opacity:0;mix-blend-mode:screen}
@@ -195,6 +195,11 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .dreidel-svg.upright{animation:up .35s ease-out forwards}
 @keyframes up{0%{transform:rotate(0)}100%{transform:rotate(0)}}
 .result-line{font-size:.85rem;font-weight:600;min-height:22px;text-align:center;white-space:nowrap;margin-top:6px;margin-bottom:4px}
+.result-line{transition:opacity .6s}.result-line.fade{opacity:0}
+.nudge-bubble{position:absolute;left:50%;top:-8px;transform:translate(-50%,-100%) scale(.6);opacity:0;pointer-events:none;z-index:30;white-space:nowrap;background:linear-gradient(180deg,#ffd966,#e0a92a);color:#1a1300;font-family:'Secular One',sans-serif;font-size:1.15rem;padding:8px 18px;border-radius:22px;box-shadow:0 6px 24px rgba(0,0,0,.5);transition:opacity .3s,transform .3s cubic-bezier(.3,1.6,.5,1)}
+.nudge-bubble.show{opacity:1;transform:translate(-50%,-100%) scale(1);animation:nudgeWiggle .5s .3s 2}
+@keyframes nudgeWiggle{25%{transform:translate(-50%,-100%) rotate(-4deg)}75%{transform:translate(-50%,-100%) rotate(4deg)}}
+.dreidel-controls{position:relative}
 .r-נ{color:var(--text-dim)}.r-ג{color:var(--green)}.r-ה{color:var(--blue)}.r-פ{color:var(--red)}
 /* spin btn */
 .spin-btn{padding:9px 34px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#12141f;border:none;border-radius:10px;font-family:'Secular One',sans-serif;font-size:1rem;cursor:pointer;box-shadow:0 3px 12px var(--gold-glow);transition:all .2s}
@@ -570,8 +575,9 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                         <!-- a real 3D dreidel (CSS 3D): 4 faces + 4 tip triangles turn around the axis; the handle always faces us -->
                         <div class="d3-box"><div class="d3-scene"><div class="d3-cam"><div class="d3-tilt" id="d3Tilt">
                             <div class="d3-spin" id="d3Spin"><div class="d3-top"></div><div class="d3-tip" data-i="0"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-tip" data-i="1"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-tip" data-i="2"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-tip" data-i="3"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-face" data-i="0"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div><div class="d3-face" data-i="1"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div><div class="d3-face" data-i="2"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div><div class="d3-face" data-i="3"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div></div>
-                            <img class="d3-handle" src="d3-handle.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-handle.png'">
-                        </div></div></div></div></div>
+                        </div></div></div>
+                        <!-- the handle is drawn on top, outside the 3D scene: placed each frame where the axis comes out of the lid -->
+                        <img class="d3-handle" id="d3Handle" src="d3-handle.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-handle.png'"></div></div>
                     </div>
                 </div>
             </div>
@@ -697,7 +703,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v52';
+const APP_VERSION='v54';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1303,7 +1309,7 @@ function d3Els(){
     return D3.els={spin,tilt:document.getElementById('d3Tilt'),faces,tips,
         fShade:faces.map(f=>f.querySelector('.d3-shade')),fGloss:faces.map(f=>f.querySelector('.d3-gloss')),
         letters:faces.map(f=>f.querySelector('.face-letter')),tints:faces.map(f=>f.querySelector('.face-tint')),
-        tShade:tips.map(t=>t.querySelector('.d3-shade')),shadow:document.getElementById('dreidelShadow')};
+        tShade:tips.map(t=>t.querySelector('.d3-shade')),shadow:document.getElementById('dreidelShadow'),handle:document.getElementById('d3Handle')};
 }
 // light comes from the upper front-left; every face is shaded by its real 3D normal (spin + lean + fall)
 const LIGHT=(()=>{const v=[-.45,-.65,.62],n=Math.hypot(...v);return v.map(x=>x/n)})();
@@ -1327,6 +1333,17 @@ function d3Render(){
         const h=[LIGHT[0],LIGHT[1],LIGHT[2]+1],hn=Math.hypot(...h);
         e.fGloss[j].style.opacity=(Math.pow(Math.max(0,_dot(nf,h.map(x=>x/hn))),40)*.9).toFixed(3);
         e.letters[j].style.opacity=blurLetters.toFixed(2);
+    }
+    // the handle: project the axis (bottom of the handle at the lid, top of the handle) through the same lean,
+    // camera tilt and perspective as the 3D scene, and draw the flat handle image along it
+    if(e.handle){
+        const O=[232.5,874,0],cam=-2.5*Math.PI/180,P=2600,PO=[232.5,880*.32];
+        const pt=(x,y)=>{let v=[x-O[0],y-O[1],0];v=_lean(v);v[0]+=D3.drift;
+            const c=Math.cos(cam),s=Math.sin(cam);v=[v[0],v[1]*c-v[2]*s,v[1]*s+v[2]*c];
+            const X=O[0]+v[0],Y=O[1]+v[1],k=P/(P-v[2]);return[PO[0]+(X-PO[0])*k,PO[1]+(Y-PO[1])*k,k]};
+        const B=pt(232.5,312),T=pt(232.5,12),dx=T[0]-B[0],dy=T[1]-B[1];
+        const len=Math.hypot(dx,dy),ang=Math.atan2(dx,-dy)*180/Math.PI;
+        e.handle.style.transform=`translate(${(B[0]-232.5).toFixed(1)}px,${(B[1]-310).toFixed(1)}px) rotate(${ang.toFixed(2)}deg) scale(${B[2].toFixed(3)},${(len/300).toFixed(3)})`;
     }
     if(e.shadow){
         const lean=Math.sin(D3.tilt*Math.PI/180),dx=lean*Math.cos(D3.psi*Math.PI/180)*80+D3.drift*.318;
@@ -1578,14 +1595,43 @@ document.getElementById('spinModes').addEventListener('click',e=>{
     if(b.dataset.m==='shake'){try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')DeviceMotionEvent.requestPermission().catch(()=>{})}catch(_){}}
 });
 setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal closes, …)
+// ── "נו, משה! תורך!": if the player whose turn it is takes too long, a friendly nudge with their name ──
+const NUDGE={key:'',since:0,count:0,FIRST:15000,EVERY:20000,MAX:3};
+const NUDGE_LINES=['נו {n}! תורך! קדימה!','{n}, הסביבון מחכה לך!','הלו, {n}! תורך לסובב!','{n}, אנחנו מחכים... סובבו!','יאללה {n}, סובבו כבר!'];
+function nudgeTick(){
+    const gs=document.getElementById('gameScreen');
+    const p=G.players[G.currentTurn];
+    const key=[G.round||1,G.turnNo||0,G.currentTurn].join('|');
+    if(key!==NUDGE.key){NUDGE.key=key;NUDGE.since=Date.now();NUDGE.count=0;hideNudge();return}
+    const waiting=gs&&!gs.classList.contains('hidden')&&G.players.length&&!G.over&&!spinning&&!TRIVIA.open&&!CIRCLE.engaged&&!CIRCLE.singing&&!charging&&p&&p.alive!==false
+        &&!document.querySelector('.modal-bg.show')&&!document.hidden;
+    if(!waiting){NUDGE.since=Date.now();return}                     // the clock only runs while really waiting
+    const due=NUDGE.FIRST+NUDGE.count*NUDGE.EVERY;
+    if(NUDGE.count<NUDGE.MAX&&Date.now()-NUDGE.since>=due){NUDGE.count++;showNudge(p)}
+}
+function showNudge(p){
+    const name=(p.name||'').trim()||'שחקן';
+    const line=pick(NUDGE_LINES).replace('{n}',name);
+    let el=document.getElementById('nudgeBubble');
+    if(!el){el=document.createElement('div');el.id='nudgeBubble';el.className='nudge-bubble';document.querySelector('.dreidel-controls').prepend(el)}
+    el.textContent='👉 '+av(p)+line;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
+    clearTimeout(NUDGE.hideT);NUDGE.hideT=setTimeout(hideNudge,5000);
+    playSfx(pick(SFX.click),{vol:.7,rate:1.3});
+    if(narrOn())speakIn('he',line);
+}
+function hideNudge(){const el=document.getElementById('nudgeBubble');if(el)el.classList.remove('show')}
+setInterval(nudgeTick,1000);
 
 (function wireHand(){
     const art=document.getElementById('dreidelSvg'),ring=document.getElementById('spinRing'),box=art.parentElement;
     const TURN=Math.PI*2,QUARTER=Math.PI/2,MIN_W=3;
     let acc=0,samples=[],lastMove=0,lastPt=null,lastHead=null,shownFace=-1,faceBase=0,raf=0,recent=0;
-    let flickPts=[],x0=0,y0=0,idleOn=false,idleRaf=0,idlePhase=0,idleT=0;
+    let flickPts=[],x0=0,y0=0,idleOn=false,idleRaf=0,idlePhase=0,idleT=0,path=[];
+    // a real circle, not a nudge: the hand's path over the last 1.5 s must be at least this big (px)
+    const MIN_CIRCLE_PX=45;
+    function pathSize(){if(path.length<2)return 0;let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const [x,y] of path){a=Math.min(a,x);b=Math.max(b,x);c=Math.min(c,y);d=Math.max(d,y)}return Math.min(b-a,d-c)}
     function omega(win){const now=performance.now();let sum=0;for(const [t,d] of samples)if(now-t<=win)sum+=d;return sum/(win/1000)}
-    function clear(){acc=0;samples=[];recent=0;lastPt=null;lastHead=null;ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
+    function clear(){acc=0;samples=[];recent=0;lastPt=null;lastHead=null;path=[];ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
     // Circles are measured by how the DIRECTION of the hand turns (not by the angle around the dreidel),
     // so a circle anywhere on the screen, small or big, turns the dreidel.
     function track(x,y){
@@ -1593,7 +1639,7 @@ setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal 
         if(!lastPt){lastPt=[x,y];return}
         const dx=x-lastPt[0],dy=y-lastPt[1];
         if(Math.hypot(dx,dy)<4)return;                   // wait for a real step
-        const h=Math.atan2(dy,dx);lastPt=[x,y];
+        const h=Math.atan2(dy,dx);lastPt=[x,y];path.push([x,y,now]);while(path.length&&now-path[0][2]>1500)path.shift();
         if(lastHead!==null){
             let d=h-lastHead;if(d>Math.PI)d-=TURN;if(d<-Math.PI)d+=TURN;
             if(Math.abs(d)<1.3){acc+=d;samples.push([now,d]);while(samples.length&&now-samples[0][0]>500)samples.shift()}
@@ -1650,8 +1696,10 @@ setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal 
         ring.style.setProperty('--a',((acc*180/Math.PI)%360).toFixed(0)+'deg');
         const idle=performance.now()-lastMove;
         if(idle>150){                                     // the hand stopped
-            if(recent>MIN_W&&!CIRCLE.grabbing){launch(recent);return}         // it was turning fast → let it fly
+            const turned=Math.abs(acc)>=TURN*.75;                             // it really turned since it was grabbed
+            if(recent>MIN_W&&turned&&!CIRCLE.grabbing){launch(recent);return} // it was turning fast → let it fly
             if(recent<=MIN_W&&Math.abs(acc)>QUARTER)document.getElementById('powerLabel').textContent='מהר יותר... ועצרו!';
+            if(!turned&&idle>1500&&!CIRCLE.grabbing){letGo();return}         // just a nudge — let it go back to idling
             if(idle>4000&&!CIRCLE.grabbing){letGo();return}                  // nobody is turning it any more
         }
         raf=requestAnimationFrame(tick);
@@ -1663,8 +1711,10 @@ setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal 
         if(spinMode()!=='circle')return;
         if(!canSpinNow()||charging){if(CIRCLE.engaged)letGo();return}
         if(e.target&&e.target.closest&&e.target.closest('.settings-panel,.spin-modes,.modal-bg'))return;  // not while using menus
+        if(!CIRCLE.engaged&&lastMove&&performance.now()-lastMove>350)clear();   // a pause: start counting again
         track(e.clientX,e.clientY);
-        if(!CIRCLE.engaged&&Math.abs(acc)>QUARTER*.9)engage();               // ~a quarter of a circle in one direction
+        // a whole circle in one direction, and a real one (not a small twitch of the mouse)
+        if(!CIRCLE.engaged&&Math.abs(acc)>=TURN&&pathSize()>=MIN_CIRCLE_PX)engage();
     },{passive:true});
 
     // ── press on the dreidel: finger-circling (touch, circle mode) or a flick ──
@@ -1688,7 +1738,7 @@ setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal 
     const release=e=>{
         if(!CIRCLE.grabbing)return;
         CIRCLE.grabbing=false;box.classList.remove('grabbing');
-        if(CIRCLE.engaged){const w=Math.max(Math.abs(omega(160)),performance.now()-lastMove<120?recent:0);if(w>MIN_W)launch(w);else letGo();return}
+        if(CIRCLE.engaged){const w=Math.max(Math.abs(omega(160)),performance.now()-lastMove<120?recent:0);if(w>MIN_W&&Math.abs(acc)>=QUARTER*2)launch(w);else letGo();return}
         if(spinMode()==='circle'){letGo();return}
         const moved=Math.abs(e.clientX-x0),now=performance.now();flickPts.push([e.clientX,now]);
         const f=flickPts[0],l=flickPts[flickPts.length-1],speed=Math.abs(l[0]-f[0])/Math.max(1,l[1]-f[1]);
@@ -2108,6 +2158,7 @@ function showSpinAnimation(fl, opts, cb){
         svg.classList.add('settled');
         const e=d3Els();if(e)e.faces.forEach((f,j)=>f.classList.toggle('win',FACE_ORDER[j]===fl));
         rl.textContent=ldesc(fl); rl.className='result-line r-'+fl;
+        {const txt=rl.textContent;clearTimeout(window._rlT);window._rlT=setTimeout(()=>{if(rl.textContent===txt)rl.classList.add('fade')},4500)}
         playThud();
         setTimeout(()=>{playResult(fl);resultStamp(fl)}, 120);
         setTimeout(()=>narrate(fl,opts&&opts.who), 800);
@@ -2571,6 +2622,7 @@ const NARR_LANGS={
     yi:{name:'ייִדיש',re:/^yi\b/i,w:1.2},
     am:{name:'አማርኛ',re:/^am\b/i,w:.8}
 };
+const MALE_VOICE=/\b(asaf|avri|david|mark|guy|george|ryan|james|daniel|paul|pavel|dmitry|henri|claude|thomas|male)\b/i;
 const CHILD_VOICE=/\b(ana|maisie|eloise|gisela|xiaoyou|xiaoshuang|aigerim|child|kid|junior)\b/i;
 const FEMALE_VOICE=/\b(hila|carmit|zira|jenny|aria|samantha|karen|moira|tessa|amelie|am[ée]lie|hortense|denise|julie|marie|audrey|svetlana|dariya|irina|milena|katya|mekdes|hedda|katja|anna|petra|female|google)\b/i;
 const NARR_VOICE={};      // lang → {voice, child}
@@ -2580,13 +2632,13 @@ function findVoices(){
     if(!window.speechSynthesis)return;
     const vs=speechSynthesis.getVoices();
     const best=re=>{const c=vs.filter(v=>re.test(v.lang.replace('_','-')));if(!c.length)return null;
-        const score=v=>(CHILD_VOICE.test(v.name)?100:0)+(/natural|neural|online|enhanced|premium/i.test(v.name)?20:0)+(FEMALE_VOICE.test(v.name)?10:0)+(v.localService?0:2);
+        const score=v=>(CHILD_VOICE.test(v.name)?100:0)+(/natural|neural|online|enhanced|premium/i.test(v.name)?20:0)+(FEMALE_VOICE.test(v.name)?25:0)-(MALE_VOICE.test(v.name)?15:0)+(v.localService?0:2);
         return c.sort((a,b)=>score(b)-score(a))[0]};
     for(const k in NARR_LANGS){
         const L=NARR_LANGS[k];if(!L.re)continue;            // 'mine' = our recordings, not a device voice
         let v=best(L.re),alt=false;
         if(!v&&L.alt){v=best(L.alt);alt=!!v}
-        if(v)NARR_VOICE[k]={voice:v,child:CHILD_VOICE.test(v.name),alt};else delete NARR_VOICE[k];
+        if(v)NARR_VOICE[k]={voice:v,child:CHILD_VOICE.test(v.name),male:MALE_VOICE.test(v.name),alt};else delete NARR_VOICE[k];
     }
     HE_VOICE=NARR_VOICE.he?NARR_VOICE.he.voice:null;
     const note=document.getElementById('narratorNote');
@@ -2620,8 +2672,9 @@ function speakIn(lang,text){
     try{
         speechSynthesis.cancel();
         const u=new SpeechSynthesisUtterance(text);u.voice=nv.voice;u.lang=nv.voice.lang;
-        u.pitch=nv.child?1.2:1.75;           // no child voice on this device → a higher, kid-like pitch
-        u.rate=nv.child?1.05:1.12;u.volume=1;
+        // no child voice on this device → as high as the voice allows (a man's voice needs the most)
+        u.pitch=nv.child?1.2:nv.male?2:1.8;
+        u.rate=nv.child?1.05:1.15;u.volume=1;
         speechSynthesis.speak(u);return true;
     }catch(e){return false}
 }
