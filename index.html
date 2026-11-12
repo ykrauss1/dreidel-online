@@ -139,12 +139,15 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* Picture dreidel: the image + letters overlaid on the two enamel panels */
 .dreidel-art{position:relative}
 .dreidel-scale{position:relative}
+.dreidel-scale.grabbing{cursor:grabbing}
 .dreidel-shadow{position:absolute;left:50%;bottom:-4px;width:70px;height:14px;margin-left:-35px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent);pointer-events:none}
 /* ring around the dreidel: fills while you circle the mouse, glows when wound up */
 .spin-ring{position:absolute;left:50%;top:56%;width:230px;height:230px;margin:-115px 0 0 -115px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .25s;
     --p:0;background:conic-gradient(rgba(245,200,66,.85) calc(var(--p)*1turn),rgba(245,200,66,.12) 0);
     -webkit-mask:radial-gradient(closest-side,transparent 88%,#000 89%,#000 100%,transparent 101%);mask:radial-gradient(closest-side,transparent 88%,#000 89%,#000 100%,transparent 101%)}
 .spin-ring.show{opacity:1}
+.spin-ring.sticky{animation:ringPulse 1s ease-in-out infinite}
+@keyframes ringPulse{50%{filter:drop-shadow(0 0 18px rgba(245,200,66,1))}}
 .spin-ring.wound{background:conic-gradient(from var(--a,0deg),rgba(245,200,66,.95),rgba(255,120,60,.6),rgba(245,200,66,.95));filter:drop-shadow(0 0 10px rgba(245,200,66,.8))}
 .dreidel-scale.spinning .dreidel-shadow{animation:shadowPulse .18s infinite alternate}
 @keyframes shadowPulse{from{transform:scaleX(.8);opacity:.7}to{transform:scaleX(1.15);opacity:1}}
@@ -320,10 +323,23 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .pot-val{font-size:2.4rem}
     .header h1,.header-title{font-size:3rem}
 }
-.key-hint{display:block;font-size:.72rem;color:var(--text-dim);margin-top:6px;text-align:center;max-width:420px;line-height:1.5}
+.key-hint-unused{display:block;font-size:.72rem;color:var(--text-dim);margin-top:6px;text-align:center;max-width:420px;line-height:1.5}
 .hint-touch{display:none}.shake-opt{display:none}
 @media(hover:none) and (pointer:coarse){.hint-desk{display:none}.hint-touch{display:inline}.shake-opt{display:flex}}
-.dreidel-art{cursor:grab;touch-action:none;pointer-events:auto} /* the zone around it is click-through */
+.dreidel-art{touch-action:none}
+.dreidel-scale{pointer-events:auto;touch-action:none} /* the zone around it is click-through; the dreidel itself is not */
+.dreidel-controls[data-mode="flick"] .dreidel-scale,.dreidel-scale.m-flick{cursor:grab}
+/* how to spin — chooser + prompt */
+.spin-modes{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:4px 0 2px}
+.spin-modes button{background:var(--bg-card);border:1px solid var(--border-l);color:var(--text-dim);border-radius:20px;padding:5px 12px;font-family:inherit;font-size:.8rem;cursor:pointer;transition:all .2s;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.spin-modes button.on{background:var(--gold);color:#12141f;border-color:var(--gold);font-weight:700;box-shadow:0 0 14px var(--gold-glow)}
+.spin-modes .touch-only,.spin-modes .m-touch{display:none}
+@media(hover:none) and (pointer:coarse){.spin-modes .touch-only{display:inline-block}.spin-modes .m-touch{display:inline}.spin-modes .m-desk{display:none}}
+.spin-prompt{font-family:'Secular One',sans-serif;font-size:1.05rem;color:var(--gold);text-align:center;min-height:1.4em;text-shadow:0 0 12px rgba(245,200,66,.5);animation:promptPulse 1.6s ease-in-out infinite}
+@keyframes promptPulse{50%{opacity:.6;transform:scale(.97)}}
+.dreidel-controls:not(.can-spin) .spin-modes,.dreidel-controls:not(.can-spin) .spin-prompt{display:none}
+.dreidel-controls[data-mode="circle"] .spin-btn,.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn{display:none}
+@media(min-width:1000px){.spin-modes button{font-size:.95rem;padding:7px 16px}.spin-prompt{font-size:1.35rem}}
 .dreidel-art.grabbing{cursor:grabbing}
 .dreidel-art.charging{animation:chargeWiggle .12s infinite alternate}
 @keyframes chargeWiggle{from{transform:rotate(calc(var(--cv,0)*-4deg))}to{transform:rotate(calc(var(--cv,0)*4deg))}}
@@ -486,6 +502,14 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
             <div class="dreidel-controls">
                 <div class="turn-box turn-inline" id="turnBox">תור: <strong>—</strong></div>
                 <div class="result-line" id="resultLine"></div>
+                <div class="spin-modes" id="spinModes" role="group" aria-label="איך לסובב">
+                    <button data-m="circle"><span class="m-desk">🌀 סיבוב בעכבר</span><span class="m-touch">🌀 סיבוב באצבע</span></button>
+                    <button data-m="flick">✊ זריקה</button>
+                    <button data-m="taps">👆 3 לחיצות</button>
+                    <button data-m="hold">🎯 החזק ושחרר</button>
+                    <button data-m="shake" class="touch-only">📳 נענוע</button>
+                </div>
+                <div class="spin-prompt" id="spinPrompt"></div>
                 <button class="spin-btn" id="spinBtn">סובב!</button>
                 <div class="power-meter hidden" id="powerMeter">
                     <div class="power-label" id="powerLabel">לחץ שוב!</div>
@@ -493,10 +517,6 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                     <div class="power-clicks" id="powerClicks">○ ○ ○</div>
                 </div>
                 <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
-                <div class="key-hint">
-                    <span class="hint-desk">✊ תפסו את הסביבון בעכבר, סובבו במעגלים — ועזבו! · או משכו אותו הצידה · או 3 לחיצות על "סובב" · או החזיקו ושחררו בשיא · או <kbd>רווח</kbd></span>
-                    <span class="hint-touch">✊ שימו אצבע על הסביבון, סובבו במעגלים — ועזבו! · או החליקו אותו · או 3 לחיצות · או החזיקו ושחררו · או נערו 📳</span>
-                </div>
             </div>
             <div class="players-area" id="playersArea"></div>
         </div>
@@ -541,7 +561,6 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
   <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין (מכריז את התוצאה)</label>
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
-  <label class="sound-toggle shake-opt"><input type="checkbox" id="shakeOn" checked> 📳 נענוע הטלפון מסובב</label>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px">📲 אפליקציה</div>
   <div class="install-help" id="installHelp"></div>
@@ -559,7 +578,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v35';
+const APP_VERSION='v36';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -882,7 +901,7 @@ setInterval(timerTick,1000);
 
 // ═══════════ SETTINGS PERSISTENCE ═══════════
 const SETTINGS_KEY='dreidel_settings';
-const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','shakeOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
+const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -1183,6 +1202,7 @@ function spinFromInput(power,how){
         const msg=bull?`🎯 ${n} שחרר בדיוק בשיא!`
             :how==='flick'&&spinPower>0.7?`🌀 ${n} סובב ביד בכל הכוח!`
             :how==='circle'&&spinPower>0.8?`🌪️ ${n} סובב את הסביבון כמו סופה!`
+            :how==='circle'&&spinPower>0.45?`🌀 ${n} סובב יפה!`
             :how==='circle'&&spinPower<0.3?`🐢 ${n} סובב לאט לאט...`
             :how==='shake'?`📳 ${n} נער את הטלפון!`
             :spinPower>0.85?`💪 ${n} סיבב בכוח עצום!`
@@ -1253,124 +1273,163 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressAt){e.preventDefault();pressEnd()}}});
 
-// ── Grab the dreidel: press on it and move the mouse/finger in circles — the dreidel turns WITH your hand
-//    (one circle = one full turn). Let go and it keeps spinning from the momentum.
-//    A quick sideways pull without circling = a "flick". Circling without pressing also works (touchpad). ──
+// ── How to spin: a per-device choice shown under the dreidel ──
+//   circle — move the mouse (or a finger on the dreidel) in circles: the dreidel turns WITH the hand,
+//            stop and it keeps spinning from the momentum. With a mouse no click at all is needed.
+//   flick  — grab the dreidel and pull it sideways fast
+//   taps   — 3 quick taps on "סובב" (or space)
+//   hold   — hold "סובב" (or space), a meter swings, release at the top
+//   shake  — shake the phone
+const SPIN_MODES=['circle','flick','taps','hold','shake'];
+function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
+const PROMPTS={
+    circle:()=>IS_TOUCH?'🌀 שימו אצבע על הסביבון וסובבו במעגלים... ועזבו!':'🌀 התחילו לסובב את העכבר במעגלים... ועצרו!',
+    flick:()=>IS_TOUCH?'✊ החליקו את הסביבון מהר הצידה':'✊ תפסו את הסביבון בעכבר ומשכו מהר הצידה',
+    taps:()=>'👆 לחצו 3 פעמים מהר על "סובב!"'+(IS_TOUCH?'':' (או רווח)'),
+    hold:()=>'🎯 החזיקו את "סובב!" — ושחררו בשיא',
+    shake:()=>'📳 נערו את הטלפון!'
+};
 const CIRCLE={engaged:false,grabbing:false,justLaunched:false};
-(function wireGrab(){
+// refresh the chooser / prompt / idle turning — call whenever the turn or state changes
+function refreshSpinUI(){
+    const c=document.querySelector('.dreidel-controls');if(!c)return;
+    const m=spinMode(),can=canSpinNow()&&!CIRCLE.engaged&&!charging;
+    c.dataset.mode=m;c.classList.toggle('can-spin',can);
+    document.querySelectorAll('#spinModes button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+    document.getElementById('spinPrompt').textContent=PROMPTS[m]();
+    const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick'||m==='circle'&&IS_TOUCH);
+    if(window._idleTurn)window._idleTurn(can&&m==='circle');
+}
+document.getElementById('spinModes').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-m]');if(!b)return;
+    lsSet('dreidel_spinmode',b.dataset.m);playClickSound();resetSpinUI();refreshSpinUI();
+    if(b.dataset.m==='shake'){try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')DeviceMotionEvent.requestPermission().catch(()=>{})}catch(_){}}
+});
+setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal closes, …)
+
+(function wireHand(){
     const art=document.getElementById('dreidelSvg'),ring=document.getElementById('spinRing'),box=art.parentElement;
-    const TURN=Math.PI*2,QUARTER=Math.PI/2;
-    let lastA=null,acc=0,samples=[],lastMove=0,flickPts=[],x0=0,faceAtGrab=0,shownFace=-1,hover=false,raf=0,peak=0;
-    // centre measured on the (never-rotated) scale box — the dreidel may still be lying tilted from the last fall
-    function center(){const r=box.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height*.56,r.height]}
+    const TURN=Math.PI*2,QUARTER=Math.PI/2,MIN_W=3;
+    let acc=0,samples=[],lastMove=0,lastPt=null,lastHead=null,shownFace=-1,faceBase=0,raf=0,recent=0;
+    let flickPts=[],x0=0,y0=0,idleOn=false,idleRaf=0,idlePhase=0,idleT=0;
     function omega(win){const now=performance.now();let sum=0;for(const [t,d] of samples)if(now-t<=win)sum+=d;return sum/(win/1000)}
-    function clear(){lastA=null;acc=0;samples=[];peak=0;shownFace=-1;ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
-    // draw the dreidel at rotation `acc` (radians): each quarter turn brings the next face to the front
-    function drawRotation(){
-        const ph=acc/QUARTER, idx=Math.floor(ph+.5), q=ph-Math.floor(ph);
-        const f=((faceAtGrab+idx)%4+4)%4;
-        if(f!==shownFace){if(shownFace>=0)playSfx(pick(SFX.tick),{vol:.18,rate:1+Math.min(.4,Math.abs(omega(200))/60)});shownFace=f;setFace(FACE_ORDER[f],false)}
-        art.style.transform=`scaleX(${Math.max(.05,Math.abs(Math.cos(Math.PI*q))).toFixed(3)})`;
-        ring.style.setProperty('--a',((acc*180/Math.PI)%360).toFixed(0)+'deg');
-        const p=Math.min(1,Math.abs(omega(250))/22);
-        document.getElementById('powerFill').style.width=Math.round(p*100)+'%';
-        chargeTone(p>.05,p);
-    }
-    function track(e){
-        const [cx,cy]=center(),dx=e.clientX-cx,dy=e.clientY-cy;
-        if(Math.hypot(dx,dy)<14)return;                  // right on the centre — the angle is just noise
-        const a=Math.atan2(dy,dx),now=performance.now();
-        if(lastA!==null){
-            let d=a-lastA;if(d>Math.PI)d-=TURN;if(d<-Math.PI)d+=TURN;
-            if(Math.abs(d)<1.6){acc+=d;samples.push([now,d]);while(samples.length&&now-samples[0][0]>500)samples.shift()}
+    function clear(){acc=0;samples=[];recent=0;lastPt=null;lastHead=null;ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
+    // Circles are measured by how the DIRECTION of the hand turns (not by the angle around the dreidel),
+    // so a circle anywhere on the screen, small or big, turns the dreidel.
+    function track(x,y){
+        const now=performance.now();
+        if(!lastPt){lastPt=[x,y];return}
+        const dx=x-lastPt[0],dy=y-lastPt[1];
+        if(Math.hypot(dx,dy)<4)return;                   // wait for a real step
+        const h=Math.atan2(dy,dx);lastPt=[x,y];
+        if(lastHead!==null){
+            let d=h-lastHead;if(d>Math.PI)d-=TURN;if(d<-Math.PI)d+=TURN;
+            if(Math.abs(d)<1.3){acc+=d;samples.push([now,d]);while(samples.length&&now-samples[0][0]>500)samples.shift()}
         }
-        lastA=a;lastMove=now;
+        lastHead=h;lastMove=now;
     }
-    function startTurning(){
-        resetDreidel();                                   // stand it up if it is still lying from the last spin
-        faceAtGrab=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shownFace=faceAtGrab;
+    // draw the dreidel at rotation acc (radians) — each quarter turn brings the next face to the front
+    function draw(angle,withSound){
+        const ph=angle/QUARTER,idx=Math.floor(ph+.5),q=ph-Math.floor(ph);
+        const f=((faceBase+idx)%4+4)%4;
+        if(f!==shownFace){if(withSound&&shownFace>=0)playSfx(pick(SFX.tick),{vol:.18,rate:1+Math.min(.4,Math.abs(omega(200))/60)});shownFace=f;setFace(FACE_ORDER[f],false)}
+        art.style.transform=`scaleX(${Math.max(.05,Math.abs(Math.cos(Math.PI*q))).toFixed(3)})`;
+    }
+
+    // ── idle: in "circle" mode the dreidel turns slowly by itself, inviting you to spin it ──
+    window._idleTurn=on=>{
+        if(on===idleOn)return;idleOn=on;
+        if(on){resetDreidel();faceBase=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shownFace=faceBase;idlePhase=0;idleT=performance.now();art.style.transition='none';idleRaf=requestAnimationFrame(idleLoop)}
+        else{cancelAnimationFrame(idleRaf);if(!CIRCLE.engaged&&!spinning){art.style.transform='';}}
+    };
+    function idleLoop(t){
+        if(!idleOn||CIRCLE.engaged)return;
+        const dt=Math.min(60,t-idleT)/1000;idleT=t;idlePhase+=dt*1.1;      // ~a quarter turn per second
+        draw(idlePhase,false);
+        idleRaf=requestAnimationFrame(idleLoop);
+    }
+
+    function engage(){
+        CIRCLE.engaged=true;window._idleTurn(false);
+        faceBase=shownFace>=0?shownFace:Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shownFace=faceBase;
+        const keep=acc;acc=0;samples=samples.slice(-3);void keep;
         clearTimeout(spinClickTimer);spinClicks=0;spinClickTimes=[];
         document.getElementById('powerMeter').classList.remove('hidden');
         document.getElementById('powerClicks').textContent='🌀';
-        document.getElementById('powerLabel').textContent='סובבו... ועזבו!';
+        document.getElementById('powerLabel').textContent='סובבו... ועצרו!';
         document.getElementById('powerFill').classList.add('hot');
         art.style.transition='none';ring.classList.add('show','wound');
+        refreshSpinUI();
+        cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);
     }
-    function finishTurning(){chargeTone(false);document.getElementById('powerFill').classList.remove('hot');ring.classList.remove('show','wound')}
+    function disengage(){cancelAnimationFrame(raf);chargeTone(false);CIRCLE.engaged=false;document.getElementById('powerFill').classList.remove('hot');ring.classList.remove('show','wound')}
     function launch(w){
-        CIRCLE.engaged=false;CIRCLE.justLaunched=true;setTimeout(()=>CIRCLE.justLaunched=false,400);
-        cancelAnimationFrame(raf);finishTurning();art.style.transform='';
-        const power=Math.max(.12,Math.min(1,(w-3)/16));  // 1 turn/s ≈ .2 · 2 turns/s ≈ .6 · 3 turns/s = full
+        disengage();CIRCLE.justLaunched=true;setTimeout(()=>CIRCLE.justLaunched=false,400);
+        art.style.transform='';
+        const power=Math.max(.12,Math.min(1,(w-MIN_W)/16));   // 1 circle/s ≈ .2 · 2/s ≈ .6 · 3/s = full
         clear();playWhoosh(power);spinFromInput(power,'circle');
     }
-    function settleBack(){ // let go too slowly — it just stops where it is
-        cancelAnimationFrame(raf);finishTurning();CIRCLE.engaged=false;
-        art.style.transition='transform .25s ease-out';art.style.transform='';
-        if(shownFace>=0)setFace(FACE_ORDER[shownFace],false);
-        clear();
-        floatText(art,'סובבו מהר יותר! 🌀','minus');
-        setTimeout(()=>resetSpinUI(),300);
+    function letGo(){disengage();art.style.transition='transform .25s ease-out';art.style.transform='';clear();resetSpinUI();refreshSpinUI()}
+    function tick(){
+        if(!CIRCLE.engaged)return;
+        draw(acc,true);
+        const w=Math.abs(omega(220));recent=Math.max(recent*.96,w);
+        const p=Math.min(1,w/22);document.getElementById('powerFill').style.width=Math.round(p*100)+'%';chargeTone(p>.05,p);
+        ring.style.setProperty('--a',((acc*180/Math.PI)%360).toFixed(0)+'deg');
+        const idle=performance.now()-lastMove;
+        if(idle>150){                                     // the hand stopped
+            if(recent>MIN_W&&!CIRCLE.grabbing){launch(recent);return}         // it was turning fast → let it fly
+            if(recent<=MIN_W&&Math.abs(acc)>QUARTER)document.getElementById('powerLabel').textContent='מהר יותר... ועצרו!';
+            if(idle>4000&&!CIRCLE.grabbing){letGo();return}                  // nobody is turning it any more
+        }
+        raf=requestAnimationFrame(tick);
     }
 
-    // ── GRAB: press on the dreidel ──
-    art.addEventListener('pointerdown',e=>{
-        if(!canSpinNow()||charging||e.button>0)return;
-        e.preventDefault();try{art.setPointerCapture(e.pointerId)}catch(_){}
-        clear();CIRCLE.grabbing=true;CIRCLE.engaged=false;
-        x0=e.clientX;flickPts=[[e.clientX,performance.now()]];
-        art.classList.add('grabbing');art.style.transition='none';
-        track(e);
+    // ── mouse (no click): in circle mode, circling anywhere turns it ──
+    document.addEventListener('pointermove',e=>{
+        if(e.pointerType==='touch'||CIRCLE.grabbing)return;
+        if(spinMode()!=='circle')return;
+        if(!canSpinNow()||charging){if(CIRCLE.engaged)letGo();return}
+        if(e.target&&e.target.closest&&e.target.closest('.settings-panel,.spin-modes,.modal-bg'))return;  // not while using menus
+        track(e.clientX,e.clientY);
+        if(!CIRCLE.engaged&&Math.abs(acc)>QUARTER*.9)engage();               // ~a quarter of a circle in one direction
+    },{passive:true});
+
+    // ── press on the dreidel: finger-circling (touch, circle mode) or a flick ──
+    box.addEventListener('pointerdown',e=>{
+        if(e.button>0||!canSpinNow()||charging)return;
+        const m=spinMode();
+        const fingerCircle=m==='circle'&&e.pointerType!=='mouse';
+        if(m!=='flick'&&!fingerCircle)return;
+        e.preventDefault();try{box.setPointerCapture(e.pointerId)}catch(_){}
+        clear();CIRCLE.grabbing=true;window._idleTurn(false);
+        x0=e.clientX;y0=e.clientY;flickPts=[[e.clientX,performance.now()]];
+        box.classList.add('grabbing');art.style.transition='none';
+        track(e.clientX,e.clientY);
     });
-    art.addEventListener('pointermove',e=>{
+    box.addEventListener('pointermove',e=>{
         if(!CIRCLE.grabbing)return;
-        track(e);
         const now=performance.now();flickPts.push([e.clientX,now]);while(flickPts.length>2&&now-flickPts[0][1]>140)flickPts.shift();
-        if(!CIRCLE.engaged&&Math.abs(acc)>QUARTER*.6){CIRCLE.engaged=true;startTurning()}  // started turning it
-        if(CIRCLE.engaged)drawRotation();
-        else art.style.transform=`rotate(${Math.max(-28,Math.min(28,(e.clientX-x0)*.22)).toFixed(1)}deg)`; // tilt while pulling
+        if(spinMode()==='circle'){track(e.clientX,e.clientY);if(!CIRCLE.engaged&&Math.abs(acc)>QUARTER*.7)engage();return}
+        art.style.transform=`rotate(${Math.max(-28,Math.min(28,(e.clientX-x0)*.22)).toFixed(1)}deg)`;   // flick: tilt while pulling
     });
     const release=e=>{
         if(!CIRCLE.grabbing)return;
-        CIRCLE.grabbing=false;art.classList.remove('grabbing');
-        if(CIRCLE.engaged){
-            const w=Math.abs(omega(160));                   // how fast the hand was turning when it let go
-            if(w>3)launch(w);else settleBack();
-            return;
-        }
-        // no circling — maybe a sideways flick
-        const now=performance.now();flickPts.push([e.clientX,now]);
-        const f=flickPts[0],l=flickPts[flickPts.length-1],speed=Math.abs(l[0]-f[0])/Math.max(1,l[1]-f[1]),total=Math.abs(e.clientX-x0);
+        CIRCLE.grabbing=false;box.classList.remove('grabbing');
+        if(CIRCLE.engaged){const w=Math.max(Math.abs(omega(160)),performance.now()-lastMove<120?recent:0);if(w>MIN_W)launch(w);else letGo();return}
+        if(spinMode()==='circle'){letGo();return}
+        const moved=Math.abs(e.clientX-x0),now=performance.now();flickPts.push([e.clientX,now]);
+        const f=flickPts[0],l=flickPts[flickPts.length-1],speed=Math.abs(l[0]-f[0])/Math.max(1,l[1]-f[1]);
         clear();
-        if(total<25||speed<0.25||!canSpinNow()){
+        if(moved<25||speed<0.25||!canSpinNow()){
             art.style.transition='transform .35s cubic-bezier(.3,1.6,.5,1)';art.style.transform='';
-            if(total>=25)floatText(art,'מהר יותר! 💨','minus');
+            if(moved>=25)floatText(art,'מהר יותר! 💨','minus');
             return;
         }
         const power=Math.max(.1,Math.min(1,(speed-0.2)/1.5));
         playWhoosh(power);spinFromInput(power,'flick');
     };
-    art.addEventListener('pointerup',release);art.addEventListener('pointercancel',release);
-
-    // ── No press (mouse hover / touchpad): circling around it also winds it up; stop to let go ──
-    document.addEventListener('pointermove',e=>{
-        if(CIRCLE.grabbing||e.pointerType==='touch')return;
-        if(!canSpinNow()||charging){if(hover){hover=false;if(CIRCLE.engaged)settleBack();else clear()}return}
-        const [cx,cy,h]=center(),dist=Math.hypot(e.clientX-cx,e.clientY-cy),R=Math.max(170,h*.95);
-        if(dist>R){if(hover){hover=false;if(CIRCLE.engaged)launchOrSettle();else clear()}return}
-        hover=true;track(e);
-        if(!CIRCLE.engaged){
-            const prog=Math.min(1,Math.abs(acc)/TURN);
-            ring.classList.toggle('show',prog>.15);ring.style.setProperty('--p',prog.toFixed(3));
-            if(Math.abs(acc)>=TURN){CIRCLE.engaged=true;acc=0;startTurning();raf=requestAnimationFrame(hoverTick)}  // a full circle — now it follows
-        }
-    },{passive:true});
-    function launchOrSettle(){const w=Math.max(peak,Math.abs(omega(300)));if(w>3)launch(w);else settleBack()}
-    function hoverTick(){
-        if(!CIRCLE.engaged||CIRCLE.grabbing)return;
-        drawRotation();peak=Math.max(peak*.99,Math.abs(omega(250)));
-        if(performance.now()-lastMove>140||Math.abs(omega(180))<2.5){launchOrSettle();return}  // the hand stopped → let go
-        raf=requestAnimationFrame(hoverTick);
-    }
+    box.addEventListener('pointerup',release);box.addEventListener('pointercancel',release);
 })();
 
 // ── Shake the phone (touch devices) ──
@@ -1379,7 +1438,7 @@ const IS_TOUCH=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coars
     if(!IS_TOUCH||!window.DeviceMotionEvent)return;
     let last=0,peak=0,win=null;
     window.addEventListener('devicemotion',e=>{
-        if(!document.getElementById('shakeOn')?.checked)return;
+        if(spinMode()!=='shake')return;
         let m=0;const a=e.acceleration;
         if(a&&(a.x||a.y||a.z))m=Math.hypot(a.x||0,a.y||0,a.z||0);
         else{const g=e.accelerationIncludingGravity||{};m=Math.max(0,Math.hypot(g.x||0,g.y||0,g.z||0)-9.8)}
@@ -1401,6 +1460,7 @@ function resetSpinUI(){
     document.getElementById('powerMeter').classList.add('hidden');
     document.getElementById('powerFill').style.width='0%';
     document.getElementById('powerClicks').textContent='○ ○ ○';
+    setTimeout(refreshSpinUI,0);
 }
 
 // Spin duration from settings (safe even if min > max)
@@ -1416,6 +1476,7 @@ let spinQueue=[];     // remote spins waiting to be animated
 
 function doSpin(){
     if(spinning||G.over)return;
+    if(window._idleTurn)window._idleTurn(false);
     resetDreidel();
     const letter=LETTERS[Math.floor(Math.random()*4)];
     spinning=true;
@@ -1448,7 +1509,7 @@ function playNextRemoteSpin(){
         if(p.restart){document.getElementById('winModal').classList.remove('show');resetDreidel();document.getElementById('resultLine').textContent='';addLogLocal(`🔁 משחק ${G.round||2} מתחיל!`)}
         renderGame();updateOnlineUI();playNextRemoteSpin();return;
     }
-    spinning=true;resetDreidel();
+    spinning=true;if(window._idleTurn)window._idleTurn(false);resetDreidel();
     showSpinAnimation(p.letter,p.opts||{power:.5},()=>{
         G=p.state;
         (p.logs||[]).forEach(addLogLocal);
@@ -1989,6 +2050,7 @@ function sizePile(pot){
     el.style.transform=`scale(${k.toFixed(2)})`;el.style.opacity=pot<=0?'.35':'1';
 }
 function renderGameNow(){
+    setTimeout(refreshSpinUI,0);
     setTimeout(updateVideoTiles,0);
     if(MODE==='online'&&G.started&&!G.over)saveSession();
     document.getElementById('potVal').textContent=G.pot;sizePile(G.pot);
