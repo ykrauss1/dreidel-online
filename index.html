@@ -680,7 +680,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v44';
+const APP_VERSION='v45';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -2278,7 +2278,7 @@ function loadSfx(name){
         .then(ab=>ab?new Promise(res=>ctx.decodeAudioData(ab,res,()=>res(null))):null).catch(()=>null);
 }
 let _sfxPreloaded=false;
-function preloadSfx(){if(_sfxPreloaded||!getAudioCtx())return;_sfxPreloaded=true;Object.values(SFX).flat().forEach(loadSfx)}
+function preloadSfx(){if(_sfxPreloaded||!getAudioCtx())return;_sfxPreloaded=true;Object.values(SFX).flat().forEach(loadSfx);setTimeout(()=>Object.values(YI_CLIPS).flat().forEach(loadSfx),4000)}
 // play a sound: vol, rate (pitch/speed), delay (s)
 function playSfx(name,o){
     const ctx=getAudioCtx();if(!ctx||!name)return;
@@ -2524,8 +2524,9 @@ function playCoinBag(){playSfx(pick(SFX.coins),{vol:.6,rate:.95+Math.random()*.1
 
 // ── Narrator: a kid's voice that sometimes switches language (Hebrew, English, French, Russian, Yiddish, Amharic) ──
 // It uses the voices this device has. A real child voice is preferred (Ana, Maisie, Eloise, Gisela...);
-// otherwise the pitch goes up so it sounds like a kid. Yiddish: a real Yiddish voice if the device has one,
-// otherwise our own recorded clips (sounds/yi/) — never a German stand-in.
+// otherwise the pitch goes up so it sounds like a kid. Yiddish: almost no device has a Yiddish voice, so we ship
+// short clips made with REYD (a real Yiddish TTS, trained on native speakers): sounds/yi_*.mp3 — the classic
+// dreidel words: נישט, גאַנץ, האַלב, שטעל אַרײַן.
 const NARR_LANGS={
     he:{name:'עברית',re:/^(he|iw)\b/i,w:5},
     en:{name:'English',re:/^en\b/i,w:1.2},
@@ -2536,7 +2537,8 @@ const NARR_LANGS={
 };
 const CHILD_VOICE=/\b(ana|maisie|eloise|gisela|xiaoyou|xiaoshuang|aigerim|child|kid|junior)\b/i;
 const FEMALE_VOICE=/\b(hila|carmit|zira|jenny|aria|samantha|karen|moira|tessa|amelie|am[ée]lie|hortense|denise|julie|marie|audrey|svetlana|dariya|irina|milena|katya|mekdes|hedda|katja|anna|petra|female|google)\b/i;
-const NARR_VOICE={};      // lang → {voice, child, yiAlt}
+const NARR_VOICE={};      // lang → {voice, child}
+const YI_CLIPS={'נ':['yi_nun0','yi_nun1'],'ג':['yi_gimel0','yi_gimel1'],'ה':['yi_he0','yi_he1'],'פ':['yi_pay0','yi_pay1']};
 function findVoices(){
     if(!window.speechSynthesis)return;
     const vs=speechSynthesis.getVoices();
@@ -2550,7 +2552,7 @@ function findVoices(){
     }
     HE_VOICE=NARR_VOICE.he?NARR_VOICE.he.voice:null;
     const note=document.getElementById('narratorNote');
-    if(note){const have=Object.keys(NARR_VOICE);
+    if(note){const have=narrLangs();
         note.textContent=!have.length?'(אין במכשיר הזה קולות דיבור — הקריין לא יישמע)':
             'שפות שיש במכשיר: '+have.map(k=>NARR_LANGS[k].name).join(' · ')+(NARR_VOICE.he?'':' (אין קול עברי — הקריין ידבר בשפות האחרות)');}
 }
@@ -2568,8 +2570,8 @@ const NARR_PHRASES={
         'נ':['Noun ! Rien du tout !','Noun ! Tant pis !'],'פ':['Pé ! Oh là là, il faut payer !','Pé ! Oups !'],'ש':['Chine ! Oh là là, il faut payer !','Chine ! Oups !']},
     ru:{'ג':['Гимел! Всё твоё!','Ура! Гимел!'],'ה':['Хей! Половина тебе!','Хей! Неплохо!'],
         'נ':['Нун! Ничего!','Нун! Ну ладно!'],'פ':['Пей! Ой, плати!','Ой-ой! Пей!'],'ש':['Шин! Ой, плати!','Ой-ой! Шин!']},
-    yi:{'ג':['גימל! אַלץ איז דײַנס!','גימל! אַ מחיה!'],'ה':['הײ! האַלב פֿאַר דיר!','הײ! נישקשה!'],
-        'נ':['נון! גאָרנישט!','נון! נו, שוין!'],'פ':['פּײ! שטעל אַרײַן!','אױ װײ! פּײ!'],'ש':['שין! שטעל אַרײַן!','אױ װײ! שין!']},
+    yi:{'ג':['גימל! גאַנץ!','גימל! אַלץ איז דײַנס!'],'ה':['הײ! האַלב!','הײ! האַלב פֿאַר דיר!'],
+        'נ':['נון! נישט!','נון! גאָרנישט!'],'פ':['שטעל אַרײַן!','אױ װײ! שטעל אַרײַן!'],'ש':['שין! שטעל אַרײַן!','אױ װײ! שטעל אַרײַן!']},
     am:{'ג':['ጊሜል! ሁሉም ያንተ ነው!','እልል! ጊሜል!'],'ה':['ሄ! ግማሹ ያንተ ነው!','ሄ! ጥሩ ነው!'],
         'נ':['ኑን! ምንም!','ኑን! ችግር የለም!'],'פ':['ፔ! ክፈል!','ውይ! ፔ!'],'ש':['ሺን! ክፈል!','ውይ! ሺን!']}
 };
@@ -2585,11 +2587,13 @@ function speakIn(lang,text){
     }catch(e){return false}
 }
 function say(text){if(narrOn())speakIn('he',text)}
+// languages we can speak on this device (Yiddish always — from our own clips)
+function narrLangs(){const l=Object.keys(NARR_VOICE);if(!l.includes('yi')&&(window.AudioContext||window.webkitAudioContext))l.push('yi');return l}
 let _narrLast='he';
 function narrate(letter,name){
     if(!narrOn())return;
     const mix=(document.getElementById('narratorLang')?.value||'mix')==='mix';
-    let langs=Object.keys(NARR_VOICE);if(!langs.length)return;
+    let langs=narrLangs();if(!langs.length)return;
     if(!mix&&NARR_VOICE.he)langs=['he'];
     // mostly Hebrew; now and then another language (never the same foreign one twice in a row)
     const pool=langs.filter(k=>k==='he'||k!==_narrLast);
@@ -2597,6 +2601,7 @@ function narrate(letter,name){
     for(const k of pool){r-=NARR_LANGS[k].w;if(r<=0){lang=k;break}}
     _narrLast=lang;
     const shin=letter==='פ'&&shinMode();
+    if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
     const set=NARR_PHRASES[lang];
     const list=(shin&&set['ש'])?set['ש']:set[letter];
     const p=pick(list||NARR_PHRASES.he[letter]||['']);
