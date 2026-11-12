@@ -708,7 +708,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v55';
+const APP_VERSION='v56';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1356,6 +1356,18 @@ function d3Render(){
     }
 }
 function d3Pose(o){Object.assign(D3,o);d3Render()}
+// after a fall the dreidel lies on its side for a moment (so everyone sees the result), then stands up again by itself
+function d3StandUp(){
+    if(!D3.fallen||D3.standing)return;D3.standing=true;
+    const t0=performance.now(),from=D3.tilt,dr=D3.drift;
+    (function st(now){
+        if(spinning||CIRCLE.engaged||CIRCLE.singing){D3.standing=false;return}
+        const k=Math.min(1,(now-t0)/450),e=1-Math.pow(1-k,3);
+        d3Pose({tilt:from*(1-e)-Math.sin(k*Math.PI)*3,drift:dr*(1-e)});
+        if(k<1)requestAnimationFrame(st);
+        else{D3.standing=false;resetDreidel();playSfx(pick(SFX.click),{vol:.25,rate:.8})}
+    })(t0);
+}
 // glide to the nearest clean pose (a letter in front, upright)
 function d3Settle(){
     const l=d3FrontLetter(D3.theta);CURRENT_FACE=l;
@@ -1558,7 +1570,7 @@ const PROMPTS={
     hold:()=>'🎯 החזיקו את "סובב!" — ושחררו בשיא',
     shake:()=>'📳 נערו את הטלפון!',
     clap:()=>MIC.on?'👏 מחאו כפיים 3 פעמים מהר!':'👏 לחצו כאן כדי להפעיל את המיקרופון',
-    sing:()=>!MIC.on?'🎤 לחצו "מתחילים לשיר!" — והמיקרופון יופעל':SING.on?'🎶 ממשיכים לשיר... כשמפסיקים — הוא עף!':SING.armed?'🎶 שירו "סביבון סוב סוב סוב"! (דיבור לא נחשב — רק שירה)':'🎤 לחצו "מתחילים לשיר!" ושירו'
+    sing:()=>!MIC.on?'🎤 לחצו "מתחילים לשיר!" — והמיקרופון יופעל':SING.on?'🎶 ממשיכים לשיר... כשמפסיקים — הוא מסתובב לבד!':SING.armed?'🎶 שירו "סביבון סוב סוב סוב"! (דיבור לא נחשב — רק שירה)':'🎤 לחצו "מתחילים לשיר!" ושירו'
 };
 const CIRCLE={engaged:false,grabbing:false,justLaunched:false,singing:false};
 // refresh the chooser / prompt / idle turning — call whenever the turn or state changes
@@ -1571,6 +1583,7 @@ function refreshSpinUI(){
     pr.classList.toggle('mic-off',(m==='clap'||m==='sing')&&!MIC.on);
     if(can)maybeAskTrivia();
     const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick'||m==='circle'&&IS_TOUCH);
+    if(can&&D3.fallen&&!D3.standing&&performance.now()-(D3.fallenAt||0)>1800)d3StandUp();   // ready for the next player
     if(window._idleTurn)window._idleTurn(can&&m==='circle');
     const ab=document.getElementById('askBtn');
     if(ab){const tn=(G.round||1)*1000+(G.turnNo||0);ab.disabled=!can||TRIVIA.open||TRIVIA.askedTurn===tn;ab.title=TRIVIA.askedTurn===tn?'כבר הייתה שאלה בתור הזה':'שאלת חנוכה לשחקן שבתור — עכשיו'}
@@ -1848,7 +1861,7 @@ const SING={armed:false,armedAt:0,on:false};
 function singArm(v){SING.armed=v;SING.armedAt=performance.now();if(v){MIC.notes=[];MIC.vh=[]}singUI();refreshSpinUI()}
 function singUI(){
     const b=document.getElementById('singBtn');if(!b)return;
-    b.textContent=SING.on?'⏹ סיימנו — שיעוף!':SING.armed?'⏹ עצרו':'🎤 מתחילים לשיר!';
+    b.textContent=SING.on?'⏹ סיימנו — תסתובב!':SING.armed?'⏹ עצרו':'🎤 מתחילים לשיר!';
     b.classList.toggle('armed',SING.armed||SING.on);
     document.querySelector('.dreidel-controls').classList.toggle('sing-live',SING.armed||SING.on);
 }
@@ -2186,7 +2199,7 @@ function showSpinAnimation(fl, opts, cb){
             d3Pose({tilt,psi:psi0+(psi1-psi0)*Math.min(1,t/DUR),drift:drift0*(1-Math.min(1,t/700))});
             if(!landed&&t>=DUR){landed=true;reveal()}
             if(t<DUR+260)requestAnimationFrame(fstep);
-            else{D3.fallen=true;setTimeout(()=>{ if(cb) cb(); }, 780)}
+            else{D3.fallen=true;D3.fallenAt=performance.now();setTimeout(()=>{ if(cb) cb(); }, 780)}
         }
         requestAnimationFrame(fstep);
     }
