@@ -227,6 +227,30 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .fx-float.plus{color:var(--green)}.fx-float.minus{color:var(--red)}
 .fx-conf{position:fixed;left:0;top:0;width:8px;height:12px;pointer-events:none;z-index:902;border-radius:2px}
 .fx-big{position:fixed;left:50%;top:38%;pointer-events:none;z-index:903;font-family:'Secular One',sans-serif;font-size:5rem;color:#f5c842;text-shadow:0 0 30px rgba(245,200,66,.8),0 4px 12px rgba(0,0,0,.7);transform:translate(-50%,-50%)}
+/* ═══ mic / bonuses / trivia / reactions ═══ */
+.mic-badge{position:fixed;bottom:18px;left:66px;z-index:120;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--green);border-radius:20px;padding:5px 10px;color:var(--text);cursor:pointer;font-size:.9rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.mic-badge i{display:block;width:44px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--green) var(--lv,0%),rgba(255,255,255,.12) 0)}
+.mic-badge.clap{box-shadow:0 0 16px var(--green)}
+.dreidel-art.golden{filter:drop-shadow(0 0 22px #ffd700) drop-shadow(0 0 48px rgba(255,190,0,.75))}
+.dreidel-art.golden .face-tint{background:#d4a017!important}
+.win-titles{display:flex;flex-direction:column;gap:4px;margin:4px 0 12px;font-size:.9rem;color:var(--text)}
+.win-titles div{background:var(--bg-input);border-radius:8px;padding:4px 10px}
+.trivia{max-width:520px}
+.trivia h2{font-size:1.3rem;line-height:1.4;margin:6px 0 12px}
+.trivia-who{color:var(--gold);font-size:.9rem}
+.trivia-answers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.trivia-answers button{background:var(--bg-input);border:1px solid var(--border-l);color:var(--text);border-radius:10px;padding:10px;font-family:inherit;font-size:1rem;cursor:pointer;transition:all .2s}
+.trivia-answers button:hover:not(:disabled){border-color:var(--gold)}
+.trivia-answers button.right{background:var(--green);color:#06210f;border-color:var(--green)}
+.trivia-answers button.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.trivia-timer{height:6px;background:var(--bg-input);border-radius:3px;margin-top:12px;overflow:hidden}
+.trivia-timer div{height:100%;background:var(--gold);width:100%}
+.trivia-msg{min-height:1.4em;margin-top:8px;font-family:'Secular One',sans-serif;font-size:1.1rem}
+.react-bar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:110;display:flex;gap:4px;background:var(--bg-card);border:1px solid var(--border-l);border-radius:24px;padding:4px 8px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.react-bar button{background:none;border:none;font-size:1.4rem;cursor:pointer;padding:2px 4px;transition:transform .15s}
+.react-bar button:hover{transform:scale(1.3)}
+.fx-react{position:fixed;left:0;top:0;z-index:905;pointer-events:none;font-size:3rem;transform:translate(-50%,-50%)}
+@media(max-width:768px){.react-bar{bottom:64px}.react-bar button{font-size:1.15rem}.mic-badge{bottom:64px;left:10px}}
 .app-version{position:fixed;bottom:6px;right:10px;font-size:.65rem;color:var(--text-dim);opacity:.6;z-index:50;pointer-events:none;direction:ltr}
 .waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
@@ -338,7 +362,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .spin-prompt{font-family:'Secular One',sans-serif;font-size:1.05rem;color:var(--gold);text-align:center;min-height:1.4em;text-shadow:0 0 12px rgba(245,200,66,.5);animation:promptPulse 1.6s ease-in-out infinite}
 @keyframes promptPulse{50%{opacity:.6;transform:scale(.97)}}
 .dreidel-controls:not(.can-spin) .spin-modes,.dreidel-controls:not(.can-spin) .spin-prompt{display:none}
-.dreidel-controls[data-mode="circle"] .spin-btn,.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn{display:none}
+.dreidel-controls[data-mode="circle"] .spin-btn,.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn,.dreidel-controls[data-mode="clap"] .spin-btn,.dreidel-controls[data-mode="sing"] .spin-btn{display:none}
+.spin-prompt.mic-off{cursor:pointer;text-decoration:underline dotted}
 @media(min-width:1000px){.spin-modes button{font-size:.95rem;padding:7px 16px}.spin-prompt{font-size:1.35rem}}
 .dreidel-art.grabbing{cursor:grabbing}
 .dreidel-art.charging{animation:chargeWiggle .12s infinite alternate}
@@ -482,6 +507,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div class="game-top">
             <div class="pot-box"><div class="pot-pile-wrap"><img class="pot-pile" id="potCoin" src="pile.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='pile.png'"></div><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
             <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
+            <div class="turn-box hidden" id="nightBox" title="הנר של הלילה"></div>
         </div>
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
         <button class="btn btn-outline fs-btn" id="fsBtn" onclick="toggleFullscreen()" title="מסך מלא">⛶ מסך מלא</button>
@@ -507,6 +533,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                     <button data-m="flick">✊ זריקה</button>
                     <button data-m="taps">👆 3 לחיצות</button>
                     <button data-m="hold">🎯 החזק ושחרר</button>
+                    <button data-m="clap">👏 מחיאות כפיים</button>
+                    <button data-m="sing">🎤 שירה</button>
                     <button data-m="shake" class="touch-only">📳 נענוע</button>
                 </div>
                 <div class="spin-prompt" id="spinPrompt"></div>
@@ -533,7 +561,17 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </div>
 
 <div class="app-version" id="appVersion"></div>
-<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p>
+<button class="mic-badge hidden" id="micBadge" title="המיקרופון פעיל — לחצו לכיבוי"><span>🎤</span><i id="micLevel"></i></button>
+<div class="react-bar hidden" id="reactBar"><button>👏</button><button>😂</button><button>😱</button><button>🎉</button><button>❤️</button><button>🔥</button></div>
+<div class="modal-bg" id="triviaModal"><div class="win-modal trivia">
+    <div class="big-icon">❓</div>
+    <div class="trivia-who" id="triviaWho"></div>
+    <h2 id="triviaQ">—</h2>
+    <div class="trivia-answers" id="triviaA"></div>
+    <div class="trivia-timer"><div id="triviaBar"></div></div>
+    <div class="trivia-msg" id="triviaMsg"></div>
+</div></div>
+<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p><div class="win-titles" id="winTitles"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-gold" id="rematchBtn" onclick="rematch()">🔁 משחק חוזר — אותם שחקנים</button>
         <div id="rematchWait" class="hidden" style="font-size:.8rem;color:var(--text-dim)">המארח יכול להתחיל משחק חוזר באותו חדר</div>
@@ -560,6 +598,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
   <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין (מכריז את התוצאה)</label>
+  <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
+  <label class="sound-toggle"><input type="checkbox" id="clapBoostOn" checked> 👏 מחיאות כפיים מאריכות את הסיבוב (כשהמיקרופון פעיל)</label>
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px">📲 אפליקציה</div>
@@ -578,7 +618,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v36';
+const APP_VERSION='v37';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -786,6 +826,10 @@ function joinChannel(onReady){
         if(G.started){renderGame();updateOnlineUI();syncPeers()}else renderLobby();
     });
 
+    channel.on('broadcast',{event:'spin_boost'},({payload})=>{if(payload.from!==MY_ID)boostSpin(true)});
+    channel.on('broadcast',{event:'react'},({payload})=>{if(payload.from!==MY_ID)showReaction(payload.e,payload.from)});
+    channel.on('broadcast',{event:'trivia_show'},({payload})=>{if(payload.from!==MY_ID&&!REJOINING){TRIVIA.used.push(payload.qi);showTrivia(payload.qi,payload.order,payload.who,false)}});
+    channel.on('broadcast',{event:'trivia_answer'},({payload})=>{if(payload.from!==MY_ID&&TRIVIA.open)answerTrivia(payload.i,0,0,true)});
     channel.on('broadcast',{event:'game_log'},({payload})=>{if(!REJOINING)addLogLocal(payload.text)});
     channel.on('broadcast',{event:'rtc_offer'},({payload})=>{if(payload.target===MY_ID)handleOffer(payload.from,payload.sid,payload.desc)});
     channel.on('broadcast',{event:'rtc_answer'},({payload})=>{if(payload.target===MY_ID)handleAnswer(payload.from,payload.sid,payload.desc)});
@@ -829,6 +873,7 @@ function loadSession(){
 
 function enterOnlineGameScreen(){
     document.querySelector('.game-layout').classList.add('with-video');
+    document.getElementById('reactBar').classList.remove('hidden');
     hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');
     renderGame();updateOnlineUI();syncPeers();
 }
@@ -901,7 +946,7 @@ setInterval(timerTick,1000);
 
 // ═══════════ SETTINGS PERSISTENCE ═══════════
 const SETTINGS_KEY='dreidel_settings';
-const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
+const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','triviaOn','clapBoostOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -921,7 +966,7 @@ function loadSettings(){
 loadSettings();
 document.getElementById('localNames').addEventListener('change',saveSettings);
 SETTING_IDS.forEach(id=>document.getElementById(id)?.addEventListener('change',saveSettings));
-function advanceTurn(){do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive)}
+function advanceTurn(){G.turnNo=(G.turnNo||0)+1;do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive)}
 function skipTurn(cp){
     G.players.forEach(p=>p.change='');
     advanceTurn();
@@ -991,8 +1036,29 @@ function startOnlineGame(){
     addLog('המשחק התחיל! כל שחקן שם '+G.ante+' בקופה.');
 }
 
+// Which Hanukkah candle is lit tonight (1–8), or 0. Uses the browser's Hebrew calendar — no internet needed.
+// (?night=N in the address forces it — handy for showing the kids)
+function hanukkahNight(d){
+    const forced=+new URLSearchParams(location.search).get('night');if(forced>=1&&forced<=8)return forced;
+    d=d||new Date();
+    try{
+        const f=new Intl.DateTimeFormat('en-u-ca-hebrew',{month:'long',day:'numeric'});
+        for(let back=0;back<8;back++){
+            const parts=f.formatToParts(new Date(d.getTime()-back*864e5));
+            const m=(parts.find(x=>x.type==='month')||{}).value||'',day=+((parts.find(x=>x.type==='day')||{}).value);
+            if(/kislev/i.test(m)&&day===24)return back+1;   // the evening of 24 Kislev = candle 1
+        }
+    }catch(e){}
+    return 0;
+}
+function showNight(){
+    const n=hanukkahNight(),b=document.getElementById('nightBox');
+    b.classList.toggle('hidden',!n);
+    if(n)b.innerHTML=`🕎 נר ${['','ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני'][n]} <span style="letter-spacing:-2px">${'🕯️'.repeat(n)}</span>`;
+}
 // Fresh amounts/pot for a new round with the same players (first game and rematches)
 function resetRound(){
+    G.stats={};G.streaks={};G.bank=0;G.turnNo=0;
     if(G.scoringMode==='family'){
         // Family scoring: all members share one pool per family
         G.familyScores={};
@@ -1021,6 +1087,10 @@ function resetRound(){
     G.currentTurn=(G.firstTurn||0)%G.players.length;
     G.over=false;G.endedByTime=false;G.winners=null;
     G.endsAt=G.timeLimitMin?Date.now()+G.timeLimitMin*60000:null;
+    // 🕎 Hanukkah night bonus: tonight's candle count, to every player
+    const night=hanukkahNight();
+    if(night){G.players.forEach(p=>{adjust(p,night,false)});G.bank=(G.bank||0)+night*G.players.length;
+        setTimeout(()=>addLog(`🕎 הלילה נר ${night} של חנוכה — כל שחקן מקבל ${night} מטבעות בונוס!`),50)}
 }
 
 // Who may start a rematch: local — anyone; online — the host, or (if the host left) the leader
@@ -1155,9 +1225,9 @@ function setFace(letter, dim){
 // ── 3-click power mechanic ──
 let spinClicks=0, spinClickTimes=[], spinPower=0.5, spinClickTimer=null;
 
-function handleSpinClick(){
+function handleSpinClick(how){
     if(spinning||G.over)return;
-    playClickSound();
+    if(how!=='clap')playClickSound();
     const now=Date.now();
     spinClicks++;
     spinClickTimes.push(now);
@@ -1178,21 +1248,25 @@ function handleSpinClick(){
     } else if(spinClicks>=3){
         clearTimeout(spinClickTimer);
         const totalMs=spinClickTimes[2]-spinClickTimes[0];
-        spinFromInput(Math.max(0.08,Math.min(1.0,1-(totalMs-250)/1800)),'taps');
+        spinFromInput(Math.max(0.08,Math.min(1.0,1-(totalMs-250)/1800)),how||'taps');
     }
 }
 
 // ── All the ways to spin end here ──
 function canSpinNow(){
     const b=document.getElementById('spinBtn');
-    return !spinning&&!G.over&&!document.getElementById('gameScreen').classList.contains('hidden')
+    return !spinning&&!G.over&&!TRIVIA.open&&!document.getElementById('gameScreen').classList.contains('hidden')
         &&!b.classList.contains('hidden')&&!b.disabled&&!document.getElementById('winModal').classList.contains('show');
 }
-function spinFromInput(power,how){
+let NEXT_EXTRA=null;            // extras for the next spin: power, skill bonus, singing seconds
+const GOLDEN_CHANCE=1/18;
+function spinFromInput(power,how,extra){
     if(spinning||G.over)return;
     spinPower=Math.max(0.08,Math.min(1,power));
+    NEXT_EXTRA=Object.assign({power:spinPower},extra||{});
+    if(how==='hold'&&spinPower>0.93)NEXT_EXTRA.skill='bull';
     const pm=document.getElementById('powerMeter');pm.classList.remove('hidden');
-    document.getElementById('powerClicks').textContent={taps:'● ● ●',hold:'🎯',flick:'👋',circle:'🌀',shake:'📳'}[how]||'';
+    document.getElementById('powerClicks').textContent={taps:'● ● ●',hold:'🎯',flick:'👋',circle:'🌀',shake:'📳',clap:'👏👏👏',sing:'🎤'}[how]||'';
     document.getElementById('powerFill').style.width=Math.round(spinPower*100)+'%';
     const bull=how==='hold'&&spinPower>0.93;
     document.getElementById('powerLabel').textContent=bull?'🎯 בול בשיא!':spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':'😴 עייף...';
@@ -1205,6 +1279,8 @@ function spinFromInput(power,how){
             :how==='circle'&&spinPower>0.45?`🌀 ${n} סובב יפה!`
             :how==='circle'&&spinPower<0.3?`🐢 ${n} סובב לאט לאט...`
             :how==='shake'?`📳 ${n} נער את הטלפון!`
+            :how==='clap'?`👏 ${n} מחא כפיים — והסביבון הסתובב!`
+            :how==='sing'?`🎤 ${n} שר — והסביבון הסתובב!`
             :spinPower>0.85?`💪 ${n} סיבב בכוח עצום!`
             :spinPower>0.65?`⚡ ${n} סיבב בחוזקה`
             :spinPower>0.4 ?`👌 ${n} סיבב בינוני`
@@ -1280,28 +1356,34 @@ document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressA
 //   taps   — 3 quick taps on "סובב" (or space)
 //   hold   — hold "סובב" (or space), a meter swings, release at the top
 //   shake  — shake the phone
-const SPIN_MODES=['circle','flick','taps','hold','shake'];
+const SPIN_MODES=['circle','flick','taps','hold','shake','clap','sing'];
 function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
 const PROMPTS={
     circle:()=>IS_TOUCH?'🌀 שימו אצבע על הסביבון וסובבו במעגלים... ועזבו!':'🌀 התחילו לסובב את העכבר במעגלים... ועצרו!',
     flick:()=>IS_TOUCH?'✊ החליקו את הסביבון מהר הצידה':'✊ תפסו את הסביבון בעכבר ומשכו מהר הצידה',
     taps:()=>'👆 לחצו 3 פעמים מהר על "סובב!"'+(IS_TOUCH?'':' (או רווח)'),
     hold:()=>'🎯 החזיקו את "סובב!" — ושחררו בשיא',
-    shake:()=>'📳 נערו את הטלפון!'
+    shake:()=>'📳 נערו את הטלפון!',
+    clap:()=>MIC.on?'👏 מחאו כפיים 3 פעמים מהר!':'👏 לחצו כאן כדי להפעיל את המיקרופון',
+    sing:()=>MIC.on?'🎤 שירו בקול "סביבון סוב סוב סוב"... כל עוד שרים — הוא מסתובב!':'🎤 לחצו כאן כדי להפעיל את המיקרופון'
 };
-const CIRCLE={engaged:false,grabbing:false,justLaunched:false};
+const CIRCLE={engaged:false,grabbing:false,justLaunched:false,singing:false};
 // refresh the chooser / prompt / idle turning — call whenever the turn or state changes
 function refreshSpinUI(){
     const c=document.querySelector('.dreidel-controls');if(!c)return;
-    const m=spinMode(),can=canSpinNow()&&!CIRCLE.engaged&&!charging;
+    const m=spinMode(),can=canSpinNow()&&!CIRCLE.engaged&&!CIRCLE.singing&&!charging;
     c.dataset.mode=m;c.classList.toggle('can-spin',can);
     document.querySelectorAll('#spinModes button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
-    document.getElementById('spinPrompt').textContent=PROMPTS[m]();
+    const pr=document.getElementById('spinPrompt');pr.textContent=PROMPTS[m]();
+    pr.classList.toggle('mic-off',(m==='clap'||m==='sing')&&!MIC.on);
+    if(can)maybeAskTrivia();
     const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick'||m==='circle'&&IS_TOUCH);
     if(window._idleTurn)window._idleTurn(can&&m==='circle');
 }
+document.getElementById('spinPrompt').addEventListener('click',()=>{const m=spinMode();if((m==='clap'||m==='sing')&&!MIC.on)micStart().then(refreshSpinUI)});
 document.getElementById('spinModes').addEventListener('click',e=>{
     const b=e.target.closest('button[data-m]');if(!b)return;
+    if((b.dataset.m==='clap'||b.dataset.m==='sing')&&!MIC.on)micStart().then(refreshSpinUI);
     lsSet('dreidel_spinmode',b.dataset.m);playClickSound();resetSpinUI();refreshSpinUI();
     if(b.dataset.m==='shake'){try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')DeviceMotionEvent.requestPermission().catch(()=>{})}catch(_){}}
 });
@@ -1432,6 +1514,214 @@ setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal 
     box.addEventListener('pointerup',release);box.addEventListener('pointercancel',release);
 })();
 
+// ══════════ MICROPHONE: claps & singing (all processing stays on this device) ══════════
+const MIC={on:false,stream:null,ctx:null,an:null,buf:null,raf:0,own:false,noise:.01,lastClap:0,pending:null,
+           voiceStart:0,lastVoiced:0,loud:0,singing:false,frame:0,clarity:0};
+let SFX_BUSY_UNTIL=0;            // our own sounds are playing — be stricter about claps
+async function micStart(){
+    if(MIC.on)return true;
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('הדפדפן הזה לא תומך במיקרופון.');return false}
+    try{
+        let st=null;
+        if(localStream&&localStream.getAudioTracks().length)st=new MediaStream(localStream.getAudioTracks()); // the video call's mic
+        else{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:false}});MIC.own=true}
+        MIC.stream=st;MIC.ctx=new(window.AudioContext||window.webkitAudioContext)();
+        if(MIC.ctx.state==='suspended')await MIC.ctx.resume();
+        const src=MIC.ctx.createMediaStreamSource(st);MIC.an=MIC.ctx.createAnalyser();MIC.an.fftSize=2048;src.connect(MIC.an);
+        MIC.buf=new Float32Array(MIC.an.fftSize);MIC.on=true;micLoop();updateMicBadge();
+        return true;
+    }catch(e){alert('אין גישה למיקרופון.\nאפשרו מיקרופון בהגדרות הדפדפן (סמל המנעול ליד הכתובת) ונסו שוב.');return false}
+}
+function micStop(){
+    cancelAnimationFrame(MIC.raf);
+    if(MIC.own&&MIC.stream)MIC.stream.getTracks().forEach(t=>t.stop());
+    try{MIC.ctx&&MIC.ctx.close()}catch(e){}
+    Object.assign(MIC,{on:false,stream:null,ctx:null,an:null,own:false,singing:false,voiceStart:0});
+    updateMicBadge();refreshSpinUI();
+}
+function updateMicBadge(){document.getElementById('micBadge').classList.toggle('hidden',!MIC.on)}
+document.getElementById('micBadge').addEventListener('click',()=>{if(confirm('לכבות את המיקרופון?'))micStop()});
+// how "pitched" the sound is (0..1) — singing is pitched, noise and claps are not
+function pitchClarity(b,sr){
+    const N=1024,minL=Math.floor(sr/900),maxL=Math.min(b.length-N-1,Math.floor(sr/85));
+    let e0=0;for(let i=0;i<N;i++)e0+=b[i]*b[i];if(e0<1e-7)return 0;
+    let best=0;
+    for(let L=minL;L<maxL;L+=2){let s=0;for(let i=0;i<N;i++)s+=b[i]*b[i+L];const c=s/e0;if(c>best)best=c}
+    return best;
+}
+function micLoop(){
+    if(!MIC.on)return;
+    const b=MIC.buf;MIC.an.getFloatTimeDomainData(b);
+    let sum=0,peak=0,zc=0;
+    for(let i=0;i<b.length;i++){const v=b[i];sum+=v*v;const a=v<0?-v:v;if(a>peak)peak=a;if(i&&(b[i-1]<0)!==(v<0))zc++}
+    const rms=Math.sqrt(sum/b.length),zcr=zc/b.length,now=performance.now();
+    // background level: follows quiet moments quickly, loud ones slowly
+    MIC.noise=rms<MIC.noise?MIC.noise*.9+rms*.1:MIC.noise*.997+rms*.003;
+    document.getElementById('micLevel').style.setProperty('--lv',Math.min(100,rms*400).toFixed(0)+'%');
+    // ── clap: a sudden, noisy (high zero-crossing) burst well above the background that dies away fast ──
+    const strict=now<SFX_BUSY_UNTIL?1.8:1;
+    if(MIC.pending){
+        if(now-MIC.pending.t>75){const p=MIC.pending;MIC.pending=null;if(rms<p.rms*.5){MIC.lastClap=p.t;onClap()}}
+    }else if(rms>Math.max(.03,MIC.noise*5)*strict&&peak>.12*strict&&zcr>.06&&now-MIC.lastClap>150){MIC.pending={t:now,rms}}
+    // ── singing: a steady pitched voice ──
+    if(++MIC.frame%3===0)MIC.clarity=pitchClarity(b,MIC.ctx.sampleRate);
+    const voiced=rms>Math.max(.012,MIC.noise*2.5)&&zcr<.15&&MIC.clarity>.55;
+    if(voiced){if(!MIC.voiceStart)MIC.voiceStart=now;MIC.lastVoiced=now;MIC.loud=MIC.loud*.9+rms*.1}
+    else if(MIC.voiceStart&&now-MIC.lastVoiced>380)MIC.voiceStart=0;     // short gaps between words are fine
+    MIC.singing=!!MIC.voiceStart&&now-MIC.voiceStart>250;
+    MIC.raf=requestAnimationFrame(micLoop);
+}
+function onClap(){
+    const badge=document.getElementById('micBadge');badge.classList.add('clap');setTimeout(()=>badge.classList.remove('clap'),150);
+    if(window._spinCtl){if(document.getElementById('clapBoostOn').checked)boostSpin(false);return}   // spinning → keep it going
+    if(spinMode()==='clap'&&canSpinNow())handleSpinClick('clap');
+}
+// a clap (here or in another home) adds momentum to the dreidel that is spinning now
+function boostSpin(remote){
+    if(!window._spinCtl||!window._spinCtl.boost())return;
+    const art=document.getElementById('dreidelSvg');
+    if(FX_ON){const [x,y]=centerOf(art);const f=document.createElement('div');f.className='fx-react';f.textContent='👏';document.body.appendChild(f);
+        const dx=(Math.random()-.5)*160;f.animate([{transform:`translate(${x}px,${y}px) translate(-50%,-50%) scale(.5)`,opacity:1},{transform:`translate(${x+dx}px,${y-140}px) translate(-50%,-50%) scale(1.2)`,opacity:0}],{duration:900,easing:'ease-out'}).finished.then(()=>f.remove()).catch(()=>f.remove())}
+    playSfx(pick(SFX.tick),{vol:.45,rate:1.6});
+    if(!remote&&MODE==='online'&&channel)channel.send({type:'broadcast',event:'spin_boost',payload:{from:MY_ID}});
+}
+
+// ── 🎤 sing mode: the dreidel turns as long as you sing; stop → it flies on. A whole song (10s+) = bonus ──
+(function wireSing(){
+    const art=document.getElementById('dreidelSvg');let on=false,start=0,phase=0,last=0,face=0,shown=-1,loudSum=0,n=0;
+    function draw(){const idx=Math.floor(phase+.5),q=phase-Math.floor(phase),f=((face+idx)%4+4)%4;
+        if(f!==shown){if(shown>=0)playSfx(pick(SFX.tick),{vol:.15});shown=f;setFace(FACE_ORDER[f],false)}
+        art.style.transform=`scaleX(${Math.max(.05,Math.abs(Math.cos(Math.PI*q))).toFixed(3)})`}
+    function loop(t){
+        requestAnimationFrame(loop);
+        if(spinMode()!=='sing'||!MIC.on){if(on)stop(false);return}
+        if(!on){
+            if(MIC.singing&&canSpinNow()){on=true;CIRCLE.singing=true;start=performance.now();phase=0;last=t;loudSum=0;n=0;
+                if(window._idleTurn)window._idleTurn(false);resetDreidel();face=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shown=face;
+                art.style.transition='none';
+                document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='🎤';
+                document.getElementById('powerLabel').textContent='🎶 ממשיכים לשיר!';document.getElementById('powerFill').classList.add('hot');
+                document.querySelector('.dreidel-controls').classList.remove('can-spin')}
+            return;
+        }
+        const dt=Math.min(60,t-last)/1000;last=t;
+        const singingNow=performance.now()-MIC.lastVoiced<250;
+        const sp=singingNow?(.8+Math.min(5,MIC.loud*60)):Math.max(0,.8-(performance.now()-MIC.lastVoiced)/900);
+        phase+=sp*dt;draw();
+        if(singingNow){loudSum+=MIC.loud;n++}
+        const sec=(MIC.lastVoiced-start)/1000;
+        document.getElementById('powerFill').style.width=Math.min(100,sec*10).toFixed(0)+'%';
+        if(sec>=10)document.getElementById('powerLabel').textContent='🎤 שיר שלם! עוד קצת... ועצרו';
+        if(performance.now()-MIC.lastVoiced>900)stop(true);                // the song ended → let it fly
+    }
+    function stop(launch){
+        on=false;CIRCLE.singing=false;document.getElementById('powerFill').classList.remove('hot');art.style.transform='';
+        if(!launch||!canSpinNow()){resetSpinUI();return}
+        const sec=Math.max(0,(MIC.lastVoiced-start)/1000),loud=n?loudSum/n:0;
+        const power=Math.max(.2,Math.min(1,.2+Math.min(.5,sec/14)+Math.min(.3,loud*3)));   // a longer song matters more than a louder one
+        playWhoosh(power);
+        spinFromInput(power,'sing',{singSec:Math.round(sec),skill:sec>=10?'song':null});
+    }
+    requestAnimationFrame(loop);
+})();
+
+// ══════════ ❓ HANUKKAH QUESTIONS — every so often before a turn; right answer = bonus ══════════
+const TRIVIA_Q=[
+    ['כמה ימים דלק פך השמן שנמצא במקדש?',['שמונה','אחד','שבעה','שלושה']],
+    ['באיזה תאריך מתחילה חנוכה?',['כ"ה בכסלו','כ"ה בטבת','ט"ו בשבט','י"ד באדר']],
+    ['מי היה אבי בני חשמונאי?',['מתתיהו','יהודה','יוחנן','אלעזר']],
+    ['באיזה יישוב גר מתתיהו?',['מודיעין','ירושלים','חברון','בית לחם']],
+    ['מי היה המלך היווני שגזר את הגזירות?',['אנטיוכוס','אלכסנדר מוקדון','פרעה','נבוכדנצר']],
+    ['כמה נרות מדליקים בכל החנוכה (בלי השמש), לפי המנהג שלנו?',['36','44','8','40']],
+    ['מה מוסיפים בתפילה ובברכת המזון בחנוכה?',['על הניסים','יעלה ויבוא','עננו','משיב הרוח']],
+    ['מה ראשי התיבות של אותיות הסביבון בארץ ישראל?',['נס גדול היה פה','נס גדול היה שם','נר גדול הדליקו פה','נס גדול היום פה']],
+    ['כמה קנים היו למנורה שבבית המקדש?',['שבעה','שמונה','תשעה','שישה']],
+    ['איך קוראים לנר הנוסף שמדליקים בו את שאר הנרות?',['שמש','מנורה','פתילה','שומר']],
+    ['באיזו מסכת בגמרא נמצא הדיון "מאי חנוכה"?',['שבת','ברכות','פסחים','מגילה']],
+    ['אם שכחו "על הניסים" בתפילת שמונה עשרה — מה עושים?',['לא חוזרים','חוזרים לתחילת התפילה','חוזרים לברכה','אומרים בסוף היום']],
+    ['כמה שעות (לפחות) צריכים הנרות לדלוק?',['חצי שעה','רבע שעה','שעתיים','כל הלילה']],
+    ['כיצד נקראו לוחמי יהודה בן מתתיהו?',['המכבים','הקנאים','הצדוקים','הפרושים']],
+    ['לפי בית הלל — כמה נרות מדליקים בלילה הראשון?',['אחד','שמונה','שניים','ארבעה']],
+    ['לפי בית שמאי — כמה נרות מדליקים בלילה הראשון?',['שמונה','אחד','ארבעה','שבעה']],
+    ['איזה מאכל מטוגן נוהגים לאכול בחנוכה בארץ ישראל?',['סופגניות','חלות','מצות','עוגת גבינה']],
+    ['למה נוהגים לאכול מאכלים מטוגנים בשמן בחנוכה?',['זכר לנס פך השמן','כי חורף קר','כי זה מסורת יוונית','זכר למן']],
+    ['מה אסור לעשות לאור נרות חנוכה?',['להשתמש לאורם','לשיר לידם','להסתכל עליהם','לשבת לידם']],
+    ['מה אומרים אחרי הדלקת הנרות?',['הנרות הללו','אשר יצר','הבדלה','קידוש']],
+    ['כמה ברכות מברכים בלילה הראשון של חנוכה?',['שלוש','שתיים','אחת','ארבע']],
+    ['איזו ברכה מוסיפים רק בלילה הראשון?',['שהחיינו','שעשה ניסים','להדליק נר','הטוב והמטיב']],
+    ['על מה נלחמו החשמונאים?',['על הזכות לשמור תורה ומצוות','על כסף','על שטחי מרעה','על הים']],
+    ['מה עשו החשמונאים כשנכנסו למקדש?',['טיהרו אותו וחנכו אותו מחדש','בנו אותו מחדש מהיסוד','עזבו אותו','הפכו אותו לארמון']],
+    ['כמה ימים נמשך חג החנוכה?',['שמונה','שבעה','תשעה','עשרה']],
+    ['איזה פרק תהלים מתחיל "מזמור שיר חנוכת הבית"?',['ל׳','כ"ג','קכ"א','צ"א']],
+    ['מה אומרים בחנוכה בתפילת שחרית אחרי שמונה עשרה?',['הלל שלם','הלל בדילוג','סליחות','תחנון']],
+    ['איך נקרא השיר הידוע שאומרים אחרי הדלקת הנרות?',['מעוז צור','לכה דודי','אדון עולם','יגדל']]
+];
+const TRIVIA={open:false,lastTurn:-1,used:[]};
+function maybeAskTrivia(){
+    if(!document.getElementById('triviaOn').checked||TRIVIA.open)return;
+    const tn=(G.round||1)*1000+(G.turnNo||0);
+    if(tn===TRIVIA.lastTurn)return;TRIVIA.lastTurn=tn;
+    if((G.turnNo||0)<3||Math.random()>.2)return;                       // about one turn in five, not at the very start
+    let pool=TRIVIA_Q.map((_,i)=>i).filter(i=>!TRIVIA.used.includes(i));if(!pool.length){TRIVIA.used=[];pool=TRIVIA_Q.map((_,i)=>i)}
+    const qi=pick(pool);TRIVIA.used.push(qi);
+    const order=[0,1,2,3].sort(()=>Math.random()-.5);
+    const who=G.players[G.currentTurn]?.name||'';
+    showTrivia(qi,order,who,true);
+    if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'trivia_show',payload:{qi,order,who,from:MY_ID}});
+}
+let _trTimer=null;
+function showTrivia(qi,order,who,mine){
+    TRIVIA.open=true;refreshSpinUI();
+    const [q,ans]=TRIVIA_Q[qi];
+    document.getElementById('triviaWho').textContent=mine?`שאלת חנוכה ל${who}! תשובה נכונה = מטבעות בונוס 🎁`:`שאלת חנוכה ל${who} — מחכים לתשובה...`;
+    document.getElementById('triviaQ').textContent=q;
+    document.getElementById('triviaMsg').textContent='';
+    const box=document.getElementById('triviaA');
+    box.innerHTML=order.map(i=>`<button data-i="${i}" ${mine?'':'disabled'}>${esc(ans[i])}</button>`).join('');
+    if(mine)box.querySelectorAll('button').forEach(b=>b.onclick=()=>answerTrivia(+b.dataset.i,qi,order));
+    document.getElementById('triviaModal').classList.add('show');
+    playSfx('he1',{vol:.6});say(q);
+    const bar=document.getElementById('triviaBar');bar.style.transition='none';bar.style.width='100%';void bar.offsetWidth;
+    bar.style.transition='width 25s linear';bar.style.width='0%';
+    clearTimeout(_trTimer);if(mine)_trTimer=setTimeout(()=>answerTrivia(-1,qi,order),25000);
+}
+function answerTrivia(i,qi,order,remote){
+    clearTimeout(_trTimer);
+    const right=i===0,box=document.getElementById('triviaA');
+    box.querySelectorAll('button').forEach(b=>{b.disabled=true;const k=+b.dataset.i;if(k===0)b.classList.add('right');else if(k===i)b.classList.add('wrong')});
+    document.getElementById('triviaBar').style.width=getComputedStyle(document.getElementById('triviaBar')).width;
+    document.getElementById('triviaMsg').textContent=right?'✅ נכון! כל הכבוד!':i<0?'⏰ נגמר הזמן':'❌ לא נכון — התשובה הנכונה מסומנת בירוק';
+    playSfx(right?pick(SFX.he):pick(SFX.pe),{vol:.8});
+    if(right){say('נכון! כל הכבוד');coinRain(10)}
+    if(!remote){
+        if(right){const p=G.players[G.currentTurn];if(p){giveBonus(p,G.ante,'🧠 תשובה נכונה! —');renderGame(true)}}
+        if(MODE==='online'&&channel){
+            channel.send({type:'broadcast',event:'trivia_answer',payload:{i,from:MY_ID}});
+            if(right){LAST_STATE=clone(G);channel.send({type:'broadcast',event:'state_update',payload:{state:LAST_STATE,from:MY_ID}})}
+        }
+    }
+    setTimeout(()=>{document.getElementById('triviaModal').classList.remove('show');TRIVIA.open=false;refreshSpinUI()},right?2200:3200);
+}
+
+// ══════════ 😂 REACTIONS (online): tap an emoji — it floats up on every screen ══════════
+let _lastReact=0;
+document.getElementById('reactBar').addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const now=performance.now();if(now-_lastReact<600)return;_lastReact=now;
+    showReaction(b.textContent,MY_ID);
+    if(channel)channel.send({type:'broadcast',event:'react',payload:{e:b.textContent,from:MY_ID}});
+});
+function showReaction(emo,from){
+    if(!FX_ON)return;
+    const tile=document.getElementById(from===MY_ID?'vid_local':'vid_'+from);
+    let x,y;
+    if(tile&&!tile.classList.contains('hidden')){[x,y]=centerOf(tile)}else{x=innerWidth*(.3+Math.random()*.4);y=innerHeight-90}
+    const f=document.createElement('div');f.className='fx-react';f.textContent=emo;document.body.appendChild(f);
+    const dx=(Math.random()-.5)*80;
+    f.animate([{transform:`translate(${x}px,${y}px) translate(-50%,-50%) scale(.4)`,opacity:0},{transform:`translate(${x+dx/2}px,${y-60}px) translate(-50%,-50%) scale(1.3)`,opacity:1,offset:.2},{transform:`translate(${x+dx}px,${y-260}px) translate(-50%,-50%) scale(1)`,opacity:0}],{duration:2200,easing:'ease-out'}).finished.then(()=>f.remove()).catch(()=>f.remove());
+    const n=(G.players.find(p=>onlineKey(p)===from)||{}).name;
+}
+
 // ── Shake the phone (touch devices) ──
 const IS_TOUCH=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches);
 (function wireShake(){
@@ -1482,10 +1772,12 @@ function doSpin(){
     spinning=true;
     document.getElementById('spinBtn').disabled=true;
     G.players.forEach(p=>p.change='');
-    const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left',who:G.players[G.currentTurn]?.name||''};
+    const ex=NEXT_EXTRA||{power:spinPower};NEXT_EXTRA=null;
+    ex.golden=Math.random()<GOLDEN_CHANCE;                       // ✨ "נס גדול" — rare golden spin, pays double
+    const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left',who:G.players[G.currentTurn]?.name||'',golden:ex.golden};
 
     // Compute the result now, but hold the log lines until the animation ends
-    LOG_BUF=[];applyLetter(letter);const logs=LOG_BUF;LOG_BUF=null;
+    LOG_BUF=[];applyLetter(letter,ex);const logs=LOG_BUF;LOG_BUF=null;
 
     // Online: broadcast at the START so everyone watches the same spin together
     if(MODE==='online'&&channel){
@@ -1551,7 +1843,7 @@ function showSpinAnimation(fl, opts, cb){
     // Speed starts fast, slows toward end.
     const startTime=Date.now();
     // How many half-revolutions total based on power
-    const totalHalfRevs = Math.round(4 + power*14); // 4..18
+    let totalHalfRevs = Math.round(4 + power*14); // 4..18 (claps can add more while it spins)
     let halfRev=0;
     // Face sequence: cycle through LETTERS repeatedly, end on fl
     // Build sequence so last face = fl
@@ -1572,6 +1864,29 @@ function showSpinAnimation(fl, opts, cb){
 
     let currentFaceIdx=0;
     setFace(faceSeq[0], false);
+    if(opts&&opts.golden){svg.classList.add('golden');goldenStamp()}
+
+    // ── boost: every clap adds two quick half-turns and speeds it up a little (the result does not change) ──
+    let boosts=0;
+    function rebuildSeq(){
+        faceSeq.length=0;for(let i=0;i<totalHalfRevs;i++)faceSeq.push(LETTERS[i%4]);
+        faceSeq[faceSeq.length-1]=fl;
+        if(faceSeq.length>1&&faceSeq[faceSeq.length-2]===fl)faceSeq[faceSeq.length-2]=LETTERS[(LETTERS.indexOf(fl)+1)%4];
+    }
+    window._spinCtl={boost(){
+        if(halfRev>=totalHalfRevs-2||boosts>=14)return false;
+        boosts++;
+        const d=Math.max(45,baseDurs[halfRev]*.75);
+        baseDurs.splice(halfRev,0,d,d);
+        for(let i=halfRev+2;i<Math.min(baseDurs.length,halfRev+6);i++)baseDurs[i]*=.9;
+        totalHalfRevs+=2;rebuildSeq();
+        if(hum&&soundCtx){try{
+            hum.frequency.cancelScheduledValues(soundCtx.currentTime);hum.frequency.setValueAtTime(90+power*150,soundCtx.currentTime);
+            const rest=baseDurs.slice(halfRev).reduce((a,b)=>a+b,0)*durScale/1000;
+            hum.frequency.linearRampToValueAtTime(25,soundCtx.currentTime+rest);
+        }catch(e){}}
+        return true;
+    }};
 
     function nextHalfRev(){
         if(halfRev>=totalHalfRevs) { finish(); return; }
@@ -1599,6 +1914,7 @@ function showSpinAnimation(fl, opts, cb){
     nextHalfRev();
 
     function finish(){
+        window._spinCtl=null;
         if(hum){try{hum.stop();hum.disconnect()}catch(e){}}
         svg.style.transition='';
         svg.style.transform='';
@@ -1634,7 +1950,7 @@ function showSpinAnimation(fl, opts, cb){
 
 function resetDreidel(){
     const s=document.getElementById('dreidelSvg');
-    s.classList.remove('fall-right','fall-left','settled');
+    s.classList.remove('fall-right','fall-left','settled','golden');
     s.style.transition=''; s.style.transform='';
     setFace('נ', false);
 }
@@ -1735,6 +2051,13 @@ function resultStamp(l){
     if(l==='ג'){coinRain(28);pulse(document.querySelector('.header-title'),'party',2200)}
     if(l==='ה')coinRain(8);
 }
+function goldenStamp(){
+    if(!FX_ON)return;
+    const st=document.createElement('div');st.className='fx-stamp L-ג';st.style.top='22%';
+    st.innerHTML='<span class="e">✨</span><span class="t">נס גדול!</span>';document.body.appendChild(st);
+    st.animate([{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.15)',opacity:1,offset:.25},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.8},{transform:'translate(-50%,-80%)',opacity:0}],{duration:1800,easing:'ease-out'}).finished.then(()=>st.remove()).catch(()=>st.remove());
+    playSfx(pick(SFX.sweep),{vol:.7});setTimeout(()=>say('נס גדול! הכל כפול'),300);
+}
 function coinRain(n){
     if(!FX_ON)return;
     const W=innerWidth,H=innerHeight;
@@ -1832,6 +2155,7 @@ function playSfx(name,o){
         const src=ctx.createBufferSource(),g=ctx.createGain();
         src.buffer=buf;src.playbackRate.value=o.rate||1;g.gain.value=o.vol==null?1:o.vol;
         src.connect(g);g.connect(ctx.destination);src.start(ctx.currentTime+(o.delay||0));
+        if((o.vol==null?1:o.vol)>.3)SFX_BUSY_UNTIL=Math.max(SFX_BUSY_UNTIL,performance.now()+((o.delay||0)+buf.duration/(o.rate||1))*1000);
     });
 }
 function playClickSound(){playSfx(pick(SFX.click),{vol:.7,rate:.9+Math.random()*.25})}
@@ -1853,6 +2177,7 @@ function noiseBuffer(ctx,sec){const b=ctx.createBuffer(1,ctx.sampleRate*sec,ctx.
 // applause / cheering crowd: many random hand-claps
 function playApplause(sec,vol){
     const ctx=getAudioCtx();if(!ctx)return;
+    SFX_BUSY_UNTIL=Math.max(SFX_BUSY_UNTIL,performance.now()+(sec||1.8)*1000+200);   // our own applause must not count as claps
     sec=sec||1.8;const sr=ctx.sampleRate,b=ctx.createBuffer(1,sr*sec,sr),d=b.getChannelData(0);
     const claps=Math.floor(sec*38);
     for(let k=0;k<claps;k++){
@@ -1945,6 +2270,7 @@ let _unlocked=false;
 function unlockAudio(){
     if(_unlocked)return;_unlocked=true;
     getAudioCtx();preloadSfx();
+    setTimeout(()=>{const m=spinMode();if((m==='clap'||m==='sing')&&!MIC.on)micStart().then(refreshSpinUI)},0);
     try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function'&&IS_TOUCH)DeviceMotionEvent.requestPermission().catch(()=>{})}catch(e){}
 }
 document.addEventListener('pointerdown',unlockAudio,{passive:true});
@@ -1987,25 +2313,59 @@ function checkOver(){
     return false;
 }
 
-function applyLetter(l){
+// Bonus coins: the common ones (streaks, skill) come out of the POT — no new money, so games still end.
+// The rare ones (נס גדול, a right answer, the Hanukkah candle) come from "the bank"; G.bank counts them.
+function giveBonus(p,amt,why,fromPot){
+    amt=Math.max(1,Math.round(amt));
+    if(fromPot){amt=Math.min(amt,G.pot);if(amt<=0)return;G.pot-=amt;adjust(p,amt,false)}
+    else{adjust(p,amt,false);G.bank=(G.bank||0)+amt}
+    const st=statsOf(p);st.bonus+=amt;
+    addLog(`${why} ${p.name} +${amt}`);
+}
+function statsOf(p){G.stats=G.stats||{};return G.stats[p.id]=G.stats[p.id]||{spins:0,gimel:0,nun:0,he:0,pe:0,maxPower:0,sing:0,bonus:0}}
+function applyLetter(l,ex){
+    ex=ex||{};
     const p=G.players[G.currentTurn];G.players.forEach(pl=>pl.change='');
+    let took=0,paid=0;
 
     switch(l){
         case'נ':p.change='—';addLog(`${p.name} ← נ׳ — כלום.`);break;
         case'ג':{
-            const w=G.pot;G.pot=0;adjust(p,w,true);
+            const w=G.pot;G.pot=0;adjust(p,w,true);took=w;
             addLog(`${p.name} ← ג׳ — לקח ${w}! 🎉`);
             anteAll();addLog(`כולם שמו ${G.ante} בקופה.`);break;
         }
         case'ה':{
-            const h=Math.ceil(G.pot/2);G.pot-=h;adjust(p,h,true);
+            const h=Math.ceil(G.pot/2);G.pot-=h;adjust(p,h,true);took=h;
             addLog(`${p.name} ← ה׳ — חצי (${h}).`);break;
         }
         case'פ':{
-            const paid=payToPot(p,G.ante,true);
+            paid=payToPot(p,G.ante,true);
             addLog(`${p.name} ← {P}׳ — שילם ${paid}.`);break; // {P} → פ or ש, per device
         }
     }
+
+    // ── statistics (for the titles at the end) ──
+    const st=statsOf(p);
+    st.spins++;st[{'נ':'nun','ג':'gimel','ה':'he','פ':'pe'}[l]]++;
+    st.maxPower=Math.max(st.maxPower,ex.power||0);
+    if(ex.singSec)st.sing+=ex.singSec;
+
+    // ── ✨ "נס גדול": a golden spin pays double (and a golden פ is forgiven) ──
+    if(ex.golden){
+        if(l==='ג'&&took)giveBonus(p,took,'✨ נס גדול! גימל כפול —');
+        else if(l==='ה'&&took)giveBonus(p,took,'✨ נס גדול! חצי כפול —');
+        else if(l==='נ')giveBonus(p,G.ante,'✨ נס גדול! נון שווה מטבעות —');
+        else if(l==='פ'&&paid){G.pot-=paid;adjust(p,paid,false);addLog(`✨ נס גדול! ${p.name} לא משלם הפעם`)}
+    }
+    // ── streaks ──
+    G.streaks=G.streaks||{};
+    const prev=G.streaks[p.id],run=prev&&prev.l===l?prev.n+1:1;G.streaks[p.id]={l,n:run};
+    if(l==='נ'&&run===3)giveBonus(p,G.ante/2,'😌 מטבע ניחומים (3 נון ברצף) —',true);
+    if(l==='ג'&&run>=2)giveBonus(p,G.ante,'🔥 כפול גימל ברצף! —',true);
+    // ── skill (from the pot) ──
+    if(ex.skill==='bull')giveBonus(p,G.ante/2,'🎯 בונוס "בול בשיא" —',true);
+    if(ex.skill==='song')giveBonus(p,G.ante/2,'🎤 בונוס שיר שלם —',true);
 
     eliminate();
     if(checkOver()){updateFamScores();return}
@@ -2110,6 +2470,15 @@ function showWinner(){
         document.getElementById('winIcon').textContent='🏆';
         document.getElementById('winSub').textContent='ניצח את המשחק!';
     }
+    // 🏅 titles — everyone gets a moment
+    const st=G.stats||{},titles=[];
+    // spread the titles: each goes to the best among those with the fewest titles so far
+    const got={};
+    const best=k=>{let b=null,bk=null;G.players.forEach(p=>{const v=(st[p.id]||{})[k]||0;if(v<=0)return;const key=[-(got[p.id]||0),v];
+        if(!b||key[0]>bk[0]||(key[0]===bk[0]&&key[1]>bk[1])){b=p;bk=key}});return b};
+    [['gimel','👑 מלך הגימל'],['maxPower','💪 המסובב החזק'],['sing','🎤 הזמר של הערב'],['bonus','🎁 צייד הבונוסים'],['nun','😅 אלוף הנון'],['pe','💸 התורם הנדיב']]
+        .forEach(([k,label])=>{const p=best(k);if(p){got[p.id]=(got[p.id]||0)+1;titles.push(`${label} — ${esc(p.name)}`)}});
+    document.getElementById('winTitles').innerHTML=titles.map(t=>`<div>${t}</div>`).join('');
     const can=canRematch();
     document.getElementById('rematchBtn').classList.toggle('hidden',!can);
     document.getElementById('rematchWait').classList.toggle('hidden',can||MODE!=='online');
@@ -2357,7 +2726,7 @@ document.addEventListener('visibilitychange',()=>{
 
 function confirmNewGame(){if(G.over||confirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?')){clearSession();location.reload()}}
 
-function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen')keepAwake()}
+function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen'){keepAwake();showNight()}}
 function hide(id){document.getElementById(id).classList.add('hidden')}
 function toggle(id,v){document.getElementById(id).classList.toggle('hidden',!v)}
 </script>
