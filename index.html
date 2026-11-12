@@ -189,7 +189,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 /* the pot is a pile of gelt that grows and shrinks with the amount */
 .pot-pile-wrap{width:64px;height:54px;display:flex;align-items:flex-end;justify-content:center}
 .pot-pile{width:64px;height:auto;transform-origin:50% 100%;transition:transform .5s cubic-bezier(.3,1.4,.5,1),opacity .4s;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));user-select:none;pointer-events:none}
-.pot-box.bump,.p-card.bump{animation:bump .45s ease-out}
+.video-tile.bump,.pot-box.bump,.p-card.bump{animation:bump .45s ease-out}
 @keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.12)}100%{transform:scale(1)}}
 .p-card.gain{box-shadow:0 0 22px rgba(52,211,153,.55)!important;border-color:var(--green)!important}
 .p-card.shake{animation:shake .5s}
@@ -222,14 +222,22 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .game-sidebar{display:flex;flex-direction:column;gap:8px}
 .sidebar-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:10px}
 .sidebar-panel h3{font-size:.75rem;color:var(--text-dim);font-weight:400;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-.video-tile{position:relative;border-radius:var(--rs);overflow:hidden;background:var(--bg-input);border:1px solid var(--border);aspect-ratio:4/3;max-height:70px}
+/* flex (not grid) so an odd last tile is centered instead of leaving a hole */
+.video-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.video-grid .video-tile{flex:0 0 calc(50% - 3px)}
+.video-grid.cols-1 .video-tile{flex-basis:100%}.video-grid.cols-3 .video-tile{flex-basis:calc(33.333% - 4px)}
+.video-tile{position:relative;border-radius:var(--rs);overflow:hidden;background:var(--bg-input);border:1px solid var(--border);aspect-ratio:4/3;transition:box-shadow .3s,border-color .3s}
 .video-tile video{width:100%;height:100%;object-fit:cover;display:block}
 .video-tile .vid-name{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:12px 6px 4px;font-size:.65rem;color:#fff}
 .vid-controls{display:flex;gap:3px}
 .vid-btn{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--rs);padding:3px 6px;color:var(--text-dim);font-size:.65rem;font-family:'Heebo',sans-serif;cursor:pointer;transition:all .2s}
 .vid-btn:hover{border-color:var(--blue);color:var(--blue)}.vid-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-.vid-placeholder{text-align:center;padding:14px 6px;color:var(--text-dim);font-size:.75rem}
+.vid-placeholder{flex:1 1 100%;text-align:center;padding:16px 8px;color:var(--text-dim);font-size:.8rem;display:flex;flex-direction:column;gap:8px;align-items:center}
+.cam-cta{font-size:1rem;padding:10px 22px}
+.video-tile.turn{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 0 22px var(--gold-glow)}
+.video-tile .vid-amt{position:absolute;top:6px;left:6px;background:rgba(6,8,15,.7);color:var(--gold);border-radius:20px;padding:2px 9px;font-family:'Secular One',sans-serif;font-size:.8rem;direction:ltr}
+.video-tile .vid-turn{position:absolute;top:6px;right:6px;background:var(--gold);color:#12141f;border-radius:20px;padding:2px 9px;font-weight:700;font-size:.75rem;display:none}
+.video-tile.turn .vid-turn{display:block}
 .log-entries{max-height:120px;overflow-y:auto}
 .log-entry{padding:2px 0;font-size:.72rem;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.02)}
 
@@ -265,7 +273,19 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .spin-btn{padding:14px 56px;font-size:1.4rem;border-radius:14px}
     .power-bar-bg{width:200px;height:12px}.power-label{font-size:1rem}
     .waiting-text{font-size:1rem}
-    .video-tile{max-height:none}
+    /* online: the video gets the whole left side, the log goes under the cards */
+    .game-layout.with-video{grid-template-columns:minmax(240px,300px) minmax(320px,400px) 1fr;
+        grid-template-areas:"top top top" "players dreidel video" "log controls video"}
+    .game-layout.with-video .game-sidebar{display:contents}
+    .game-layout.with-video #videoSection{grid-area:video;align-self:start;margin-top:10px}
+    .game-layout.with-video #logPanel{grid-area:log;align-self:start}
+    .game-layout.with-video .log-entries{max-height:160px}
+    .game-layout.with-video .players-grid{grid-template-columns:1fr 1fr}
+    .video-tile .vid-name{font-size:1rem;padding:18px 10px 6px}
+    .video-tile .vid-amt{font-size:1.05rem}
+    .video-tile .vid-turn{font-size:.9rem}
+    .cam-cta{font-size:1.3rem;padding:14px 30px}
+    .vid-placeholder{font-size:1rem;padding:40px 10px}
     .log-entries{max-height:260px}.log-entry{font-size:.85rem}
     .sidebar-panel h3{font-size:.9rem}
     .key-hint{display:block!important}
@@ -282,6 +302,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .mode-selector{flex-direction:column}
     .game-layout{grid-template-columns:1fr}
     .game-sidebar{flex-direction:row;flex-wrap:wrap}
+    #videoSection{flex:1 1 100%}
     .sidebar-panel{flex:1;min-width:140px}
     .players-grid{grid-template-columns:repeat(3,1fr)}
     .new-game-btn{top:auto;bottom:24px;left:70px}
@@ -446,9 +467,11 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div class="game-sidebar">
             <div class="sidebar-panel" id="videoSection">
                 <h3>📹 וידאו <span class="vid-controls"><button class="vid-btn" id="camStartBtn" onclick="startCamera()">מצלמה</button><button class="vid-btn hidden" id="vidToggle" onclick="toggleVideo()">📷</button><button class="vid-btn hidden" id="micToggle" onclick="toggleMic()">🎤</button></span></h3>
-                <div class="video-grid" id="videoGrid"><div class="vid-placeholder" id="vidPlaceholder">לחץ "מצלמה"</div></div>
+                <div class="video-grid" id="videoGrid"><div class="vid-placeholder" id="vidPlaceholder">
+                    <button class="btn btn-blue cam-cta" onclick="startCamera()">📹 הפעילו מצלמה</button>
+                    <div>כדי שכל המשפחות יראו אחת את השנייה</div></div></div>
             </div>
-            <div class="sidebar-panel"><h3>📜 יומן</h3><div class="log-entries" id="logEntries"></div></div>
+            <div class="sidebar-panel" id="logPanel"><h3>📜 יומן</h3><div class="log-entries" id="logEntries"></div></div>
         </div>
     </div>
 </div>
@@ -497,7 +520,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v31';
+const APP_VERSION='v32';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -747,6 +770,7 @@ function loadSession(){
 }
 
 function enterOnlineGameScreen(){
+    document.querySelector('.game-layout').classList.add('with-video');
     hide('waitingRoom');hide('modeScreen');hide('onlineSetup');show('gameScreen');show('videoSection');
     renderGame();updateOnlineUI();syncPeers();
 }
@@ -1309,6 +1333,13 @@ let COIN_SRC='coin.webp';
 (function(){const t=new Image();t.onerror=()=>{COIN_SRC='coin.png'};t.src='coin.webp'})();
 const FX_ON=!!(document.body.animate)&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 function centerOf(el){const r=el.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}
+function videoTileFor(playerId){
+    if(MODE!=='online')return null;
+    const p=G.players.find(x=>x.id===playerId);if(!p)return null;
+    const key=onlineKey(p);
+    const t=document.getElementById(key===MY_ID?'vid_local':'vid_'+key);
+    return t&&!t.classList.contains('hidden')?t:null;
+}
 function cardEl(id){return [...document.querySelectorAll('.p-card[data-pid]')].find(e=>e.dataset.pid===id)||null}
 
 // coins fly from → to along an arc; resolves when the last one lands
@@ -1385,6 +1416,7 @@ function playMoneyFx(prev,cur){
             const card=cardEl(id); // re-query: the cards may have been redrawn meanwhile
             countTo(card?.querySelector('.p-amt'),prev.amt[id],cur.amt[id],500);
             pulse(card,'bump');pulse(card,'gain',900);floatText(card,'+'+d,'plus');
+            const vt=videoTileFor(id);if(vt){floatText(vt,'+'+d,'plus');pulse(vt,'bump')}
         });
     });
     // 2) payments fly into the pot (a little after)
@@ -1394,6 +1426,7 @@ function playMoneyFx(prev,cur){
             const card=cardEl(id);
             countTo(card?.querySelector('.p-amt'),prev.amt[id],cur.amt[id],400);
             floatText(card,String(d),'minus');
+            const vt=videoTileFor(id);if(vt)floatText(vt,String(d),'minus');
         });
     });
     // pot counter follows the coins
@@ -1562,6 +1595,7 @@ function sizePile(pot){
     el.style.transform=`scale(${k.toFixed(2)})`;el.style.opacity=pot<=0?'.35':'1';
 }
 function renderGameNow(){
+    setTimeout(updateVideoTiles,0);
     if(MODE==='online'&&G.started&&!G.over)saveSession();
     document.getElementById('potVal').textContent=G.pot;sizePile(G.pot);
     const cp=G.players[G.currentTurn];
@@ -1749,8 +1783,31 @@ function attachRemote(pid,track){
     const v=tile.querySelector('video');if(v.play)v.play().catch(()=>{});
 }
 function updateVidPlaceholder(){
-    const any=localStream||document.querySelector('#videoGrid .video-tile:not(.hidden)');
-    document.getElementById('vidPlaceholder')?.classList.toggle('hidden',!!any);
+    // the big "turn on camera" button stays until I turn mine on
+    document.getElementById('vidPlaceholder')?.classList.toggle('hidden',!!localStream);
+    const n=document.querySelectorAll('#videoGrid .video-tile:not(.hidden)').length;
+    const g=document.getElementById('videoGrid');
+    g.classList.toggle('cols-1',n<=1);g.classList.toggle('cols-3',n>=5);
+    updateVideoTiles();
+}
+// name, coins and "their turn" on every video tile
+function deviceAmount(key){
+    const ps=G.players.filter(p=>onlineKey(p)===key&&p.alive);
+    if(!ps.length)return null;
+    if(famScoring(ps[0]))return ps[0].amount;          // shared family pool
+    return ps.reduce((s,p)=>s+(Number(p.amount)||0),0);
+}
+function updateVideoTiles(){
+    if(MODE!=='online'||!G.started)return;
+    const cp=G.players[G.currentTurn],turnKey=cp&&onlineKey(cp);
+    document.querySelectorAll('#videoGrid .video-tile').forEach(t=>{
+        const key=t.id==='vid_local'?MY_ID:t.id.slice(4);
+        if(!t.querySelector('.vid-amt'))t.insertAdjacentHTML('beforeend','<div class="vid-amt"></div><div class="vid-turn">התור!</div>');
+        const amt=deviceAmount(key);
+        t.querySelector('.vid-amt').textContent=amt===null?'❌':'🪙 '+amt;
+        t.classList.toggle('turn',key===turnKey&&!G.over);
+        if(t.id==='vid_local'){const me=peerLabel(MY_ID);t.querySelector('.vid-name').textContent=(me&&me!=='שחקן'?me+' (אני)':'אני')}
+    });
 }
 
 async function startCamera(){
@@ -1759,7 +1816,7 @@ async function startCamera(){
         return;
     }
     try{
-        localStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:320},height:{ideal:240}},audio:true});
+        localStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},frameRate:{ideal:24,max:30}},audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
         videoEnabled=true;micEnabled=true;
         document.getElementById('camStartBtn').classList.add('hidden');
         document.getElementById('vidToggle').classList.remove('hidden');
