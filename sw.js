@@ -10,7 +10,7 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v32';
+const CACHE = 'dreidel-v33';
 const FALLBACK = './index.html';
 const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png', './bg-table.webp', './bg-table.jpg', './bg-table-portrait.webp', './bg-table-portrait.jpg', './coin.webp', './coin.png', './pile.webp', './pile.png'];
 
@@ -75,7 +75,7 @@ self.addEventListener('fetch', function (e) {
   }
 
   // Own static files (icons, manifest) and fonts / library
-  const ownStatic = url.origin === self.location.origin && /\.(png|webp|jpg|ico|svg|json)$/.test(url.pathname);
+  const ownStatic = url.origin === self.location.origin && /\.(png|webp|jpg|mp3|ico|svg|json)$/.test(url.pathname);
   if (ownStatic || CACHEABLE_HOSTS.indexOf(url.hostname) !== -1) {
     e.respondWith(staleWhileRevalidate(req));
   }

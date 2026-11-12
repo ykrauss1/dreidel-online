@@ -1,0 +1,3 @@
+Sound effects by Kenney (www.kenney.nl) — CC0 1.0 (public domain).
+Packs: Music Jingles, Digital Audio, RPG Audio, Impact Sounds, Interface Sounds.
+Obtained from GitHub mirrors: Boyquotes/kenney-*-for-godot, Calinou/kenney-interface-sounds.

@@ -55,6 +55,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .header{text-align:center;padding:14px 0 4px}
 .header h1,.header-title{font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,4vw,2.4rem);color:#e0eaff;text-shadow:0 0 20px rgba(120,160,255,.6),0 0 40px rgba(80,120,255,.3);display:flex;align-items:center;justify-content:center;gap:0;width:100%}
 .handle-gap{display:inline-block;width:clamp(40px,8vw,80px)}
+/* title: a gold glow passes over the letters one by one; sometimes they hop; on Gimel — party colors */
+.header-title .ch{display:inline-block;animation:glowPass 4.5s ease-in-out infinite;animation-delay:calc(var(--i)*.14s)}
+@keyframes glowPass{0%,12%,100%{color:#e0eaff;text-shadow:0 0 20px rgba(120,160,255,.6),0 0 40px rgba(80,120,255,.3)}
+    5%{color:#ffe38a;text-shadow:0 0 18px rgba(245,200,66,.95),0 0 44px rgba(245,170,40,.6)}}
+.header-title.hop .ch{animation:glowPass 4.5s ease-in-out infinite,hop .55s cubic-bezier(.3,1.8,.5,1) both;animation-delay:calc(var(--i)*.14s),calc(var(--i)*.06s)}
+@keyframes hop{0%{transform:none}40%{transform:translateY(-14px) rotate(-6deg)}100%{transform:none}}
+.header-title.party .ch{animation:party .5s linear infinite;animation-delay:calc(var(--i)*-.07s)}
+@keyframes party{0%{color:#f5c842;transform:translateY(0)}25%{color:#34d399;transform:translateY(-6px)}50%{color:#6fa3ff;transform:translateY(0)}75%{color:#f87171;transform:translateY(-4px)}100%{color:#f5c842}}
 .header .sub{color:var(--text-dim);font-size:.8rem;margin-top:1px;font-weight:300}
 
 /* COMMON */
@@ -130,6 +138,17 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
              transform-origin:50% 99%;overflow:visible}
 /* Picture dreidel: the image + letters overlaid on the two enamel panels */
 .dreidel-art{position:relative}
+.dreidel-scale{position:relative}
+.dreidel-shadow{position:absolute;left:50%;bottom:-4px;width:70px;height:14px;margin-left:-35px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent);pointer-events:none}
+.dreidel-scale.spinning .dreidel-shadow{animation:shadowPulse .18s infinite alternate}
+@keyframes shadowPulse{from{transform:scaleX(.8);opacity:.7}to{transform:scaleX(1.15);opacity:1}}
+.fx-stamp{position:fixed;left:50%;top:40%;z-index:904;pointer-events:none;text-align:center;font-family:'Secular One',sans-serif;line-height:1;transform:translate(-50%,-50%);white-space:nowrap}
+.fx-stamp .e{font-size:4.2rem;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+.fx-stamp .t{font-size:3rem;text-shadow:0 0 24px currentColor,0 4px 12px rgba(0,0,0,.8)}
+.fx-stamp.L-ג{color:#f5c842}.fx-stamp.L-ה{color:#6fa3ff}.fx-stamp.L-נ{color:#c9cde6}.fx-stamp.L-פ{color:#ff6b6b}
+@media(min-width:1000px){.fx-stamp .e{font-size:6rem}.fx-stamp .t{font-size:4.4rem}}
+.app.quake{animation:quake .45s}
+@keyframes quake{0%,100%{transform:none}15%{transform:translate(-7px,2px) rotate(-.4deg)}30%{transform:translate(6px,-2px) rotate(.4deg)}45%{transform:translate(-5px,1px)}60%{transform:translate(4px,-1px)}80%{transform:translate(-2px,0)}}
 .dreidel-art img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none}
 /* each face is a W×H box that JS maps onto the measured trapezoid of the panel (matrix3d) */
 .dreidel-art .face{position:absolute;left:0;top:0;width:56px;height:88px;transform-origin:0 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -288,7 +307,6 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .vid-placeholder{font-size:1rem;padding:40px 10px}
     .log-entries{max-height:260px}.log-entry{font-size:.85rem}
     .sidebar-panel h3{font-size:.9rem}
-    .key-hint{display:block!important}
 }
 @media(min-width:1400px) and (min-height:820px){
     .dreidel-wrap{--k:2}
@@ -296,7 +314,14 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .pot-val{font-size:2.4rem}
     .header h1,.header-title{font-size:3rem}
 }
-.key-hint{display:none;font-size:.75rem;color:var(--text-dim);margin-top:6px;text-align:center}
+.key-hint{display:block;font-size:.72rem;color:var(--text-dim);margin-top:6px;text-align:center;max-width:420px;line-height:1.5}
+.hint-touch{display:none}.shake-opt{display:none}
+@media(hover:none) and (pointer:coarse){.hint-desk{display:none}.hint-touch{display:inline}.shake-opt{display:flex}}
+.dreidel-art{cursor:grab;touch-action:none;pointer-events:auto} /* the zone around it is click-through */
+.dreidel-art.grabbing{cursor:grabbing}
+.dreidel-art.charging{animation:chargeWiggle .12s infinite alternate}
+@keyframes chargeWiggle{from{transform:rotate(calc(var(--cv,0)*-4deg))}to{transform:rotate(calc(var(--cv,0)*4deg))}}
+.power-fill.hot{background:linear-gradient(90deg,var(--green),var(--gold),var(--red))}
 .key-hint kbd{background:var(--bg-input);border:1px solid var(--border-l);border-radius:4px;padding:1px 6px;font-family:inherit}
 @media(max-width:768px){
     .mode-selector{flex-direction:column}
@@ -314,10 +339,10 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 <body>
 <div class="app">
 <header class="header">
-  <h1 class="header-title">
-    <span>משחק</span>
+  <h1 class="header-title" aria-label="משחק סביבון">
+    <span class="tw">משחק</span>
     <span class="handle-gap"></span>
-    <span>סביבון</span>
+    <span class="tw">סביבון</span>
   </h1>
 </header>
 
@@ -441,6 +466,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div class="game-main">
             <div class="dreidel-zone">
                 <div class="dreidel-wrap"><div class="dreidel-scale">
+                    <div class="dreidel-shadow" id="dreidelShadow"></div>
                     <div class="dreidel-svg dreidel-art" id="dreidelSvg">
                         <img src="dreidel.webp" alt="סביבון" draggable="false" onerror="this.onerror=null;this.src='dreidel.png'">
                         <!-- faces are positioned over the two enamel panels of the picture (measured: 6–44% / 56–94% wide, 39.6–71.8% high) -->
@@ -453,14 +479,17 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
             <div class="dreidel-controls">
                 <div class="turn-box turn-inline" id="turnBox">תור: <strong>—</strong></div>
                 <div class="result-line" id="resultLine"></div>
-                <button class="spin-btn" id="spinBtn" onclick="handleSpinClick()">סובב!</button>
+                <button class="spin-btn" id="spinBtn">סובב!</button>
                 <div class="power-meter hidden" id="powerMeter">
                     <div class="power-label" id="powerLabel">לחץ שוב!</div>
                     <div class="power-bar-bg"><div class="power-bar-fill" id="powerFill"></div></div>
                     <div class="power-clicks" id="powerClicks">○ ○ ○</div>
                 </div>
                 <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
-                <div class="key-hint">אפשר גם במקלדת: <kbd>רווח</kbd> שלוש פעמים מהר = סיבוב חזק</div>
+                <div class="key-hint">
+                    <span class="hint-desk">🖱️ גררו את הסביבון הצידה · או לחצו 3 פעמים מהר · או החזיקו ושחררו בשיא · או <kbd>רווח</kbd></span>
+                    <span class="hint-touch">👆 החליקו את הסביבון · או 3 לחיצות · או החזיקו ושחררו בשיא · או נערו את הטלפון 📳</span>
+                </div>
             </div>
             <div class="players-area" id="playersArea"></div>
         </div>
@@ -503,6 +532,9 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <div class="settings-row"><select id="fourthLetter" class="input" style="padding:5px 8px;font-size:.8rem" onchange="applyFourthLetter()"><option value="פ">פ — נס גדול היה פה (ארץ ישראל)</option><option value="ש">ש — נס גדול היה שם (חוץ לארץ)</option></select></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
+  <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין (מכריז את התוצאה)</label>
+  <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
+  <label class="sound-toggle shake-opt"><input type="checkbox" id="shakeOn" checked> 📳 נענוע הטלפון מסובב</label>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px">📲 אפליקציה</div>
   <div class="install-help" id="installHelp"></div>
@@ -520,7 +552,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v32';
+const APP_VERSION='v33';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -843,7 +875,7 @@ setInterval(timerTick,1000);
 
 // ═══════════ SETTINGS PERSISTENCE ═══════════
 const SETTINGS_KEY='dreidel_settings';
-const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
+const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','shakeOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -1120,33 +1152,150 @@ function handleSpinClick(){
     } else if(spinClicks>=3){
         clearTimeout(spinClickTimer);
         const totalMs=spinClickTimes[2]-spinClickTimes[0];
-        spinPower=Math.max(0.08,Math.min(1.0,1-(totalMs-250)/1800));
-        document.getElementById('powerFill').style.width='100%';
-        document.getElementById('powerLabel').textContent=spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':'😴 עייף...';
-        // Log
-        const cp=G.players[G.currentTurn];
-        if(cp){
-            const msg=spinPower>0.85?`💪 ${cp.name} סיבב בכוח עצום!`
-                     :spinPower>0.65?`⚡ ${cp.name} סיבב בחוזקה`
-                     :spinPower>0.4 ?`👌 ${cp.name} סיבב בינוני`
-                     :spinPower>0.2 ?`😅 ${cp.name} סיבב בעצלתיים...`
-                     :`😴 ${cp.name} בקושי הזיז את הסביבון`;
-            addLog(msg);
-        }
-        setTimeout(()=>doSpin(),200);
+        spinFromInput(Math.max(0.08,Math.min(1.0,1-(totalMs-250)/1800)),'taps');
     }
 }
 
-// Keyboard: space / enter act like the spin button (three quick presses = strong spin)
+// ── All the ways to spin end here ──
+function canSpinNow(){
+    const b=document.getElementById('spinBtn');
+    return !spinning&&!G.over&&!document.getElementById('gameScreen').classList.contains('hidden')
+        &&!b.classList.contains('hidden')&&!b.disabled&&!document.getElementById('winModal').classList.contains('show');
+}
+function spinFromInput(power,how){
+    if(spinning||G.over)return;
+    spinPower=Math.max(0.08,Math.min(1,power));
+    const pm=document.getElementById('powerMeter');pm.classList.remove('hidden');
+    document.getElementById('powerClicks').textContent={taps:'● ● ●',hold:'🎯',flick:'🌀',shake:'📳'}[how]||'';
+    document.getElementById('powerFill').style.width=Math.round(spinPower*100)+'%';
+    const bull=how==='hold'&&spinPower>0.93;
+    document.getElementById('powerLabel').textContent=bull?'🎯 בול בשיא!':spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':'😴 עייף...';
+    const cp=G.players[G.currentTurn];
+    if(cp){
+        const n=cp.name;
+        const msg=bull?`🎯 ${n} שחרר בדיוק בשיא!`
+            :how==='flick'&&spinPower>0.7?`🌀 ${n} סובב ביד בכל הכוח!`
+            :how==='shake'?`📳 ${n} נער את הטלפון!`
+            :spinPower>0.85?`💪 ${n} סיבב בכוח עצום!`
+            :spinPower>0.65?`⚡ ${n} סיבב בחוזקה`
+            :spinPower>0.4 ?`👌 ${n} סיבב בינוני`
+            :spinPower>0.2 ?`😅 ${n} סיבב בעצלתיים...`
+            :`😴 ${n} בקושי הזיז את הסביבון`;
+        addLog(msg);
+    }
+    setTimeout(()=>doSpin(),how==='flick'?0:180);
+}
+
+// ── Hold & release: hold the button / space, a meter swings 0→100→0, release at the top ──
+const HOLD_MS=220, CHARGE_PERIOD=1100;
+let pressAt=0,holdTimer=null,charging=false,chargeT0=0,chargeVal=0,chargeRAF=0;
+function pressStart(){
+    if(!canSpinNow()||pressAt)return;
+    pressAt=performance.now();clearTimeout(holdTimer);
+    holdTimer=setTimeout(startCharge,HOLD_MS);
+}
+function pressEnd(){
+    if(!pressAt)return;
+    const held=performance.now()-pressAt;pressAt=0;clearTimeout(holdTimer);
+    if(charging)releaseCharge();else if(held<HOLD_MS&&canSpinNow())handleSpinClick();
+}
+function startCharge(){
+    if(!canSpinNow())return;
+    clearTimeout(spinClickTimer);spinClicks=0;spinClickTimes=[];
+    charging=true;chargeT0=performance.now();
+    document.getElementById('powerMeter').classList.remove('hidden');
+    document.getElementById('powerClicks').textContent='🎯';
+    document.getElementById('powerLabel').textContent='שחררו בשיא!';
+    document.getElementById('powerFill').classList.add('hot');
+    document.getElementById('spinBtn').textContent='שחרר!';
+    document.getElementById('dreidelSvg').classList.add('charging');
+    const loop=()=>{
+        if(!charging)return;
+        const t=(performance.now()-chargeT0)/CHARGE_PERIOD;
+        chargeVal=0.5-0.5*Math.cos(2*Math.PI*t);
+        document.getElementById('powerFill').style.width=Math.round(chargeVal*100)+'%';
+        document.getElementById('dreidelSvg').style.setProperty('--cv',chargeVal.toFixed(2));
+        chargeTone(true,chargeVal);
+        chargeRAF=requestAnimationFrame(loop);
+    };loop();
+}
+function releaseCharge(){
+    charging=false;cancelAnimationFrame(chargeRAF);chargeTone(false);
+    const art=document.getElementById('dreidelSvg');art.classList.remove('charging');art.style.removeProperty('--cv');
+    document.getElementById('powerFill').classList.remove('hot');
+    playClickSound();
+    spinFromInput(Math.max(0.08,chargeVal),'hold');
+}
+(function wireSpinButton(){
+    const b=document.getElementById('spinBtn');
+    b.addEventListener('pointerdown',e=>{if(e.button>0)return;e.preventDefault();pressStart()});
+    window.addEventListener('pointerup',()=>pressEnd());
+    window.addEventListener('pointercancel',()=>pressEnd());
+    window.addEventListener('blur',()=>pressEnd());
+    b.addEventListener('contextmenu',e=>e.preventDefault());
+})();
+// Keyboard: space / enter — tap 3 times, or hold & release
 document.addEventListener('keydown',e=>{
     if(e.key!==' '&&e.key!=='Enter')return;
-    const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.tagName==='BUTTON'))return;
-    if(document.getElementById('gameScreen').classList.contains('hidden'))return;
-    if(document.getElementById('winModal').classList.contains('show'))return;
-    const btn=document.getElementById('spinBtn');
-    if(btn.classList.contains('hidden')||btn.disabled)return;
-    e.preventDefault();if(!e.repeat)handleSpinClick();
+    const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'))return;
+    if(t&&t.tagName==='BUTTON'&&t.id!=='spinBtn')return;
+    if(!canSpinNow()&&!charging)return;
+    e.preventDefault();if(!e.repeat)pressStart();
 });
+document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressAt){e.preventDefault();pressEnd()}}});
+
+// ── Grab the dreidel and flick it sideways (mouse or finger). Speed = power ──
+(function wireFlick(){
+    const art=document.getElementById('dreidelSvg');let drag=null;
+    art.addEventListener('pointerdown',e=>{
+        if(!canSpinNow()||charging)return;
+        e.preventDefault();
+        try{art.setPointerCapture(e.pointerId)}catch(_){}
+        clearTimeout(spinClickTimer);spinClicks=0;spinClickTimes=[];
+        drag={x0:e.clientX,pts:[[e.clientX,performance.now()]]};
+        art.classList.add('grabbing');art.style.transition='none';
+    });
+    art.addEventListener('pointermove',e=>{
+        if(!drag)return;
+        const now=performance.now();drag.pts.push([e.clientX,now]);
+        while(drag.pts.length>2&&now-drag.pts[0][1]>140)drag.pts.shift();
+        const dx=e.clientX-drag.x0;
+        art.style.transform=`rotate(${Math.max(-28,Math.min(28,dx*.22)).toFixed(1)}deg)`;
+    });
+    const end=e=>{
+        if(!drag)return;
+        const d=drag;drag=null;art.classList.remove('grabbing');
+        const now=performance.now();d.pts.push([e.clientX,now]);
+        const first=d.pts[0],last=d.pts[d.pts.length-1],dt=Math.max(1,last[1]-first[1]);
+        const speed=Math.abs(last[0]-first[0])/dt;           // px per ms over the last ~140ms
+        const total=Math.abs(e.clientX-d.x0);
+        if(total<25||speed<0.25||!canSpinNow()){             // too gentle — snap back
+            art.style.transition='transform .35s cubic-bezier(.3,1.6,.5,1)';art.style.transform='';
+            if(total>=25)floatText(art,'מהר יותר! 💨','minus');
+            return;
+        }
+        const power=Math.max(.1,Math.min(1,(speed-0.2)/1.5));
+        playWhoosh(power);
+        spinFromInput(power,'flick');
+    };
+    art.addEventListener('pointerup',end);art.addEventListener('pointercancel',end);
+})();
+
+// ── Shake the phone (touch devices) ──
+const IS_TOUCH=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches);
+(function wireShake(){
+    if(!IS_TOUCH||!window.DeviceMotionEvent)return;
+    let last=0,peak=0,win=null;
+    window.addEventListener('devicemotion',e=>{
+        if(!document.getElementById('shakeOn')?.checked)return;
+        let m=0;const a=e.acceleration;
+        if(a&&(a.x||a.y||a.z))m=Math.hypot(a.x||0,a.y||0,a.z||0);
+        else{const g=e.accelerationIncludingGravity||{};m=Math.max(0,Math.hypot(g.x||0,g.y||0,g.z||0)-9.8)}
+        if(m<15||!canSpinNow()||charging||performance.now()-last<2500)return;
+        if(!win){peak=m;win=setTimeout(()=>{win=null;last=performance.now();spinFromInput((peak-12)/25,'shake')},250)}
+        else peak=Math.max(peak,m);
+    });
+})();
 function toggleFullscreen(){
     const d=document,el=d.documentElement;
     if(!d.fullscreenElement&&!d.webkitFullscreenElement){(el.requestFullscreen||el.webkitRequestFullscreen||(()=>{})).call(el)}
@@ -1180,7 +1329,7 @@ function doSpin(){
     spinning=true;
     document.getElementById('spinBtn').disabled=true;
     G.players.forEach(p=>p.change='');
-    const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left'};
+    const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left',who:G.players[G.currentTurn]?.name||''};
 
     // Compute the result now, but hold the log lines until the animation ends
     LOG_BUF=[];applyLetter(letter);const logs=LOG_BUF;LOG_BUF=null;
@@ -1223,6 +1372,8 @@ function showSpinAnimation(fl, opts, cb){
     const fallDir=(opts&&opts.dir)||(Math.random()>.5?'fall-right':'fall-left');
 
     const svg=document.getElementById('dreidelSvg');
+    const scaleBox=svg.parentElement;scaleBox.classList.add('spinning');
+    const img=svg.querySelector('img');
     const rl=document.getElementById('resultLine');
     rl.textContent=''; rl.className='result-line';
     svg.classList.remove('fall-right','fall-left','upright');
@@ -1237,7 +1388,7 @@ function showSpinAnimation(fl, opts, cb){
         hum.connect(g); g.connect(soundCtx.destination);
         hum.type='sawtooth';
         hum.frequency.setValueAtTime(90+power*150, soundCtx.currentTime);
-        g.gain.setValueAtTime(0.03, soundCtx.currentTime);
+        g.gain.setValueAtTime(0.018, soundCtx.currentTime);
         hum.start();
         hum.frequency.linearRampToValueAtTime(25, soundCtx.currentTime+totalDur/1000*0.88);
     }
@@ -1273,6 +1424,9 @@ function showSpinAnimation(fl, opts, cb){
         if(halfRev>=totalHalfRevs) { finish(); return; }
         const halfDur=Math.max(30,Math.round(baseDurs[halfRev]*durScale));
 
+        // motion blur while fast + a tick on every face
+        img.style.filter=halfDur<80?'blur(1.4px)':halfDur<130?'blur(.6px)':'';
+        if(halfDur>=45||halfRev%2===0)playSfx(pick(SFX.tick),{vol:.18+Math.min(.3,halfDur/900),rate:1.35-Math.min(.55,halfDur/600)});
         // Phase A: squeeze to 0
         svg.style.transition=`transform ${halfDur*0.45}ms ease-in`;
         svg.style.transform='scaleX(0.04)';
@@ -1295,11 +1449,13 @@ function showSpinAnimation(fl, opts, cb){
         if(hum){try{hum.stop();hum.disconnect()}catch(e){}}
         svg.style.transition='';
         svg.style.transform='';
+        img.style.filter='';scaleBox.classList.remove('spinning');
         setFace(fl, false);
         svg.classList.add('settled');
         rl.textContent=ldesc(fl); rl.className='result-line r-'+fl;
         playThud();
-        setTimeout(()=>playResult(fl), 160);
+        setTimeout(()=>{playResult(fl);resultStamp(fl)}, 160);
+        setTimeout(()=>narrate(fl,opts&&opts.who), 900);
         // Wobble before fall
         let wobbleCount=0, wobbleDir=1;
         function wobble(){
@@ -1308,6 +1464,7 @@ function showSpinAnimation(fl, opts, cb){
             svg.style.transition=`transform ${120-wobbleCount*15}ms ease-in-out`;
             svg.style.transform=`rotate(${deg}deg)`;
             wobbleDir*=-1; wobbleCount++;
+            playSfx(pick(SFX.tick),{vol:.12,rate:.7});
             setTimeout(wobble, 130-wobbleCount*15);
         }
         wobble();
@@ -1316,6 +1473,8 @@ function showSpinAnimation(fl, opts, cb){
         svg.style.transition='';
         svg.style.transform='';
         svg.classList.add(fallDir);
+        playSfx(pick(SFX.fall),{vol:.9,delay:.55});                 // lands on the table
+        playSfx(pick(SFX.fall),{vol:.3,rate:1.25,delay:.78});       // small bounce
         setTimeout(()=>{ if(cb) cb(); }, 1300);
     }
 }
@@ -1326,6 +1485,16 @@ function resetDreidel(){
     s.style.transition=''; s.style.transform='';
     setFace('נ', false);
 }
+
+// ══════ TITLE ══════
+(function initTitle(){
+    let i=0;
+    document.querySelectorAll('.header-title .tw').forEach(w=>{
+        w.innerHTML=[...w.textContent].map(c=>`<span class="ch" style="--i:${i++}">${c}</span>`).join('');
+    });
+    const t=document.querySelector('.header-title');
+    (function loop(){setTimeout(()=>{if(!t.classList.contains('party'))pulse(t,'hop',1400);loop()},8000+Math.random()*7000)})();
+})();
 
 // ══════ FX: coins, counters, confetti ══════
 // coin picture (WebP, PNG fallback for very old browsers)
@@ -1392,6 +1561,38 @@ function bigText(text){
     b.animate([{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.25)',opacity:1,offset:.3},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.7},{transform:'translate(-50%,-80%) scale(1.1)',opacity:0}],{duration:1500,easing:'ease-out'}).finished.then(()=>b.remove()).catch(()=>b.remove());
 }
 
+// Big reaction in the middle of the screen — a random one each time
+const STAMPS={
+    'ג':[['🤩','גימל!'],['🎉','הכל!'],['💰','כל הקופה!'],['🏆','יש!!!'],['🥳','גימל!!']],
+    'ה':[['😊','חצי!'],['👍','יופי!'],['🎈','חצי קופה!'],['😄','הא!']],
+    'נ':[['🤷','כלום'],['😐','נו...'],['🥱','ממשיכים'],['😶','נון']],
+    'פ':[['😱','אוי!'],['💸','משלמים!'],['😭','אוי ואבוי'],['🙈','פספוס!'],['😬','אאוץ׳']]
+};
+function resultStamp(l){
+    if(!FX_ON)return;
+    const [e,t]=pick(STAMPS[l]||[['','']]);
+    const st=document.createElement('div');st.className='fx-stamp L-'+l;
+    st.innerHTML=`<span class="e">${e}</span><span class="t">${esc(t)}</span>`;document.body.appendChild(st);
+    const style=pick(['pop','spin','drop']);
+    const frames=style==='spin'?[{transform:'translate(-50%,-50%) scale(.2) rotate(-200deg)',opacity:0},{transform:'translate(-50%,-50%) scale(1.15) rotate(8deg)',opacity:1,offset:.35},{transform:'translate(-50%,-50%) scale(1) rotate(0)',opacity:1,offset:.75},{transform:'translate(-50%,-50%) scale(.8)',opacity:0}]
+        :style==='drop'?[{transform:'translate(-50%,-220%) scale(1.1)',opacity:0},{transform:'translate(-50%,-50%) scale(1,.85)',opacity:1,offset:.3},{transform:'translate(-50%,-55%) scale(1)',opacity:1,offset:.45},{transform:'translate(-50%,-50%)',opacity:1,offset:.75},{transform:'translate(-50%,-50%) scale(.85)',opacity:0}]
+        :[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.25)',opacity:1,offset:.3},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.75},{transform:'translate(-50%,-70%) scale(1.05)',opacity:0}];
+    st.animate(frames,{duration:l==='ג'?1900:1500,easing:'ease-out'}).finished.then(()=>st.remove()).catch(()=>st.remove());
+    if(l==='פ')pulse(document.querySelector('.app'),'quake',500);
+    if(l==='ג'){coinRain(28);pulse(document.querySelector('.header-title'),'party',2200)}
+    if(l==='ה')coinRain(8);
+}
+function coinRain(n){
+    if(!FX_ON)return;
+    const W=innerWidth,H=innerHeight;
+    for(let i=0;i<n;i++){
+        const c=document.createElement('img');c.className='fx-coin';c.src=COIN_SRC;c.alt='';document.body.appendChild(c);
+        const x=W*(.1+Math.random()*.8),r=Math.random()*720-360,sc=.7+Math.random()*.7;
+        c.animate([{transform:`translate(${x}px,-40px) rotate(0deg) scale(${sc})`,opacity:1},{transform:`translate(${x+(Math.random()-.5)*120}px,${H+40}px) rotate(${r}deg) scale(${sc})`,opacity:1}],
+            {duration:1200+Math.random()*900,delay:Math.random()*600,easing:'cubic-bezier(.4,0,.8,.6)',fill:'both'}).finished.then(()=>c.remove()).catch(()=>c.remove());
+    }
+}
+
 // Play the difference between two screens: who paid, who took, who is out
 function playMoneyFx(prev,cur){
     const potEl=document.getElementById('potCoin'),potVal=document.getElementById('potVal');
@@ -1409,7 +1610,8 @@ function playMoneyFx(prev,cur){
     if(!FX_ON){countTo(potVal,prev.pot,cur.pot);sizePile(cur.pot);G.players.forEach(p=>countTo(cardEl(p.id)?.querySelector('.p-amt'),prev.amt[p.id],cur.amt[p.id]));return}
     // 1) winnings fly out of the pot
     const big=takers.some(([,d])=>d>=Math.max(ante*3,prev.pot*.6));
-    if(big){const [x,y]=centerOf(potEl);confetti(x,y,40,180);bigText(dispLetter('ג')+'!');playJackpotSound()}
+    if(big){const [x,y]=centerOf(potEl);confetti(x,y,40,180)}
+    if(takers.length||payers.length)playCoinBag();
     const t1=takers.map(([id,d],i)=>{
         const card=cardEl(id);
         return flyCoins(potEl,card,nCoins(d),i*60).then(()=>{
@@ -1433,7 +1635,10 @@ function playMoneyFx(prev,cur){
     Promise.all([...t1,...t2]).then(()=>{countTo(potVal,Number(potVal.textContent)||0,cur.pot,450);sizePile(cur.pot);pulse(potVal.closest('.pot-box'),'bump')});
     if(takers.length){setTimeout(()=>{sizePile(payers.length?Math.max(0,prev.pot-takers.reduce((a,[,d])=>a+d,0)):cur.pot);if(!payers.length)countTo(potVal,prev.pot,cur.pot,500)},300)} // the pile shrinks as the winnings leave
     // 3) knocked out
-    out.forEach(id=>setTimeout(()=>pulse(cardEl(id),'shake',600),900));
+    out.forEach(id=>setTimeout(()=>{
+        pulse(cardEl(id),'shake',600);playSfx(pick(SFX.out));
+        const p=G.players.find(x=>x.id===id);if(p)setTimeout(()=>say(p.name+' יצא מהמשחק'),700);
+    },900));
 }
 
 // ══════ AUDIO ══════
@@ -1444,24 +1649,40 @@ function getAudioCtx(){
     if(_audioCtx.state==='suspended') _audioCtx.resume();
     return _audioCtx;
 }
-function playClickSound(){
-    const ctx=getAudioCtx(); if(!ctx) return;
-    const o=ctx.createOscillator(), g=ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.type='sine'; o.frequency.value=900;
-    g.gain.setValueAtTime(0.12, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.1);
-    o.start(); o.stop(ctx.currentTime+0.1);
+// ── Recorded sounds (Kenney, CC0 — see sounds/CREDITS.txt) ──
+// Each event has several variants; one is picked at random so it never gets boring.
+const SFX={
+    pe:['pe0','pe1','pe2','pe3','pe4','pe5','pe6','pe7','pe8'],
+    nun:['nun0','nun1','nun2','nun3','nun4','nun5','nun6','nun7'],
+    he:['he0','he1','he2','he3','he4','he5','he6','he7','he8'],
+    gimel:['gimel0','gimel1','gimel2','gimel3','gimel4'],
+    sweep:['sweep0','sweep1'], out:['out0','out1','out2'], win:['win0'],
+    coins:['coins0','coins1'], fall:['fall0','fall1','fall2','fall3','fall4'],
+    tick:['tick0','tick1','tick2'], click:['click0','click1','click2','click3','click4']
+};
+const _sfxBuf={};
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function loadSfx(name){
+    if(_sfxBuf[name])return _sfxBuf[name];
+    const ctx=getAudioCtx();if(!ctx)return Promise.resolve(null);
+    return _sfxBuf[name]=fetch('sounds/'+name+'.mp3').then(r=>r.ok?r.arrayBuffer():null)
+        .then(ab=>ab?new Promise(res=>ctx.decodeAudioData(ab,res,()=>res(null))):null).catch(()=>null);
 }
-function playThud(){
-    const ctx=getAudioCtx(); if(!ctx) return;
-    const buf=ctx.createBuffer(1,ctx.sampleRate*0.2,ctx.sampleRate);
-    const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.05));
-    const s=ctx.createBufferSource(), g=ctx.createGain();
-    s.buffer=buf; s.connect(g); g.connect(ctx.destination);
-    g.gain.value=0.3; s.start();
+let _sfxPreloaded=false;
+function preloadSfx(){if(_sfxPreloaded||!getAudioCtx())return;_sfxPreloaded=true;Object.values(SFX).flat().forEach(loadSfx)}
+// play a sound: vol, rate (pitch/speed), delay (s)
+function playSfx(name,o){
+    const ctx=getAudioCtx();if(!ctx||!name)return;
+    o=o||{};
+    loadSfx(name).then(buf=>{
+        if(!buf)return;
+        const src=ctx.createBufferSource(),g=ctx.createGain();
+        src.buffer=buf;src.playbackRate.value=o.rate||1;g.gain.value=o.vol==null?1:o.vol;
+        src.connect(g);g.connect(ctx.destination);src.start(ctx.currentTime+(o.delay||0));
+    });
 }
+function playClickSound(){playSfx(pick(SFX.click),{vol:.7,rate:.9+Math.random()*.25})}
+function playThud(){playSfx(pick(SFX.fall),{vol:.35,rate:1.3})}
 let _lastClink=0;
 function playCoinSound(){
     const ctx=getAudioCtx();if(!ctx)return;
@@ -1473,28 +1694,109 @@ function playCoinSound(){
         o.start(t);o.stop(t+0.17);
     });
 }
-function playJackpotSound(){
+
+// ── Synthesized extras ──
+function noiseBuffer(ctx,sec){const b=ctx.createBuffer(1,ctx.sampleRate*sec,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b}
+// applause / cheering crowd: many random hand-claps
+function playApplause(sec,vol){
     const ctx=getAudioCtx();if(!ctx)return;
-    [523,659,784,1047,1319].forEach((f,i)=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
-        o.type='triangle';o.frequency.value=f;const t=ctx.currentTime+0.25+i*0.09;
-        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.12,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
-        o.start(t);o.stop(t+0.36);
+    sec=sec||1.8;const sr=ctx.sampleRate,b=ctx.createBuffer(1,sr*sec,sr),d=b.getChannelData(0);
+    const claps=Math.floor(sec*38);
+    for(let k=0;k<claps;k++){
+        const t0=Math.floor(Math.random()*(sec-.05)*sr),len=Math.floor(sr*(.008+Math.random()*.012)),amp=.4+Math.random()*.6;
+        const pos=t0/d.length,env=Math.min(1,pos*5)*Math.min(1,(1-pos)*3); // swell in, fade out
+        for(let i=0;i<len&&t0+i<d.length;i++)d[t0+i]+=(Math.random()*2-1)*amp*env*Math.exp(-i/(len*.35));
+    }
+    const src=ctx.createBufferSource(),bp=ctx.createBiquadFilter(),g=ctx.createGain();
+    src.buffer=b;bp.type='bandpass';bp.frequency.value=1800;bp.Q.value=.6;g.gain.value=vol||.5;
+    src.connect(bp);bp.connect(g);g.connect(ctx.destination);src.start();
+}
+// classic "wah wah wah waaah"
+function playSadTrombone(){
+    const ctx=getAudioCtx();if(!ctx)return;
+    const notes=[[233,.32],[220,.32],[208,.32],[196,1.1]],lp=ctx.createBiquadFilter(),g=ctx.createGain();
+    lp.type='lowpass';lp.frequency.value=900;lp.Q.value=4;lp.connect(g);g.connect(ctx.destination);g.gain.value=.22;
+    let t=ctx.currentTime+.05;
+    notes.forEach(([f,d],i)=>{
+        const o=ctx.createOscillator(),og=ctx.createGain();o.type='sawtooth';o.frequency.setValueAtTime(f,t);
+        if(i===3){const v=ctx.createOscillator(),vg=ctx.createGain();v.frequency.value=6;vg.gain.value=6;v.connect(vg);vg.connect(o.frequency);v.start(t);v.stop(t+d);o.frequency.linearRampToValueAtTime(f*.94,t+d)}
+        og.gain.setValueAtTime(0,t);og.gain.linearRampToValueAtTime(1,t+.04);og.gain.setValueAtTime(1,t+d-.08);og.gain.linearRampToValueAtTime(0,t+d);
+        lp.frequency.setValueAtTime(500,t);lp.frequency.linearRampToValueAtTime(1400,t+.12);lp.frequency.linearRampToValueAtTime(600,t+d);
+        o.connect(og);og.connect(lp);o.start(t);o.stop(t+d+.02);t+=d+.03;
     });
 }
+// whoosh when the dreidel is flicked
+function playWhoosh(power){
+    const ctx=getAudioCtx();if(!ctx)return;
+    const src=ctx.createBufferSource(),bp=ctx.createBiquadFilter(),g=ctx.createGain(),t=ctx.currentTime;
+    src.buffer=noiseBuffer(ctx,.45);bp.type='bandpass';bp.Q.value=1.2;
+    bp.frequency.setValueAtTime(400,t);bp.frequency.exponentialRampToValueAtTime(2500+power*2500,t+.3);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.35+power*.3,t+.06);g.gain.exponentialRampToValueAtTime(.001,t+.42);
+    src.connect(bp);bp.connect(g);g.connect(ctx.destination);src.start(t);
+}
+// rising tone while charging (hold & release)
+let _chargeOsc=null,_chargeGain=null;
+function chargeTone(on,val){
+    const ctx=getAudioCtx();if(!ctx)return;
+    if(on&&!_chargeOsc){_chargeOsc=ctx.createOscillator();_chargeGain=ctx.createGain();_chargeOsc.type='triangle';_chargeGain.gain.value=.07;_chargeOsc.connect(_chargeGain);_chargeGain.connect(ctx.destination);_chargeOsc.start()}
+    if(on&&_chargeOsc){_chargeOsc.frequency.setTargetAtTime(180+val*720,ctx.currentTime,.015)}
+    if(!on&&_chargeOsc){try{_chargeGain.gain.setTargetAtTime(0,ctx.currentTime,.03);_chargeOsc.stop(ctx.currentTime+.12)}catch(e){}_chargeOsc=null}
+}
+
+// ── Result sounds: always a little different ──
 function playResult(letter){
-    const ctx=getAudioCtx(); if(!ctx) return;
-    const freqs={'נ':[330],'ג':[330,440,550,660],'ה':[330,440,550],'פ':[330,220]};
-    (freqs[letter]||[330]).forEach((f,i)=>{
-        const o=ctx.createOscillator(), g=ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.type='sine'; o.frequency.value=f;
-        const t=ctx.currentTime+i*0.13;
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.15,t+0.04);
-        g.gain.exponentialRampToValueAtTime(0.001,t+0.28);
-        o.start(t); o.stop(t+0.28);
-    });
+    if(!getAudioCtx())return;
+    if(letter==='פ'){
+        if(Math.random()<.3)playSadTrombone(); else playSfx(pick(SFX.pe));
+    }else if(letter==='נ'){
+        playSfx(pick(SFX.nun),{vol:.8,rate:.9+Math.random()*.2});
+    }else if(letter==='ה'){
+        playSfx(pick(SFX.he));
+        if(Math.random()<.4)playSfx(pick(SFX.coins),{vol:.5,delay:.25});
+    }else if(letter==='ג'){
+        playSfx(pick(SFX.gimel));
+        playSfx(pick(SFX.sweep),{vol:.5,delay:.15});
+        playSfx(pick(SFX.coins),{vol:.8,delay:.45});
+        setTimeout(()=>playApplause(2.2,.45),350);
+    }
 }
+function playCoinBag(){playSfx(pick(SFX.coins),{vol:.6,rate:.95+Math.random()*.15})}
+
+// ── Narrator (Hebrew text-to-speech, if the device has a Hebrew voice) ──
+let HE_VOICE=null;
+function findHebrewVoice(){
+    if(!window.speechSynthesis)return;
+    const vs=speechSynthesis.getVoices();
+    HE_VOICE=vs.find(v=>/^(he|iw)(-|_|$)/i.test(v.lang))||null;
+    const note=document.getElementById('narratorNote');
+    if(note)note.textContent=HE_VOICE?'':'(אין במכשיר הזה קול עברי — הקריין לא יישמע)';
+}
+if(window.speechSynthesis){findHebrewVoice();speechSynthesis.onvoiceschanged=findHebrewVoice}
+const PHRASES={
+    'ג':['גימל! כל הקופה ל{n}!','וואו! גימל!','יש! {n} לוקח הכל!','גימל! איזה מזל!','כל הקופה! גימל!'],
+    'ה':['הא! חצי קופה ל{n}','חצי! לא רע בכלל','הא! יופי','חצי קופה! יפה'],
+    'נ':['נון. כלום','נו, לא נורא','נון, ממשיכים','כלום, התור עובר'],
+    'פ':['אוי! {n} משלם','{L}, משלמים לקופה','אוי ואבוי','לא נורא, בפעם הבאה']
+};
+function say(text){
+    if(!HE_VOICE||!document.getElementById('narratorOn')?.checked||!document.getElementById('soundOn')?.checked)return;
+    try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.voice=HE_VOICE;u.lang=HE_VOICE.lang;u.rate=1.05;u.pitch=1.1;speechSynthesis.speak(u)}catch(e){}
+}
+function narrate(letter,name){
+    const p=pick(PHRASES[letter]||['']);
+    say(p.replace('{n}',name||'').replace('{L}',letter==='פ'&&shinMode()?'שין':'פה'));
+}
+
+// unlock audio + load sounds on the first touch/click (browsers require a gesture)
+let _unlocked=false;
+function unlockAudio(){
+    if(_unlocked)return;_unlocked=true;
+    getAudioCtx();preloadSfx();
+    try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function'&&IS_TOUCH)DeviceMotionEvent.requestPermission().catch(()=>{})}catch(e){}
+}
+document.addEventListener('pointerdown',unlockAudio,{passive:true});
+document.addEventListener('keydown',unlockAudio,{passive:true});
+document.getElementById('soundOn').addEventListener('change',()=>{if(document.getElementById('soundOn').checked){_sfxPreloaded=false;preloadSfx()}});
 
 // ══════ SETTINGS ══════
 function toggleSettings(){ renderInstallHelp(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
@@ -1660,6 +1962,8 @@ function showWinner(){
     document.getElementById('winName').textContent=winText;
     document.getElementById('winModal').classList.add('show');
     confettiRain();
+    playSfx(pick(SFX.win));playSfx(pick(SFX.gimel),{delay:.9});setTimeout(()=>playApplause(3.5,.55),300);
+    setTimeout(()=>say(winText.replace('🎉','').replace('—','')+' כל הכבוד!'),1200);
     addLogLocal(`🏆 ${winText}`); // every client shows it locally — no broadcast duplicates
 }
 
