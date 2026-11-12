@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#06080f">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico" sizes="32x32">
-<link rel="preload" href="dreidel.webp" as="image">
+<link rel="preload" href="d3-face.webp" as="image"><link rel="preload" href="d3-tip.webp" as="image"><link rel="preload" href="d3-handle.webp" as="image">
 <link rel="preload" href="bg-table.webp" as="image" type="image/webp">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -54,7 +54,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* HEADER */
 .header{text-align:center;padding:14px 0 4px}
 .header h1,.header-title{font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,4vw,2.4rem);color:#e0eaff;text-shadow:0 0 20px rgba(120,160,255,.6),0 0 40px rgba(80,120,255,.3);display:flex;align-items:center;justify-content:center;gap:0;width:100%}
-.handle-gap{display:inline-block;width:clamp(40px,8vw,80px)}
+.header-title{gap:.32em!important;flex-wrap:wrap}
+.header-title .tw:nth-child(n+2){font-size:.78em;color:#f5d97a;text-shadow:0 0 18px rgba(245,200,66,.55)}
+/* in the game every centimetre goes to the dreidel and the button — no title */
+body:has(#gameScreen:not(.hidden)) .header{display:none}
 /* title: a gold glow passes over the letters one by one; sometimes they hop; on Gimel — party colors */
 .header-title .ch{display:inline-block;animation:glowPass 4.5s ease-in-out infinite;animation-delay:calc(var(--i)*.14s)}
 @keyframes glowPass{0%,12%,100%{color:#e0eaff;text-shadow:0 0 20px rgba(120,160,255,.6),0 0 40px rgba(80,120,255,.3)}
@@ -149,7 +152,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .spin-ring.sticky{animation:ringPulse 1s ease-in-out infinite}
 @keyframes ringPulse{50%{filter:drop-shadow(0 0 18px rgba(245,200,66,1))}}
 .spin-ring.wound{background:conic-gradient(from var(--a,0deg),rgba(245,200,66,.95),rgba(255,120,60,.6),rgba(245,200,66,.95));filter:drop-shadow(0 0 10px rgba(245,200,66,.8))}
-.dreidel-scale.spinning .dreidel-shadow{animation:shadowPulse .18s infinite alternate}
 @keyframes shadowPulse{from{transform:scaleX(.8);opacity:.7}to{transform:scaleX(1.15);opacity:1}}
 .fx-stamp{position:fixed;left:50%;top:40%;z-index:904;pointer-events:none;text-align:center;font-family:'Secular One',sans-serif;line-height:1;transform:translate(-50%,-50%);white-space:nowrap}
 .fx-stamp .e{font-size:4.2rem;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
@@ -158,15 +160,29 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 @media(min-width:1000px){.fx-stamp .e{font-size:6rem}.fx-stamp .t{font-size:4.4rem}}
 .app.quake{animation:quake .45s}
 @keyframes quake{0%,100%{transform:none}15%{transform:translate(-7px,2px) rotate(-.4deg)}30%{transform:translate(6px,-2px) rotate(.4deg)}45%{transform:translate(-5px,1px)}60%{transform:translate(4px,-1px)}80%{transform:translate(-2px,0)}}
-.dreidel-art img{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none}
-/* each face is a W×H box that JS maps onto the measured trapezoid of the panel (matrix3d) */
-.dreidel-art .face{position:absolute;left:0;top:0;width:56px;height:88px;transform-origin:0 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.dreidel-art .face-tint{position:absolute;inset:0;mix-blend-mode:color;opacity:.85;transition:background .15s}
-.dreidel-art .face-letter{position:relative;font-family:'Secular One','Heebo',sans-serif;font-size:60px;line-height:1;
+/* ── 3D dreidel: built in "design units" (465×880, the source art's pixels) and scaled into the 148×280 box ── */
+.d3-box{position:absolute;left:0;top:0;width:465px;height:880px;transform:scale(.31828);transform-origin:0 0;pointer-events:none}
+.d3-scene{position:absolute;inset:0;perspective:2600px;perspective-origin:50% 32%}
+.d3-cam{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:232.5px 874px;transform:rotateX(-2.5deg)}
+.d3-tilt{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:232.5px 874px}
+.d3-spin{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:232.5px 0 0}
+.d3-face,.d3-tip{position:absolute;left:70.5px;width:324px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.d3-face{top:318px;height:350px;transform-origin:50% 50%}
+.d3-tip{top:666px;height:262px;transform-origin:50% 0;clip-path:polygon(0 0,100% 0,50% 100%)}
+.d3-face>img,.d3-tip>img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.d3-top{position:absolute;left:70.5px;top:156px;width:324px;height:324px;transform:rotateY(45deg) rotateX(90deg);
+    background:radial-gradient(circle,#e9c766 0,#c99a3a 35%,#9a7024 75%,#6a4a12 100%);box-shadow:inset 0 0 0 10px #8a6418,inset 0 0 0 16px #d4a94a}
+.d3-handle{position:absolute;left:171.5px;top:12px;width:122px;height:298px;display:block}
+.d3-shade,.d3-gloss{position:absolute;inset:0;pointer-events:none}
+.d3-shade{background:#000;opacity:0}
+.d3-gloss{background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 48%,rgba(255,250,220,.25) 55%,transparent 70%);opacity:0;mix-blend-mode:screen}
+.d3-panel{position:absolute;left:13.6%;right:13.6%;top:12.6%;bottom:11.4%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.d3-panel .face-tint{position:absolute;inset:0;mix-blend-mode:color;opacity:.85;transition:background .15s}
+.dreidel-art .face-letter{position:relative;font-family:'Secular One','Heebo',sans-serif;font-size:190px;line-height:1;
     background:linear-gradient(180deg,#fff4c8 0%,#f5c842 45%,#b8862a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 2px 1px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(245,200,66,.35));transition:opacity .3s}
-.dreidel-art .face-l .face-letter{filter:drop-shadow(0 2px 1px rgba(0,0,0,.55)) brightness(.8)} /* shadow side */
-.dreidel-art.settled .face-l .face-letter{opacity:.35}  /* the result is on the right face */
+    filter:drop-shadow(0 6px 3px rgba(0,0,0,.55)) drop-shadow(0 0 18px rgba(245,200,66,.35))}
+.d3-face.win .face-letter{animation:winGlow 1.2s ease-in-out 2}
+@keyframes winGlow{50%{filter:drop-shadow(0 6px 3px rgba(0,0,0,.55)) drop-shadow(0 0 40px rgba(255,230,140,1)) brightness(1.35)}}
 .dreidel-art.dimmed{filter:brightness(.85) drop-shadow(0 10px 14px rgba(0,0,0,.5))}
 .dreidel-controls{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:10;margin-top:4px}
 /* fall */
@@ -195,7 +211,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .settings-panel{position:fixed;bottom:72px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border-l);border-radius:var(--r);padding:16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideUp .2s ease-out}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .settings-panel h4{font-family:'Secular One',sans-serif;color:var(--gold);font-size:.9rem;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
-.settings-panel h4 button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem}
+.settings-panel h4{position:sticky;top:-16px;margin:-16px -16px 12px;padding:12px 16px;background:var(--bg-card);z-index:2;border-bottom:1px solid var(--border)}
+.settings-panel h4 button{background:var(--bg-input);border:1px solid var(--border-l);color:var(--text);cursor:pointer;font-size:1.1rem;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.settings-panel h4 button:hover{border-color:var(--gold);color:var(--gold)}
+.settings-panel{max-height:calc(100vh - 96px);max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain}
 .settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:.8rem;gap:8px}
 .settings-row label{color:var(--text-dim);flex-shrink:0}
 .settings-row input[type=color]{width:34px;height:24px;border:1px solid var(--border);border-radius:4px;padding:1px;background:var(--bg-input);cursor:pointer}
@@ -233,6 +252,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .mic-badge.clap{box-shadow:0 0 16px var(--green)}
 .dreidel-art.golden{filter:drop-shadow(0 0 22px #ffd700) drop-shadow(0 0 48px rgba(255,190,0,.75))}
 .dreidel-art.golden .face-tint{background:#d4a017!important}
+.dreidel-art.golden .d3-face>img,.dreidel-art.golden .d3-tip>img{filter:sepia(1) saturate(3) hue-rotate(5deg) brightness(1.1)}
 .win-titles{display:flex;flex-direction:column;gap:4px;margin:4px 0 12px;font-size:.9rem;color:var(--text)}
 .win-titles div{background:var(--bg-input);border-radius:8px;padding:4px 10px}
 .trivia{max-width:520px}
@@ -395,10 +415,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 <body>
 <div class="app">
 <header class="header">
-  <h1 class="header-title" aria-label="משחק סביבון">
-    <span class="tw">משחק</span>
-    <span class="handle-gap"></span>
-    <span class="tw">סביבון</span>
+  <h1 class="header-title" aria-label="סביבון סוב סוב סוב">
+    <span class="tw">סביבון</span><span class="tw">סוב</span><span class="tw">סוב</span><span class="tw">סוב...</span>
   </h1>
 </header>
 
@@ -526,11 +544,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                 <div class="dreidel-wrap"><div class="dreidel-scale">
                     <div class="dreidel-shadow" id="dreidelShadow"></div>
                     <div class="spin-ring" id="spinRing"></div>
-                    <div class="dreidel-svg dreidel-art" id="dreidelSvg">
-                        <img src="dreidel.webp" alt="סביבון" draggable="false" onerror="this.onerror=null;this.src='dreidel.png'">
-                        <!-- faces are positioned over the two enamel panels of the picture (measured: 6–44% / 56–94% wide, 39.6–71.8% high) -->
-                        <div class="face face-l"><span class="face-tint" id="tintL"></span><span class="face-letter" id="dreidelLetter2"></span></div>
-                        <div class="face face-r"><span class="face-tint" id="tintR"></span><span class="face-letter" id="dreidelLetter">?</span></div></div>
+                    <div class="dreidel-svg dreidel-art" id="dreidelSvg" role="img" aria-label="סביבון">
+                        <!-- a real 3D dreidel (CSS 3D): 4 faces + 4 tip triangles turn around the axis; the handle always faces us -->
+                        <div class="d3-box"><div class="d3-scene"><div class="d3-cam"><div class="d3-tilt" id="d3Tilt">
+                            <div class="d3-spin" id="d3Spin"><div class="d3-top"></div><div class="d3-tip" data-i="0"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-tip" data-i="1"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-tip" data-i="2"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-tip" data-i="3"><img src="d3-tip.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-tip.png'"><i class="d3-shade"></i></div><div class="d3-face" data-i="0"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div><div class="d3-face" data-i="1"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div><div class="d3-face" data-i="2"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div><div class="d3-face" data-i="3"><img src="d3-face.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-face.png'"><div class="d3-panel"><span class="face-tint"></span><span class="face-letter"></span></div><i class="d3-gloss"></i><i class="d3-shade"></i></div></div>
+                            <img class="d3-handle" src="d3-handle.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='d3-handle.png'">
+                        </div></div></div></div></div>
                     </div>
                 </div>
             </div>
@@ -592,7 +611,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 <!-- ══ SETTINGS ══ -->
 <button class="settings-toggle" onclick="toggleSettings()">⚙️</button>
 <div class="settings-panel hidden" id="settingsPanel">
-  <h4>⚙️ הגדרות <button onclick="toggleSettings()">✕</button></h4>
+  <h4>⚙️ הגדרות <button onclick="closeSettings()" aria-label="סגור" title="סגור (Esc)">✕</button></h4>
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎨 צבעי פאות הסביבון</div>
   <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun"   value="#3a3a7a" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אפור-כחול</span></div>
   <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1e6040" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">ירוק</span></div>
@@ -628,7 +647,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v38';
+const APP_VERSION='v39';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1195,35 +1214,53 @@ const FACE_DEFAULTS={'נ':'#3a3a7a','ג':'#1e6040','ה':'#2a5abf','פ':'#a02020'
 const TIP_DEFAULTS ={'נ':'#22226a','ג':'#103828','פ':'#6a1010','ה':'#1a3a8a'};
 
 function getFaceColor(l){return document.getElementById({נ:'colNun',ג:'colGimel',ה:'colHeh',פ:'colPeh'}[l])?.value||FACE_DEFAULTS[l]}
-function syncFaceColor(){if(CURRENT_FACE)setFace(CURRENT_FACE,false);saveSettings()}
+function syncFaceColor(){paintFaces();saveSettings()}
 
-// ── Fit the letters onto the picture's panels ──
-// Panel corners measured on the image (fractions of width/height): TL, TR, BR, BL
-const FACE_QUADS={
-    L:[[0.0582,0.3956],[0.4372,0.3975],[0.4372,0.7266],[0.0615,0.7072]],
-    R:[[0.5604,0.3975],[0.9396,0.3952],[0.9364,0.7079],[0.5608,0.7276]]
-};
-// 2D projective transform (homography) from a w×h box to 4 points → CSS matrix3d
-function _adj(m){return[m[4]*m[8]-m[5]*m[7],m[2]*m[7]-m[1]*m[8],m[1]*m[5]-m[2]*m[4],m[5]*m[6]-m[3]*m[8],m[0]*m[8]-m[2]*m[6],m[2]*m[3]-m[0]*m[5],m[3]*m[7]-m[4]*m[6],m[1]*m[6]-m[0]*m[7],m[0]*m[4]-m[1]*m[3]]}
-function _mm(a,b){const c=[];for(let i=0;i<3;i++)for(let j=0;j<3;j++){let s=0;for(let k=0;k<3;k++)s+=a[3*i+k]*b[3*k+j];c[3*i+j]=s}return c}
-function _mv(m,v){return[m[0]*v[0]+m[1]*v[1]+m[2]*v[2],m[3]*v[0]+m[4]*v[1]+m[5]*v[2],m[6]*v[0]+m[7]*v[1]+m[8]*v[2]]}
-function _basis(p){const m=[p[0],p[2],p[4],p[1],p[3],p[5],1,1,1];const v=_mv(_adj(m),[p[6],p[7],1]);return _mm(m,[v[0],0,0,0,v[1],0,0,0,v[2]])}
-function quadMatrix(w,h,q){ // q: TL,TR,BR,BL in px
-    const src=[0,0,w,0,0,h,w,h], dst=[q[0][0],q[0][1],q[1][0],q[1][1],q[3][0],q[3][1],q[2][0],q[2][1]];
-    const t=_mm(_basis(dst),_adj(_basis(src)));for(let i=0;i<9;i++)t[i]/=t[8];
-    return `matrix3d(${[t[0],t[3],0,t[6],t[1],t[4],0,t[7],0,0,1,0,t[2],t[5],0,t[8]].map(n=>+n.toFixed(6)).join(',')})`;
+// ══════ 3D DREIDEL ══════
+// Face j carries FACE_ORDER[j] and sits at yaw 45-90j (design: 0 = facing us, + = turned to the right).
+// θ turns the whole body; the face that is "in front" ends at +20° — clear, and still clearly a cube.
+const D3={theta:0,tilt:0,psi:0,drift:0,omega:0,fallen:false,els:null};
+const D3_FRONT=20;
+function d3Rest(letter){return 90*Math.max(0,FACE_ORDER.indexOf(letter))+D3_FRONT-45}   // θ that shows this letter in front
+function d3Els(){
+    if(D3.els)return D3.els;
+    const spin=document.getElementById('d3Spin');if(!spin)return null;
+    const faces=[...spin.querySelectorAll('.d3-face')],tips=[...spin.querySelectorAll('.d3-tip')];
+    faces.forEach((f,j)=>f.style.transform=`rotateY(${45-90*j}deg) translateZ(162px)`);
+    tips.forEach((t,j)=>t.style.transform=`rotateY(${45-90*j}deg) translateZ(162px) rotateX(-38.2deg)`);
+    return D3.els={spin,tilt:document.getElementById('d3Tilt'),faces,tips,
+        fShade:faces.map(f=>f.querySelector('.d3-shade')),fGloss:faces.map(f=>f.querySelector('.d3-gloss')),
+        letters:faces.map(f=>f.querySelector('.face-letter')),tints:faces.map(f=>f.querySelector('.face-tint')),
+        tShade:tips.map(t=>t.querySelector('.d3-shade')),shadow:document.getElementById('dreidelShadow')};
 }
-function fitFaces(){
-    const art=document.getElementById('dreidelSvg');if(!art)return;
-    // sizes are fixed in CSS (.dreidel-svg 148×280, .face 56×88) — works even while the screen is hidden
-    const W=148,H=280,FW=56,FH=88;
-    [['L','.face-l'],['R','.face-r']].forEach(([k,sel])=>{
-        const el=art.querySelector(sel);
-        const q=FACE_QUADS[k].map(([x,y])=>[x*W,y*H]);
-        el.style.transform=quadMatrix(FW,FH,q);
-    });
-    centerLetters();
+const LIGHT=-35;  // light comes from the front-left
+function d3Render(){
+    const e=d3Els();if(!e)return;
+    e.spin.style.transform=`rotateY(${D3.theta.toFixed(2)}deg)`;
+    e.tilt.style.transform=`translateX(${D3.drift.toFixed(1)}px) rotateY(${D3.psi.toFixed(1)}deg) rotateZ(${D3.tilt.toFixed(2)}deg) rotateY(${(-D3.psi).toFixed(1)}deg)`;
+    const blurLetters=Math.max(.3,Math.min(1,1.3-Math.abs(D3.omega)/1000));    // letters smear when it is fast
+    for(let j=0;j<4;j++){
+        const phi=((45-90*j+D3.theta)%360+540)%360-180;                      // where this face looks now
+        const lit=Math.max(0,Math.cos((phi-LIGHT)*Math.PI/180));
+        e.fShade[j].style.opacity=(0.62*(1-lit)).toFixed(3);
+        e.tShade[j].style.opacity=(0.18+0.6*(1-lit)).toFixed(3);
+        e.fGloss[j].style.opacity=(Math.pow(Math.max(0,Math.cos((phi+12)*Math.PI/180)),24)*.9).toFixed(3);
+        e.letters[j].style.opacity=blurLetters.toFixed(2);
+    }
+    if(e.shadow){
+        const lean=Math.sin(D3.tilt*Math.PI/180),dx=lean*Math.cos(D3.psi*Math.PI/180)*80+D3.drift*.318;
+        e.shadow.style.transform=`translateX(${dx.toFixed(1)}px) scaleX(${(1+lean*1.6).toFixed(3)})`;
+    }
 }
+function d3Pose(o){Object.assign(D3,o);d3Render()}
+// glide to the nearest clean pose (a letter in front, upright)
+function d3Settle(){
+    const l=d3FrontLetter(D3.theta);CURRENT_FACE=l;
+    const to=d3Rest(l)+Math.round((D3.theta-d3Rest(l))/360)*360,from=D3.theta,t0=performance.now(),tl=D3.tilt;
+    (function st(now){if(spinning||CIRCLE.engaged||CIRCLE.singing)return;const k=Math.min(1,(now-t0)/280),e=1-(1-k)*(1-k);
+        d3Pose({theta:from+(to-from)*e,tilt:tl*(1-e)});if(k<1)requestAnimationFrame(st)})(t0);
+}
+function fitFaces(){if(!d3Els())return;paintFaces();if(!fitFaces.done){fitFaces.done=1;D3.theta=d3Rest(CURRENT_FACE||'נ')}d3Render()}
 // Center each letter by its actual ink, not by the font's line box (Hebrew glyphs sit unevenly)
 const _inkCache={};
 function inkOffset(ch,el){
@@ -1257,18 +1294,23 @@ window.addEventListener('load',fitFaces);
 // Around a real dreidel the order is נ ג ה פ — the left face shows the letter after the one in front
 const FACE_ORDER=['נ','ג','ה','פ'];
 function nextFace(l){return FACE_ORDER[(FACE_ORDER.indexOf(l)+1)%4]}
-function setFace(letter, dim){
+try{fitFaces()}catch(e){}
+// paints the letters + colours on the four faces; turn=true also turns the dreidel to show `letter` in front
+function paintFaces(){
+    const e=d3Els();if(!e)return;
+    FACE_ORDER.forEach((l,j)=>{e.letters[j].textContent=dispLetter(l);e.tints[j].style.background=getFaceColor(l)});
+    centerLetters();
+}
+function setFace(letter, dim, turn){
     const art=document.getElementById('dreidelSvg');
     if(!art||!LETTERS.includes(letter))return;
-    const n=nextFace(letter);
-    document.getElementById('tintR').style.background=getFaceColor(letter);
-    document.getElementById('tintL').style.background=getFaceColor(n);
-    document.getElementById('dreidelLetter').textContent=dispLetter(letter);
-    document.getElementById('dreidelLetter2').textContent=dispLetter(n);
-    centerLetters();
+    paintFaces();
+    if(turn!==false)d3Pose({theta:d3Rest(letter)});
     CURRENT_FACE=letter;
     art.classList.toggle('dimmed',!!dim);
 }
+// the letter that faces us at angle θ
+function d3FrontLetter(theta){const j=((Math.round((theta-(D3_FRONT-45))/90))%4+4)%4;return FACE_ORDER[j]}
 
 // ── 3-click power mechanic ──
 let spinClicks=0, spinClickTimes=[], spinPower=0.5, spinClickTimer=null;
@@ -1427,7 +1469,24 @@ function refreshSpinUI(){
     if(can)maybeAskTrivia();
     const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick'||m==='circle'&&IS_TOUCH);
     if(window._idleTurn)window._idleTurn(can&&m==='circle');
+    const key=[m,can,innerWidth,innerHeight,document.getElementById('gameScreen').classList.contains('hidden')].join('|');
+    if(key!==refreshSpinUI.key){refreshSpinUI.key=key;fitDreidel(can&&(m==='taps'||m==='hold'))}
 }
+// On a short screen the dreidel shrinks a little so the controls (and the "סובב!" button) fit without scrolling;
+// if they still don't fit, the page scrolls to the button when it is needed.
+function fitDreidel(needBtn){
+    const wrap=document.querySelector('.dreidel-wrap'),ctrl=document.querySelector('.dreidel-controls');
+    if(!wrap||!ctrl||document.getElementById('gameScreen').classList.contains('hidden'))return;
+    wrap.style.removeProperty('--k');
+    const k0=parseFloat(getComputedStyle(wrap).getPropertyValue('--k'))||1;
+    const btnH=document.getElementById('spinBtn').offsetHeight?0:64;              // room for the button even when this mode hides it
+    const bottom=ctrl.getBoundingClientRect().bottom+scrollY+btnH;
+    const over=bottom-innerHeight+12;
+    if(over>0)wrap.style.setProperty('--k',Math.max(.62,k0-over/290).toFixed(3));
+    if(needBtn){const b=document.getElementById('spinBtn'),r=b.getBoundingClientRect();
+        if(r.bottom>innerHeight||r.top<0)b.scrollIntoView({block:'nearest',behavior:'smooth'})}
+}
+window.addEventListener('resize',()=>{refreshSpinUI.key='';refreshSpinUI()});
 document.getElementById('spinPrompt').addEventListener('click',()=>{const m=spinMode();if((m==='clap'||m==='sing')&&!MIC.on)micStart().then(refreshSpinUI)});
 document.getElementById('spinModes').addEventListener('click',e=>{
     const b=e.target.closest('button[data-m]');if(!b)return;
@@ -1460,22 +1519,22 @@ setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal 
     }
     // draw the dreidel at rotation acc (radians) — each quarter turn brings the next face to the front
     function draw(angle,withSound){
-        const ph=angle/QUARTER,idx=Math.floor(ph+.5),q=ph-Math.floor(ph);
-        const f=((faceBase+idx)%4+4)%4;
-        if(f!==shownFace){if(withSound&&shownFace>=0)playSfx(pick(SFX.tick),{vol:.18,rate:1+Math.min(.4,Math.abs(omega(200))/60)});shownFace=f;setFace(FACE_ORDER[f],false)}
-        art.style.transform=`scaleX(${Math.max(.05,Math.abs(Math.cos(Math.PI*q))).toFixed(3)})`;
+        const th=d3Rest(FACE_ORDER[faceBase])+angle*180/Math.PI;
+        const f=FACE_ORDER.indexOf(d3FrontLetter(th));
+        if(f!==shownFace){if(withSound&&shownFace>=0)playSfx(pick(SFX.tick),{vol:.18,rate:1+Math.min(.4,Math.abs(omega(200))/60)});shownFace=f;CURRENT_FACE=FACE_ORDER[f]}
+        D3.omega=withSound?omega(200)*180/Math.PI:0;d3Pose({theta:th});
     }
 
     // ── idle: in "circle" mode the dreidel turns slowly by itself, inviting you to spin it ──
     window._idleTurn=on=>{
         if(on===idleOn)return;idleOn=on;
         if(on){resetDreidel();faceBase=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shownFace=faceBase;idlePhase=0;idleT=performance.now();art.style.transition='none';idleRaf=requestAnimationFrame(idleLoop)}
-        else{cancelAnimationFrame(idleRaf);if(!CIRCLE.engaged&&!spinning){art.style.transform='';}}
+        else{cancelAnimationFrame(idleRaf);if(!CIRCLE.engaged&&!spinning&&!CIRCLE.singing){art.style.transform='';d3Settle()}}
     };
     function idleLoop(t){
         if(!idleOn||CIRCLE.engaged)return;
-        const dt=Math.min(60,t-idleT)/1000;idleT=t;idlePhase+=dt*1.1;      // ~a quarter turn per second
-        draw(idlePhase,false);
+        const dt=Math.min(60,t-idleT)/1000;idleT=t;idlePhase+=dt*.55;      // slow and lazy — "come, spin me"
+        draw(idlePhase,false);D3.tilt=3;D3.psi=(t/1000*70)%360;d3Render();    // a gentle wobble too
         idleRaf=requestAnimationFrame(idleLoop);
     }
 
@@ -1497,9 +1556,9 @@ setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal 
         disengage();CIRCLE.justLaunched=true;setTimeout(()=>CIRCLE.justLaunched=false,400);
         art.style.transform='';
         const power=Math.max(.12,Math.min(1,(w-MIN_W)/16));   // 1 circle/s ≈ .2 · 2/s ≈ .6 · 3/s = full
-        clear();playWhoosh(power);spinFromInput(power,'circle');
+        const rot=acc<0?-1:1;clear();playWhoosh(power);spinFromInput(power,'circle',{rot});
     }
-    function letGo(){disengage();art.style.transition='transform .25s ease-out';art.style.transform='';clear();resetSpinUI();refreshSpinUI()}
+    function letGo(){disengage();art.style.transition='transform .25s ease-out';art.style.transform='';clear();d3Settle();resetSpinUI();refreshSpinUI()}
     function tick(){
         if(!CIRCLE.engaged)return;
         draw(acc,true);
@@ -1637,9 +1696,9 @@ function boostSpin(remote){
 // ── 🎤 sing mode: the dreidel turns as long as you sing; stop → it flies on. A whole song (10s+) = bonus ──
 (function wireSing(){
     const art=document.getElementById('dreidelSvg');let on=false,start=0,phase=0,last=0,face=0,shown=-1,loudSum=0,n=0;
-    function draw(){const idx=Math.floor(phase+.5),q=phase-Math.floor(phase),f=((face+idx)%4+4)%4;
-        if(f!==shown){if(shown>=0)playSfx(pick(SFX.tick),{vol:.15});shown=f;setFace(FACE_ORDER[f],false)}
-        art.style.transform=`scaleX(${Math.max(.05,Math.abs(Math.cos(Math.PI*q))).toFixed(3)})`}
+    function draw(){const th=d3Rest(FACE_ORDER[face])+phase*90,f=FACE_ORDER.indexOf(d3FrontLetter(th));
+        if(f!==shown){if(shown>=0)playSfx(pick(SFX.tick),{vol:.15});shown=f;CURRENT_FACE=FACE_ORDER[f]}
+        d3Pose({theta:th,tilt:2})}
     function loop(t){
         requestAnimationFrame(loop);
         if(spinMode()!=='sing'||!MIC.on){if(on)stop(false);return}
@@ -1663,7 +1722,7 @@ function boostSpin(remote){
         if(performance.now()-MIC.lastVoiced>900)stop(true);                // the song ended → let it fly
     }
     function stop(launch){
-        on=false;CIRCLE.singing=false;document.getElementById('powerFill').classList.remove('hot');art.style.transform='';
+        on=false;CIRCLE.singing=false;document.getElementById('powerFill').classList.remove('hot');art.style.transform='';if(!launch)d3Settle();
         if(!launch||!canSpinNow()){resetSpinUI();return}
         const sec=Math.max(0,(MIC.lastVoiced-start)/1000),loud=n?loudSum/n:0;
         const power=Math.max(.2,Math.min(1,.2+Math.min(.5,sec/14)+Math.min(.3,loud*3)));   // a longer song matters more than a louder one
@@ -1861,7 +1920,7 @@ function doSpin(){
     G.players.forEach(p=>p.change='');
     const ex=NEXT_EXTRA||{power:spinPower};NEXT_EXTRA=null;
     ex.golden=Math.random()<GOLDEN_CHANCE;                       // ✨ "נס גדול" — rare golden spin, pays double
-    const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left',who:G.players[G.currentTurn]?.name||'',golden:ex.golden};
+    const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left',who:G.players[G.currentTurn]?.name||'',golden:ex.golden,rot:ex.rot===-1?-1:1};
 
     // Compute the result now, but hold the log lines until the animation ends
     LOG_BUF=[];applyLetter(letter,ex);const logs=LOG_BUF;LOG_BUF=null;
@@ -1905,7 +1964,6 @@ function showSpinAnimation(fl, opts, cb){
 
     const svg=document.getElementById('dreidelSvg');
     const scaleBox=svg.parentElement;scaleBox.classList.add('spinning');
-    const img=svg.querySelector('img');
     const rl=document.getElementById('resultLine');
     rl.textContent=''; rl.className='result-line';
     svg.classList.remove('fall-right','fall-left','upright');
@@ -1925,113 +1983,97 @@ function showSpinAnimation(fl, opts, cb){
         hum.frequency.linearRampToValueAtTime(25, soundCtx.currentTime+totalDur/1000*0.88);
     }
 
-    // ── Spin via scaleX ──
-    // Each "half revolution" = SVG squeezes to 0 (edge), then expands back with new face.
-    // Speed starts fast, slows toward end.
-    const startTime=Date.now();
-    // How many half-revolutions total based on power
-    let totalHalfRevs = Math.round(4 + power*14); // 4..18 (claps can add more while it spins)
-    let halfRev=0;
-    // Face sequence: cycle through LETTERS repeatedly, end on fl
-    // Build sequence so last face = fl
-    const faceSeq=[];
-    for(let i=0;i<totalHalfRevs;i++) faceSeq.push(LETTERS[i%4]);
-    // Force last to be fl
-    faceSeq[faceSeq.length-1]=fl;
-    // Also ensure second-to-last differs for a proper swap
-    if(faceSeq.length>1 && faceSeq[faceSeq.length-2]===fl)
-        faceSeq[faceSeq.length-2]=LETTERS[(LETTERS.indexOf(fl)+1)%4];
+    // ── Real spin: θ(u) = θ0 + Δ·(1-(1-u)^(P+1)), ω falls smoothly to 0 and θ lands exactly on the result face ──
+    // While it slows, the axis leans more and more and precesses faster (the classic dreidel wobble), then it falls.
+    const P=1.6, rot=(opts&&opts.rot===-1)?-1:1;
+    const revPerSec=1.6+power*2.6;                               // how fast it starts (turns per second)
+    const target=d3Rest(fl), fallPsi=fallDir==='fall-left'?180:0;
+    let seg=null;
+    function newSegment(theta0,psi0,tilt0,T,w0deg){         // w0deg: start speed (deg/s)
+        let d=w0deg*T/1000/(P+1);                             // the angle that speed would naturally cover
+        const need=((rot*(target-theta0))%360+360)%360;       // the extra bit so it ends on the result
+        d=Math.floor(d/360)*360+need;if(d<120)d+=360;
+        let dp=360*T/1000*(.35+2.2/3);                         // precession: slow at first, fast at the end
+        dp=Math.floor(dp/360)*360+(((fallPsi-psi0)%360)+360)%360;
+        seg={t0:performance.now(),T,theta0,d:rot*d,psi0,dp,tilt0};
+    }
+    function precessShape(u){return (.35*u+2.2*u*u*u/3)/(.35+2.2/3)}
+    D3.fallen=false;D3.tilt=1.5;
+    newSegment(D3.theta,0,1.5,totalDur,revPerSec*360);
 
-    // Base duration per half-rev: starts fast, slows with ease-out (55ms..375ms),
-    // then scaled so the whole spin matches the duration from settings
-    const baseDurs=[];
-    for(let i=0;i<totalHalfRevs;i++){const speed=Math.pow(1-i/totalHalfRevs,1.6);baseDurs.push(55+(1-speed)*320)}
-    const baseTotal=baseDurs.reduce((a,b)=>a+b,0)*0.95;
-    const durScale=totalDur/baseTotal;
-
-    let currentFaceIdx=0;
-    setFace(faceSeq[0], false);
     if(opts&&opts.golden){svg.classList.add('golden');goldenStamp()}
 
-    // ── boost: every clap adds two quick half-turns and speeds it up a little (the result does not change) ──
+    // ── boost: every clap gives it another push (a bit faster, a bit longer; the result does not change) ──
     let boosts=0;
-    function rebuildSeq(){
-        faceSeq.length=0;for(let i=0;i<totalHalfRevs;i++)faceSeq.push(LETTERS[i%4]);
-        faceSeq[faceSeq.length-1]=fl;
-        if(faceSeq.length>1&&faceSeq[faceSeq.length-2]===fl)faceSeq[faceSeq.length-2]=LETTERS[(LETTERS.indexOf(fl)+1)%4];
-    }
     window._spinCtl={boost(){
-        if(halfRev>=totalHalfRevs-2||boosts>=14)return false;
+        const now=performance.now(),u=Math.min(1,(now-seg.t0)/seg.T);
+        if(u>.85||boosts>=14)return false;
         boosts++;
-        const d=Math.max(45,baseDurs[halfRev]*.75);
-        baseDurs.splice(halfRev,0,d,d);
-        for(let i=halfRev+2;i<Math.min(baseDurs.length,halfRev+6);i++)baseDurs[i]*=.9;
-        totalHalfRevs+=2;rebuildSeq();
+        const wNow=Math.abs(seg.d)*(P+1)*Math.pow(1-u,P)/(seg.T/1000);           // current speed, deg/s
+        const rest=seg.T*(1-u)+420;
+        newSegment(D3.theta,D3.psi,D3.tilt,rest,Math.min(revPerSec*360*1.15,wNow*1.25+200));
         if(hum&&soundCtx){try{
             hum.frequency.cancelScheduledValues(soundCtx.currentTime);hum.frequency.setValueAtTime(90+power*150,soundCtx.currentTime);
-            const rest=baseDurs.slice(halfRev).reduce((a,b)=>a+b,0)*durScale/1000;
-            hum.frequency.linearRampToValueAtTime(25,soundCtx.currentTime+rest);
+            hum.frequency.linearRampToValueAtTime(25,soundCtx.currentTime+rest/1000);
         }catch(e){}}
         return true;
     }};
 
-    function nextHalfRev(){
-        if(halfRev>=totalHalfRevs) { finish(); return; }
-        const halfDur=Math.max(30,Math.round(baseDurs[halfRev]*durScale));
-
-        // motion blur while fast + a tick on every face
-        img.style.filter=halfDur<80?'blur(1.4px)':halfDur<130?'blur(.6px)':'';
-        if(halfDur>=45||halfRev%2===0)playSfx(pick(SFX.tick),{vol:.18+Math.min(.3,halfDur/900),rate:1.35-Math.min(.55,halfDur/600)});
-        // Phase A: squeeze to 0
-        svg.style.transition=`transform ${halfDur*0.45}ms ease-in`;
-        svg.style.transform='scaleX(0.04)';
-
-        setTimeout(()=>{
-            // At squeeze = 0: swap face
-            currentFaceIdx=halfRev % faceSeq.length;
-            setFace(faceSeq[currentFaceIdx], true);
-            // Phase B: expand back
-            svg.style.transition=`transform ${halfDur*0.45}ms ease-out`;
-            svg.style.transform='scaleX(1)';
-            setFace(faceSeq[currentFaceIdx], false);
-            halfRev++;
-            setTimeout(nextHalfRev, halfDur*0.5);
-        }, halfDur*0.45);
+    let lastFace=d3FrontLetter(D3.theta),lastTick=0,raf=0;
+    const scene=svg.querySelector('.d3-scene');
+    function frame(now){
+        const u=Math.min(1,(now-seg.t0)/seg.T);
+        const F=1-Math.pow(1-u,P+1);
+        const w=seg.d*(P+1)*Math.pow(1-u,P)/(seg.T/1000);                         // deg/s
+        const lean=Math.min(1,u*u*u);
+        d3Pose({theta:seg.theta0+seg.d*F, omega:w,
+            psi:seg.psi0+seg.dp*precessShape(u),
+            tilt:seg.tilt0+(16-seg.tilt0)*lean+Math.sin(now/90)*.6*(1-u),          // leans more as it slows, + a tiny shiver while fast
+            drift:Math.sin(now/520)*26*(.3+u)});
+        // motion blur while really fast
+        const aw=Math.abs(w);
+        scene.style.filter=aw>1000?'blur(2.5px)':aw>650?'blur(1.4px)':'';
+        // a tick each time a face passes the front (rate-limited when very fast)
+        const f=d3FrontLetter(D3.theta);
+        if(f!==lastFace){lastFace=f;if(now-lastTick>55){lastTick=now;playSfx(pick(SFX.tick),{vol:.14+Math.min(.3,250/Math.max(250,aw)*.3),rate:.8+Math.min(.6,aw/2000)})}}
+        if(u<1){raf=requestAnimationFrame(frame);return}
+        finish();
     }
-    nextHalfRev();
+    raf=requestAnimationFrame(frame);
 
     function finish(){
         window._spinCtl=null;
         if(hum){try{hum.stop();hum.disconnect()}catch(e){}}
-        svg.style.transition='';
-        svg.style.transform='';
-        img.style.filter='';scaleBox.classList.remove('spinning');
-        setFace(fl, false);
+        scene.style.filter='';scaleBox.classList.remove('spinning');
+        D3.omega=0;setFace(fl,false,false);d3Pose({theta:target+Math.round((D3.theta-target)/360)*360});
+        doFall();
+    }
+    // it tips over toward its lean: fast (gravity), hits the table, bounces once, rests on the tip + an edge
+    function doFall(){
+        const t0=performance.now(),from=D3.tilt,psi0=D3.psi,psi1=psi0+((((fallPsi-psi0)%360)+540)%360-180),drift0=D3.drift;
+        const REST=48,DUR=520;
+        let landed=false;
+        playSfx(pick(SFX.fall),{vol:.9,delay:DUR/1000-.05});                     // lands on the table
+        playSfx(pick(SFX.fall),{vol:.3,rate:1.25,delay:DUR/1000+.2});           // small bounce
+        function fstep(now){
+            const t=now-t0;
+            let tilt;
+            if(t<DUR){const k=t/DUR;tilt=from+(REST+4-from)*k*k}                 // accelerating fall
+            else{const k=Math.min(1,(t-DUR)/260);tilt=REST+4-4*k-Math.sin(k*Math.PI)*5}  // bounce and settle
+            d3Pose({tilt,psi:psi0+(psi1-psi0)*Math.min(1,t/DUR),drift:drift0*(1-Math.min(1,t/700))});
+            if(!landed&&t>=DUR){landed=true;reveal()}
+            if(t<DUR+260)requestAnimationFrame(fstep);
+            else{D3.fallen=true;setTimeout(()=>{ if(cb) cb(); }, 780)}
+        }
+        requestAnimationFrame(fstep);
+    }
+    function reveal(){
         svg.classList.add('settled');
+        const e=d3Els();if(e)e.faces.forEach((f,j)=>f.classList.toggle('win',FACE_ORDER[j]===fl));
         rl.textContent=ldesc(fl); rl.className='result-line r-'+fl;
         playThud();
-        setTimeout(()=>{playResult(fl);resultStamp(fl)}, 160);
-        setTimeout(()=>narrate(fl,opts&&opts.who), 900);
-        // Wobble before fall
-        let wobbleCount=0, wobbleDir=1;
-        function wobble(){
-            if(wobbleCount>=5){ doFall(); return; }
-            const deg=wobbleDir*(8-wobbleCount*1.2);
-            svg.style.transition=`transform ${120-wobbleCount*15}ms ease-in-out`;
-            svg.style.transform=`rotate(${deg}deg)`;
-            wobbleDir*=-1; wobbleCount++;
-            playSfx(pick(SFX.tick),{vol:.12,rate:.7});
-            setTimeout(wobble, 130-wobbleCount*15);
-        }
-        wobble();
-    }
-    function doFall(){
-        svg.style.transition='';
-        svg.style.transform='';
-        svg.classList.add(fallDir);
-        playSfx(pick(SFX.fall),{vol:.9,delay:.55});                 // lands on the table
-        playSfx(pick(SFX.fall),{vol:.3,rate:1.25,delay:.78});       // small bounce
-        setTimeout(()=>{ if(cb) cb(); }, 1300);
+        setTimeout(()=>{playResult(fl);resultStamp(fl)}, 120);
+        setTimeout(()=>narrate(fl,opts&&opts.who), 800);
     }
 }
 
@@ -2039,7 +2081,8 @@ function resetDreidel(){
     const s=document.getElementById('dreidelSvg');
     s.classList.remove('fall-right','fall-left','settled','golden');
     s.style.transition=''; s.style.transform='';
-    setFace('נ', false);
+    const e=d3Els();if(e)e.faces.forEach(f=>f.classList.remove('win'));
+    paintFaces();D3.fallen=false;D3.omega=0;d3Pose({tilt:0,drift:0});
 }
 
 // ══════ TITLE ══════
@@ -2392,6 +2435,19 @@ document.getElementById('soundOn').addEventListener('change',()=>{if(document.ge
 
 // ══════ SETTINGS ══════
 function toggleSettings(){ renderInstallHelp(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
+function closeSettings(){ document.getElementById('settingsPanel').classList.add('hidden'); }
+document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape')return;
+    const sp=document.getElementById('settingsPanel');
+    if(!sp.classList.contains('hidden')){e.preventDefault();closeSettings();return}
+    const pk=document.getElementById('avatarPicker');if(pk&&!pk.classList.contains('hidden'))pk.classList.add('hidden');
+});
+// a click anywhere outside the panel closes it too
+document.addEventListener('pointerdown',e=>{
+    const sp=document.getElementById('settingsPanel');if(sp.classList.contains('hidden'))return;
+    if(e.target.closest&&(e.target.closest('#settingsPanel')||e.target.closest('.settings-toggle')||e.target.closest('.install-btn')))return;
+    closeSettings();
+},true);
 
 // ── Money helpers ──
 // In shared family scoring, every alive member holds a mirror of the family pool,
