@@ -397,6 +397,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .dreidel-scale{pointer-events:auto;touch-action:none} /* the zone around it is click-through; the dreidel itself is not */
 .dreidel-controls[data-mode="flick"] .dreidel-scale,.dreidel-scale.m-flick{cursor:grab}
 /* how to spin — chooser + prompt */
+.spin-modes .ask-btn{border-color:var(--gold)!important;color:var(--gold)!important;background:rgba(245,200,66,.08)!important}
+.spin-modes .ask-btn[disabled]{opacity:.35;cursor:default}
 .spin-modes{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:4px 0 2px}
 .spin-modes button{background:var(--bg-card);border:1px solid var(--border-l);color:var(--text-dim);border-radius:20px;padding:5px 12px;font-family:inherit;font-size:.8rem;cursor:pointer;transition:all .2s;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .spin-modes button.on{background:var(--gold);color:#12141f;border-color:var(--gold);font-weight:700;box-shadow:0 0 14px var(--gold-glow)}
@@ -579,6 +581,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                     <button data-m="clap">👏 מחיאות כפיים</button>
                     <button data-m="sing">🎤 שירה</button>
                     <button data-m="shake" class="touch-only">📳 נענוע</button>
+                    <button type="button" class="ask-btn" id="askBtn" onclick="askTriviaNow()" title="שאלת חנוכה לשחקן שבתור — עכשיו">❓ שאלה עכשיו</button>
                 </div>
                 <div class="spin-prompt" id="spinPrompt"></div>
                 <button class="spin-btn" id="spinBtn">סובב!</button>
@@ -681,7 +684,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v49';
+const APP_VERSION='v50';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1529,6 +1532,8 @@ function refreshSpinUI(){
     if(can)maybeAskTrivia();
     const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick'||m==='circle'&&IS_TOUCH);
     if(window._idleTurn)window._idleTurn(can&&m==='circle');
+    const ab=document.getElementById('askBtn');
+    if(ab){const tn=(G.round||1)*1000+(G.turnNo||0);ab.disabled=!can||TRIVIA.open||TRIVIA.askedTurn===tn;ab.title=TRIVIA.askedTurn===tn?'כבר הייתה שאלה בתור הזה':'שאלת חנוכה לשחקן שבתור — עכשיו'}
     const key=[m,can,innerWidth,innerHeight,document.getElementById('gameScreen').classList.contains('hidden')].join('|');
     if(key!==refreshSpinUI.key){refreshSpinUI.key=key;fitDreidel(can&&(m==='taps'||m==='hold'))}
 }
@@ -1802,11 +1807,21 @@ function loadTrivia(list){
 if(typeof fetch==='function')fetch('trivia.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{if(j)loadTrivia(j.questions)}).catch(()=>{});
 const TRIVIA={open:false,lastTurn:-1,used:[]};
 function playerLevel(p){return safeLevel(p&&p.level)}
-function maybeAskTrivia(){
-    if(!document.getElementById('triviaOn').checked||TRIVIA.open)return;
+// "❓ שאלה עכשיו": the player whose turn it is asks for a question right away (one per turn — the bonus can't be farmed)
+function askTriviaNow(){
+    if(TRIVIA.open||!canSpinNow()||G.over)return;
     const tn=(G.round||1)*1000+(G.turnNo||0);
-    if(tn===TRIVIA.lastTurn)return;TRIVIA.lastTurn=tn;
-    if((G.turnNo||0)<3||Math.random()>.2)return;                       // about one turn in five, not at the very start
+    if(TRIVIA.askedTurn===tn)return;
+    unlockAudio();maybeAskTrivia(true);
+}
+function maybeAskTrivia(force){
+    if(TRIVIA.open)return;
+    if(!force&&!document.getElementById('triviaOn').checked)return;
+    const tn=(G.round||1)*1000+(G.turnNo||0);
+    if(force){if(TRIVIA.askedTurn===tn)return}
+    else{if(tn===TRIVIA.lastTurn||TRIVIA.askedTurn===tn)return;TRIVIA.lastTurn=tn;
+        if((G.turnNo||0)<3||Math.random()>.2)return}                      // about one turn in five, not at the very start
+    TRIVIA.askedTurn=tn;
     const lvl=playerLevel(G.players[G.currentTurn]);
     let ofLevel=TRIVIA_Q.filter(x=>x.lvl===lvl);if(!ofLevel.length)ofLevel=TRIVIA_Q;if(!ofLevel.length)return;
     let pool=ofLevel.filter(x=>!TRIVIA.used.includes(x.q));if(!pool.length){TRIVIA.used=TRIVIA.used.filter(t=>!ofLevel.some(x=>x.q===t));pool=ofLevel}
