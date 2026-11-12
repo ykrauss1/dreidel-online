@@ -10,9 +10,9 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v30';
+const CACHE = 'dreidel-v31';
 const FALLBACK = './index.html';
-const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png', './bg-table.webp', './bg-table.jpg'];
+const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png', './bg-table.webp', './bg-table.jpg', './bg-table-portrait.webp', './bg-table-portrait.jpg', './coin.webp', './coin.png', './pile.webp', './pile.png'];
 
 // Third-party static assets that are safe to keep (fonts + the supabase-js library)
 const CACHEABLE_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];

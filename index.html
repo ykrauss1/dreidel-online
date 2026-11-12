@@ -38,7 +38,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       radial-gradient(ellipse 70% 60% at 50% 55%,transparent 40%,rgba(6,8,15,.55) 100%),
       image-set(url(bg-table.webp) type('image/webp'),url(bg-table.jpg) type('image/jpeg')) center 60%/cover no-repeat}
 /* phone (portrait): show the menorah side of the picture */
-@media(max-aspect-ratio:4/5){body::before{background-position:center,center,82% 55%}}
+@media(max-aspect-ratio:4/5){body::before{
+    background:
+      linear-gradient(180deg,rgba(6,8,15,.80) 0%,rgba(6,8,15,.35) 30%,rgba(6,8,15,.30) 55%,rgba(6,8,15,.6) 100%),
+      url(bg-table-portrait.jpg) center 40%/cover no-repeat;
+    background:
+      linear-gradient(180deg,rgba(6,8,15,.80) 0%,rgba(6,8,15,.35) 30%,rgba(6,8,15,.30) 55%,rgba(6,8,15,.6) 100%),
+      image-set(url(bg-table-portrait.webp) type('image/webp'),url(bg-table-portrait.jpg) type('image/jpeg')) center 40%/cover no-repeat}}
 /* glass panels over the table */
 .card,.mode-card,.p-card,.pot-box,.turn-box,.sidebar-panel,.lobby-family,.install-banner{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:12px}
@@ -180,13 +186,15 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .install-help{font-size:.75rem;color:var(--text-dim);line-height:1.7}
 .install-help b{color:var(--text)}
 /* ═══ FX ═══ */
-.pot-coin{width:30px;height:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+/* the pot is a pile of gelt that grows and shrinks with the amount */
+.pot-pile-wrap{width:64px;height:54px;display:flex;align-items:flex-end;justify-content:center}
+.pot-pile{width:64px;height:auto;transform-origin:50% 100%;transition:transform .5s cubic-bezier(.3,1.4,.5,1),opacity .4s;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));user-select:none;pointer-events:none}
 .pot-box.bump,.p-card.bump{animation:bump .45s ease-out}
 @keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.12)}100%{transform:scale(1)}}
 .p-card.gain{box-shadow:0 0 22px rgba(52,211,153,.55)!important;border-color:var(--green)!important}
 .p-card.shake{animation:shake .5s}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
-.fx-coin{position:fixed;left:0;top:0;width:26px;height:26px;margin:-13px 0 0 -13px;pointer-events:none;z-index:900;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.fx-coin{position:fixed;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;pointer-events:none;z-index:900;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
 .fx-float{direction:ltr;unicode-bidi:isolate;position:fixed;left:0;top:0;pointer-events:none;z-index:901;font-family:'Secular One',sans-serif;font-size:1.3rem;transform:translate(-50%,-50%);text-shadow:0 2px 6px rgba(0,0,0,.7)}
 .fx-float.plus{color:var(--green)}.fx-float.minus{color:var(--red)}
 .fx-conf{position:fixed;left:0;top:0;width:8px;height:12px;pointer-events:none;z-index:902;border-radius:2px}
@@ -251,7 +259,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .p-card .p-amt{font-size:1.7rem}
     .p-card .p-delta{font-size:.9rem}
     .family-group-title{font-size:.95rem}
-    .pot-box{padding:10px 22px}.pot-val{font-size:2rem}.pot-label{font-size:.85rem}.pot-coin{width:42px;height:42px}
+    .pot-box{padding:10px 22px}.pot-val{font-size:2rem}.pot-label{font-size:.85rem}.pot-pile-wrap{width:104px;height:88px}.pot-pile{width:104px}
     .turn-box{font-size:1.1rem}.turn-inline{padding:6px 20px;font-size:1.15rem}
     .result-line{font-size:1.25rem;min-height:30px}
     .spin-btn{padding:14px 56px;font-size:1.4rem;border-radius:14px}
@@ -283,21 +291,6 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <radialGradient id="coinG" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fff6c9"/><stop offset=".35" stop-color="#f5c842"/><stop offset=".8" stop-color="#b8862a"/><stop offset="1" stop-color="#7a5414"/></radialGradient>
-    <linearGradient id="coinRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b0"/><stop offset=".5" stop-color="#c9952e"/><stop offset="1" stop-color="#6e4a10"/></linearGradient>
-    <symbol id="coin" viewBox="0 0 40 40">
-      <circle cx="20" cy="20" r="19" fill="url(#coinRim)"/>
-      <circle cx="20" cy="20" r="15.5" fill="url(#coinG)"/>
-      <circle cx="20" cy="20" r="13.2" fill="none" stroke="#a7781f" stroke-width="1" stroke-dasharray="1.6 1.4" opacity=".8"/>
-      <g fill="none" stroke="#8a5f17" stroke-width="1.6" stroke-linecap="round" opacity=".9">
-        <path d="M20 13v14M13 15.5v3a7 7 0 0 0 14 0v-3M16.5 15.5v3a3.5 3.5 0 0 0 7 0v-3M16 27h8"/>
-      </g>
-      <ellipse cx="14" cy="11" rx="6" ry="3" fill="#fff" opacity=".35" transform="rotate(-25 14 11)"/>
-    </symbol>
-  </defs>
-</svg>
 <div class="app">
 <header class="header">
   <h1 class="header-title">
@@ -419,7 +412,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 <div class="hidden" id="gameScreen">
     <div class="game-layout">
         <div class="game-top">
-            <div class="pot-box"><svg class="pot-coin" id="potCoin" viewBox="0 0 40 40"><use href="#coin"/></svg><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
+            <div class="pot-box"><div class="pot-pile-wrap"><img class="pot-pile" id="potCoin" src="pile.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='pile.png'"></div><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
             <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
         </div>
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
@@ -504,7 +497,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v30';
+const APP_VERSION='v31';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1311,6 +1304,9 @@ function resetDreidel(){
 }
 
 // ══════ FX: coins, counters, confetti ══════
+// coin picture (WebP, PNG fallback for very old browsers)
+let COIN_SRC='coin.webp';
+(function(){const t=new Image();t.onerror=()=>{COIN_SRC='coin.png'};t.src='coin.webp'})();
 const FX_ON=!!(document.body.animate)&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 function centerOf(el){const r=el.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}
 function cardEl(id){return [...document.querySelectorAll('.p-card[data-pid]')].find(e=>e.dataset.pid===id)||null}
@@ -1322,9 +1318,8 @@ function flyCoins(fromEl,toEl,count,delay){
     const lift=60+Math.random()*40;
     const jobs=[];
     for(let i=0;i<count;i++){
-        const c=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        c.setAttribute('viewBox','0 0 40 40');c.setAttribute('class','fx-coin');
-        c.innerHTML='<use href="#coin"/>';document.body.appendChild(c);
+        const c=document.createElement('img');c.className='fx-coin';c.src=COIN_SRC;c.alt='';
+        document.body.appendChild(c);
         const jx=(Math.random()-.5)*26,jy=(Math.random()-.5)*16, spin=(Math.random()>.5?1:-1)*(360+Math.random()*360);
         const a=c.animate([
             {transform:`translate(${x0+jx}px,${y0+jy}px) scale(.5) rotate(0deg)`,opacity:0},
@@ -1378,9 +1373,9 @@ function playMoneyFx(prev,cur){
     });
     const nCoins=d=>Math.max(1,Math.min(10,Math.round(Math.abs(d)/ante)));
     // numbers start from the old values
-    potVal.textContent=prev.pot;
+    potVal.textContent=prev.pot;sizePile(prev.pot);
     G.players.forEach(p=>{const el=cardEl(p.id)?.querySelector('.p-amt');if(el)el.textContent=prev.amt[p.id]??0});
-    if(!FX_ON){countTo(potVal,prev.pot,cur.pot);G.players.forEach(p=>countTo(cardEl(p.id)?.querySelector('.p-amt'),prev.amt[p.id],cur.amt[p.id]));return}
+    if(!FX_ON){countTo(potVal,prev.pot,cur.pot);sizePile(cur.pot);G.players.forEach(p=>countTo(cardEl(p.id)?.querySelector('.p-amt'),prev.amt[p.id],cur.amt[p.id]));return}
     // 1) winnings fly out of the pot
     const big=takers.some(([,d])=>d>=Math.max(ante*3,prev.pot*.6));
     if(big){const [x,y]=centerOf(potEl);confetti(x,y,40,180);bigText(dispLetter('ג')+'!');playJackpotSound()}
@@ -1402,8 +1397,8 @@ function playMoneyFx(prev,cur){
         });
     });
     // pot counter follows the coins
-    Promise.all([...t1,...t2]).then(()=>{countTo(potVal,Number(potVal.textContent)||0,cur.pot,450);pulse(potVal.closest('.pot-box'),'bump')});
-    if(takers.length&&!payers.length)setTimeout(()=>countTo(potVal,prev.pot,cur.pot,500),300);
+    Promise.all([...t1,...t2]).then(()=>{countTo(potVal,Number(potVal.textContent)||0,cur.pot,450);sizePile(cur.pot);pulse(potVal.closest('.pot-box'),'bump')});
+    if(takers.length){setTimeout(()=>{sizePile(payers.length?Math.max(0,prev.pot-takers.reduce((a,[,d])=>a+d,0)):cur.pot);if(!payers.length)countTo(potVal,prev.pot,cur.pot,500)},300)} // the pile shrinks as the winnings leave
     // 3) knocked out
     out.forEach(id=>setTimeout(()=>pulse(cardEl(id),'shake',600),900));
 }
@@ -1560,9 +1555,15 @@ function renderGame(animate){
     renderGameNow();
     if(animate&&prev)playMoneyFx(prev,PREV_VIEW);
 }
+function sizePile(pot){
+    const el=document.getElementById('potCoin');if(!el)return;
+    const base=Math.max(1,(G.ante||10)*Math.max(2,G.players.filter(p=>p.alive).length)); // a fresh pot = 1
+    const k=pot<=0?0.35:Math.min(1.3,0.55+0.3*Math.sqrt(pot/base)*1.2);
+    el.style.transform=`scale(${k.toFixed(2)})`;el.style.opacity=pot<=0?'.35':'1';
+}
 function renderGameNow(){
     if(MODE==='online'&&G.started&&!G.over)saveSession();
-    document.getElementById('potVal').textContent=G.pot;
+    document.getElementById('potVal').textContent=G.pot;sizePile(G.pot);
     const cp=G.players[G.currentTurn];
     document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?esc(cp.name):'—'}</strong>`;
 
