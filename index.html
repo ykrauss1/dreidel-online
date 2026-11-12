@@ -251,6 +251,15 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .react-bar button:hover{transform:scale(1.3)}
 .fx-react{position:fixed;left:0;top:0;z-index:905;pointer-events:none;font-size:3rem;transform:translate(-50%,-50%)}
 @media(max-width:768px){.react-bar{bottom:64px}.react-bar button{font-size:1.15rem}.mic-badge{bottom:64px;left:10px}}
+/* avatar + level next to names */
+.persona{display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.av-btn{background:var(--bg-input);border:1px solid var(--border-l);border-radius:50%;width:34px;height:34px;font-size:1.15rem;cursor:pointer;padding:0;line-height:1}
+.av-btn:hover{border-color:var(--gold)}
+.lvl-sel{background:var(--bg-input);border:1px solid var(--border-l);color:var(--text);border-radius:8px;padding:4px 4px;font-family:inherit;font-size:.75rem;max-width:88px}
+.persona-row{display:flex;align-items:center;gap:6px}.persona-row .input{flex:1}
+.player-name-row{display:flex;align-items:center;gap:6px}.player-name-row .input{flex:1}
+.family-member-row{display:flex;align-items:center;gap:6px}.family-member-row .input{flex:1}
+.trivia-lvl{display:inline-block;font-size:.75rem;background:var(--bg-input);border-radius:10px;padding:1px 8px;margin-inline-start:6px;color:var(--text-dim)}
 .app-version{position:fixed;bottom:6px;right:10px;font-size:.65rem;color:var(--text-dim);opacity:.6;z-index:50;pointer-events:none;direction:ltr}
 .waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
@@ -399,6 +408,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
         <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
     </div>
+    <div style="text-align:center;margin-top:10px"><button class="btn btn-outline btn-sm" id="tuneBtn" onclick="unlockAudio();playMaozTzur()">🎵 מעוז צור</button></div>
     <div class="install-banner" id="rejoinBanner" style="border-color:var(--blue)">
         <span style="font-size:1.4rem">🔄</span>
         <div class="ib-text" id="rejoinText"><b>יש לך משחק פתוח</b></div>
@@ -443,7 +453,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div id="createPanel">
             <!-- Individual mode -->
             <div id="createIndividual">
-                <div class="form-row"><label>השם שלך:</label><input type="text" id="hostName" maxlength="20" class="input" placeholder="שם..."></div>
+                <div class="form-row persona-row"><label>השם שלך:</label><input type="text" id="hostName" maxlength="20" class="input" placeholder="שם..."><span class="persona" data-av="0"></span></div>
             </div>
             <!-- Family mode -->
             <div id="createFamily" class="hidden">
@@ -477,7 +487,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div id="joinPanel" class="hidden">
             <!-- Individual mode -->
             <div id="joinIndividual">
-                <div class="form-row"><label>השם שלך:</label><input type="text" id="joinName" maxlength="20" class="input" placeholder="שם..."></div>
+                <div class="form-row persona-row"><label>השם שלך:</label><input type="text" id="joinName" maxlength="20" class="input" placeholder="שם..."><span class="persona" data-av="3"></span></div>
             </div>
             <!-- Family mode -->
             <div id="joinFamily" class="hidden">
@@ -618,7 +628,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v37';
+const APP_VERSION='v38';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -626,6 +636,29 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function safeColor(c){return /^#[0-9a-f]{6}$/i.test(c||'')?c:'#7a7da0'}
 function cleanName(n,fallback){return String(n??'').trim().slice(0,20)||fallback}
 let JOIN_TIMER=null;
+
+// ── Avatar + question level for every player ──
+const AVATARS=['🦁','🐻','🦊','🐼','🐸','🦄','🐯','🐨','🐵','🐧','🦉','🐙','🐰','🐶','🐱','🐢','🦒','🐬'];
+const LEVELS={1:'👶 קל',2:'🧒 בינוני',3:'🎓 קשה'};
+function safeAvatar(a){return AVATARS.includes(a)?a:AVATARS[Math.floor(Math.random()*AVATARS.length)]}
+function safeLevel(l){l=+l;return l>=1&&l<=3?l:2}
+// turn every <span class="persona"> into [avatar button][level select]
+function initPersonas(root){
+    (root||document).querySelectorAll('.persona:not(.ready)').forEach(sp=>{
+        sp.classList.add('ready');
+        const ai=(+sp.dataset.av||0)%AVATARS.length,lv=safeLevel(sp.dataset.lvl||2);
+        sp.innerHTML=`<button type="button" class="av-btn" title="לחצו להחלפת דמות">${AVATARS[ai]}</button><select class="lvl-sel" title="רמת שאלות החנוכה">${[1,2,3].map(l=>`<option value="${l}" ${l===lv?'selected':''}>${LEVELS[l]}</option>`).join('')}</select>`;
+        sp.querySelector('.av-btn').onclick=e=>{const b=e.currentTarget;b.textContent=AVATARS[(AVATARS.indexOf(b.textContent)+1)%AVATARS.length];
+            b.animate&&b.animate([{transform:'scale(1.4) rotate(-15deg)'},{transform:'none'}],{duration:250});saveSettings()};
+        sp.querySelector('.lvl-sel').onchange=()=>saveSettings();
+    });
+}
+function applyPersona(row,pr){const b=row.querySelector('.av-btn'),s=row.querySelector('.lvl-sel');if(b&&pr.avatar)b.textContent=safeAvatar(pr.avatar);if(s&&pr.level)s.value=safeLevel(pr.level)}
+function readPersona(row){
+    const b=row&&row.querySelector('.av-btn'),s=row&&row.querySelector('.lvl-sel');
+    return{avatar:b?safeAvatar(b.textContent):safeAvatar(),level:s?safeLevel(s.value):2};
+}
+function av(p){return p&&p.avatar?p.avatar+' ':''}
 
 function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){alert(e.message);return false}}
 
@@ -642,14 +675,21 @@ function setOnlineType(t){
 }
 
 // ═══════════ LOCAL ═══════════
-function renderLocalNames(){const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');const keep=[...d.querySelectorAll('.local-name')].map(i=>i.value);d.innerHTML='';for(let i=0;i<n;i++)d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" maxlength="20" placeholder="שחקן ${i+1}" value="${esc(keep[i]||'')}"></div>`}
+function renderLocalNames(){
+    const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');
+    const keep=[...d.querySelectorAll('.player-name-row')].map(r=>({v:r.querySelector('.local-name').value,...readPersona(r)}));
+    d.innerHTML='';
+    for(let i=0;i<n;i++){const k=keep[i]||{};
+        d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" maxlength="20" placeholder="שחקן ${i+1}" value="${esc(k.v||'')}"><span class="persona" data-av="${k.avatar!=null?AVATARS.indexOf(k.avatar):(i*5)%AVATARS.length}" data-lvl="${k.level||2}"></span></div>`}
+    initPersonas(d);
+}
 renderLocalNames();
 
 function startLocalGame(){
     G.startAmt=parseInt(document.getElementById('localStartAmt').value)||100;G.ante=Math.round(G.startAmt*.1);
     G.players=[];G.families=[];G.scoringMode='individual';G.firstTurn=0;G.round=1;
     G.timeLimitMin=parseInt(document.getElementById('localTime').value)||0;
-    document.querySelectorAll('.local-name').forEach((inp,i)=>{G.players.push({id:'p'+i,name:cleanName(inp.value,`שחקן ${i+1}`),family:null,amount:0,alive:true,change:''})});
+    document.querySelectorAll('#localNames .player-name-row').forEach((row,i)=>{const pr=readPersona(row);G.players.push({id:'p'+i,name:cleanName(row.querySelector('.local-name').value,`שחקן ${i+1}`),family:null,amount:0,alive:true,change:'',avatar:pr.avatar,level:pr.level})});
     resetRound();
     hide('modeScreen');hide('localSetup');show('gameScreen');document.getElementById('videoSection').classList.add('hidden');
     document.getElementById('spinBtn').classList.remove('hidden');document.getElementById('waitingMsg').classList.add('hidden');
@@ -667,15 +707,16 @@ function addMemberInput(containerId){
     const d=document.getElementById(containerId);
     const idx=d.children.length+1;
     const row=document.createElement('div');row.className='family-member-row';
-    row.innerHTML=`<input class="input input-sm member-name" maxlength="20" placeholder="בן משפחה ${idx}" style="padding:6px 10px;font-size:.85rem"><button class="remove-member" onclick="this.parentElement.remove()">✕</button>`;
-    d.appendChild(row);
+    row.innerHTML=`<input class="input input-sm member-name" maxlength="20" placeholder="בן משפחה ${idx}" style="padding:6px 10px;font-size:.85rem"><span class="persona" data-av="${(idx*5+(containerId==='joinMembers'?2:0))%AVATARS.length}"></span><button class="remove-member" onclick="this.parentElement.remove()">✕</button>`;
+    d.appendChild(row);initPersonas(row);
 }
 // Init with 2 members each
+initPersonas();
 addMemberInput('hostMembers');addMemberInput('hostMembers');
 addMemberInput('joinMembers');addMemberInput('joinMembers');
 
 function getMemberNames(containerId){
-    return [...document.querySelectorAll(`#${containerId} .member-name`)].map(i=>i.value.trim()).filter(n=>n);
+    return [...document.querySelectorAll(`#${containerId} .member-name`)].map(i=>({name:i.value.trim(),...readPersona(i.parentElement)})).filter(m=>m.name);
 }
 
 async function createRoom(){
@@ -691,14 +732,14 @@ async function createRoom(){
     if(ONLINE_TYPE==='family'){
         const famName=document.getElementById('hostFamilyName').value.trim()||'משפחה 1';
         const members=getMemberNames('hostMembers');
-        if(members.length===0)members.push(famName);
+        if(members.length===0)members.push({name:famName,avatar:AVATARS[0],level:2});
         MY_FAMILY=MY_ID;
         G.families.push({id:MY_ID,name:famName,color:FAM_COLORS[0]});
-        members.forEach((m,i)=>{G.players.push({id:MY_ID+'_'+i,name:m,family:MY_ID,amount:0,alive:true,change:''})});
+        members.forEach((m,i)=>{G.players.push({id:MY_ID+'_'+i,name:cleanName(m.name||m,famName),family:MY_ID,amount:0,alive:true,change:'',avatar:safeAvatar(m.avatar),level:safeLevel(m.level)})});
     }else{
         const name=document.getElementById('hostName').value.trim()||'מארח';
-        MY_FAMILY=null;
-        G.players.push({id:MY_ID,name,family:null,amount:0,alive:true,change:''});
+        MY_FAMILY=null;const pr=readPersona(document.getElementById('hostName').parentElement);
+        G.players.push({id:MY_ID,name,family:null,amount:0,alive:true,change:'',avatar:pr.avatar,level:pr.level});
     }
 
     hide('onlineLobby');show('waitingRoom');document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
@@ -716,13 +757,13 @@ async function joinRoom(){
     if(ONLINE_TYPE==='family'){
         const famName=document.getElementById('joinFamilyName').value.trim()||'משפחה';
         const members=getMemberNames('joinMembers');
-        if(members.length===0)members.push(famName);
+        if(members.length===0)members.push({name:famName,avatar:AVATARS[3],level:2});
         MY_FAMILY=MY_ID;
         payload={id:MY_ID,type:'family',name:famName,members};
     }else{
         const name=document.getElementById('joinName').value.trim()||'שחקן';
         MY_FAMILY=null;
-        payload={id:MY_ID,type:'individual',name};
+        payload={id:MY_ID,type:'individual',name,...readPersona(document.getElementById('joinName').parentElement)};
     }
 
     hide('onlineLobby');show('waitingRoom');document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
@@ -759,12 +800,13 @@ function joinChannel(onReady){
             const color=FAM_COLORS[G.families.length%FAM_COLORS.length];
             const famName=cleanName(p.name,'משפחה');
             G.families.push({id:p.id,name:famName,color});
-            const members=(Array.isArray(p.members)?p.members:[]).slice(0,10).map(m=>cleanName(m,'')).filter(Boolean);
-            if(!members.length)members.push(famName);
-            members.forEach((m,i)=>{G.players.push({id:p.id+'_'+i,name:m,family:p.id,amount:0,alive:true,change:''})});
+            const members=(Array.isArray(p.members)?p.members:[]).slice(0,10)
+                .map(m=>typeof m==='string'?{name:m}:m||{}).map(m=>({name:cleanName(m.name,''),avatar:safeAvatar(m.avatar),level:safeLevel(m.level)})).filter(m=>m.name);
+            if(!members.length)members.push({name:famName,avatar:safeAvatar(),level:2});
+            members.forEach((m,i)=>{G.players.push({id:p.id+'_'+i,name:m.name,family:p.id,amount:0,alive:true,change:'',avatar:m.avatar,level:m.level})});
         }else{
             if(G.players.find(pl=>pl.id===p.id))return;
-            G.players.push({id:p.id,name:cleanName(p.name,'שחקן'),family:null,amount:0,alive:true,change:''});
+            G.players.push({id:p.id,name:cleanName(p.name,'שחקן'),family:null,amount:0,alive:true,change:'',avatar:safeAvatar(p.avatar),level:safeLevel(p.level)});
         }
         broadcastState();
         renderLobby();
@@ -951,6 +993,8 @@ function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
     o.localNames=[...document.querySelectorAll('.local-name')].map(i=>i.value);
+    o.localPersonas=[...document.querySelectorAll('#localNames .player-name-row')].map(r=>readPersona(r));
+    o.hostPersona=readPersona(document.getElementById('hostName').parentElement);o.joinPersona=readPersona(document.getElementById('joinName').parentElement);
     lsSet(SETTINGS_KEY,JSON.stringify(o));
 }
 function loadSettings(){
@@ -962,6 +1006,9 @@ function loadSettings(){
     document.getElementById('colPehLabel').textContent=dispLetter('פ')+' (לשלם)';
     renderLocalNames();
     (o.localNames||[]).forEach((v,i)=>{const inp=document.querySelectorAll('.local-name')[i];if(inp)inp.value=v});
+    (o.localPersonas||[]).forEach((pr,i)=>{const r=document.querySelectorAll('#localNames .player-name-row')[i];if(r)applyPersona(r,pr)});
+    if(o.hostPersona)applyPersona(document.getElementById('hostName').parentElement,o.hostPersona);
+    if(o.joinPersona)applyPersona(document.getElementById('joinName').parentElement,o.joinPersona);
 }
 loadSettings();
 document.getElementById('localNames').addEventListener('change',saveSettings);
@@ -987,14 +1034,14 @@ function renderLobby(){
             const members=G.players.filter(p=>p.family===f.id);
             return `<div class="lobby-family">
                 <div class="lobby-family-name"><span style="color:${safeColor(f.color)}">●</span> משפ׳ ${esc(f.name)}</div>
-                <div class="lobby-family-members">${members.map(m=>`<span>${esc(m.name)}</span>`).join('')}</div>
+                <div class="lobby-family-members">${members.map(m=>`<span>${av(m)}${esc(m.name)}</span>`).join('')}</div>
             </div>`;
         }).join('');
         // Also show non-family players if mixed
         const noFam=G.players.filter(p=>!p.family);
         if(noFam.length)el.innerHTML+=noFam.map(p=>`<div class="lobby-player ${lobbyOff(p)}"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
     }else{
-        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''} ${lobbyOff(p)}"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
+        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''} ${lobbyOff(p)}"><span class="dot"></span> ${av(p)}${esc(p.name)}</div>`).join('');
     }
 }
 
@@ -1102,6 +1149,7 @@ function canRematch(){
 }
 function rematch(){
     if(!canRematch())return;
+    stopMaozTzur();
     G.firstTurn=((G.firstTurn||0)+1)%G.players.length; // a different player starts each round
     resetRound();
     G.round=(G.round||1)+1;
@@ -1626,54 +1674,93 @@ function boostSpin(remote){
 })();
 
 // ══════════ ❓ HANUKKAH QUESTIONS — every so often before a turn; right answer = bonus ══════════
+// [question, [RIGHT answer first, then wrong ones], level]   1 = 👶 easy (kids) · 2 = 🧒 medium · 3 = 🎓 hard (adults / Gemara)
 const TRIVIA_Q=[
-    ['כמה ימים דלק פך השמן שנמצא במקדש?',['שמונה','אחד','שבעה','שלושה']],
-    ['באיזה תאריך מתחילה חנוכה?',['כ"ה בכסלו','כ"ה בטבת','ט"ו בשבט','י"ד באדר']],
-    ['מי היה אבי בני חשמונאי?',['מתתיהו','יהודה','יוחנן','אלעזר']],
-    ['באיזה יישוב גר מתתיהו?',['מודיעין','ירושלים','חברון','בית לחם']],
-    ['מי היה המלך היווני שגזר את הגזירות?',['אנטיוכוס','אלכסנדר מוקדון','פרעה','נבוכדנצר']],
-    ['כמה נרות מדליקים בכל החנוכה (בלי השמש), לפי המנהג שלנו?',['36','44','8','40']],
-    ['מה מוסיפים בתפילה ובברכת המזון בחנוכה?',['על הניסים','יעלה ויבוא','עננו','משיב הרוח']],
-    ['מה ראשי התיבות של אותיות הסביבון בארץ ישראל?',['נס גדול היה פה','נס גדול היה שם','נר גדול הדליקו פה','נס גדול היום פה']],
-    ['כמה קנים היו למנורה שבבית המקדש?',['שבעה','שמונה','תשעה','שישה']],
-    ['איך קוראים לנר הנוסף שמדליקים בו את שאר הנרות?',['שמש','מנורה','פתילה','שומר']],
-    ['באיזו מסכת בגמרא נמצא הדיון "מאי חנוכה"?',['שבת','ברכות','פסחים','מגילה']],
-    ['אם שכחו "על הניסים" בתפילת שמונה עשרה — מה עושים?',['לא חוזרים','חוזרים לתחילת התפילה','חוזרים לברכה','אומרים בסוף היום']],
-    ['כמה שעות (לפחות) צריכים הנרות לדלוק?',['חצי שעה','רבע שעה','שעתיים','כל הלילה']],
-    ['כיצד נקראו לוחמי יהודה בן מתתיהו?',['המכבים','הקנאים','הצדוקים','הפרושים']],
-    ['לפי בית הלל — כמה נרות מדליקים בלילה הראשון?',['אחד','שמונה','שניים','ארבעה']],
-    ['לפי בית שמאי — כמה נרות מדליקים בלילה הראשון?',['שמונה','אחד','ארבעה','שבעה']],
-    ['איזה מאכל מטוגן נוהגים לאכול בחנוכה בארץ ישראל?',['סופגניות','חלות','מצות','עוגת גבינה']],
-    ['למה נוהגים לאכול מאכלים מטוגנים בשמן בחנוכה?',['זכר לנס פך השמן','כי חורף קר','כי זה מסורת יוונית','זכר למן']],
-    ['מה אסור לעשות לאור נרות חנוכה?',['להשתמש לאורם','לשיר לידם','להסתכל עליהם','לשבת לידם']],
-    ['מה אומרים אחרי הדלקת הנרות?',['הנרות הללו','אשר יצר','הבדלה','קידוש']],
-    ['כמה ברכות מברכים בלילה הראשון של חנוכה?',['שלוש','שתיים','אחת','ארבע']],
-    ['איזו ברכה מוסיפים רק בלילה הראשון?',['שהחיינו','שעשה ניסים','להדליק נר','הטוב והמטיב']],
-    ['על מה נלחמו החשמונאים?',['על הזכות לשמור תורה ומצוות','על כסף','על שטחי מרעה','על הים']],
-    ['מה עשו החשמונאים כשנכנסו למקדש?',['טיהרו אותו וחנכו אותו מחדש','בנו אותו מחדש מהיסוד','עזבו אותו','הפכו אותו לארמון']],
-    ['כמה ימים נמשך חג החנוכה?',['שמונה','שבעה','תשעה','עשרה']],
-    ['איזה פרק תהלים מתחיל "מזמור שיר חנוכת הבית"?',['ל׳','כ"ג','קכ"א','צ"א']],
-    ['מה אומרים בחנוכה בתפילת שחרית אחרי שמונה עשרה?',['הלל שלם','הלל בדילוג','סליחות','תחנון']],
-    ['איך נקרא השיר הידוע שאומרים אחרי הדלקת הנרות?',['מעוז צור','לכה דודי','אדון עולם','יגדל']]
+    // ── 👶 easy ──
+    ['מה מסובבים בחנוכה?',['סביבון','רעשן','שופר','לולב'],1],
+    ['מה מדליקים בחנוכה?',['נרות בחנוכייה','מדורה','זיקוקים','פנס'],1],
+    ['איזה מאכל אוכלים בחנוכה?',['סופגניות','מצות','אוזני המן','תפוח בדבש'],1],
+    ['כמה נרות מדליקים בלילה הראשון (בלי השמש)?',['אחד','שמונה','שניים','שלושה'],1],
+    ['כמה נרות מדליקים בלילה השני (בלי השמש)?',['שניים','אחד','שלושה','שמונה'],1],
+    ['כמה ימים נמשך חג החנוכה?',['שמונה','שבעה','שלושה','עשרה'],1],
+    ['מה מצאו החשמונאים במקדש?',['פך שמן','ספר תורה','כתר זהב','חרב'],1],
+    ['מה פירוש האות ג׳ על הסביבון במשחק?',['לוקחים את כל הקופה','לא לוקחים כלום','לוקחים חצי','משלמים לקופה'],1],
+    ['מה פירוש האות נ׳ על הסביבון במשחק?',['כלום','הכל','חצי','משלמים'],1],
+    ['מי ניצח במלחמה — המכבים או היוונים?',['המכבים','היוונים','אף אחד','שניהם'],1],
+    ['איפה שמים את החנוכייה?',['ליד החלון או הפתח','במקרר','מתחת למיטה','בארון'],1],
+    ['מה נותנים לילדים בחנוכה?',['דמי חנוכה','משלוח מנות','ארבעה כוסות','ערבה'],1],
+    ['באיזו עונה חל חנוכה?',['חורף','קיץ','אביב','סתיו מוקדם'],1],
+    ['איזה חג בא אחרי חנוכה?',['ט"ו בשבט','פסח','סוכות','ראש השנה'],1],
+    ['איך קוראים לנר שמדליק את שאר הנרות?',['שמש','מלך','גדול','ראשון'],1],
+    ['באיזה שמן הדליקו את המנורה במקדש?',['שמן זית','שמן קנולה','שמן חמניות','נפט'],1],
+    ['מי היה המנהיג של המכבים בקרבות?',['יהודה המכבי','משה רבנו','דוד המלך','יהושע'],1],
+    ['כמה נרות דולקים בלילה האחרון — כולל השמש?',['תשעה','שמונה','עשרה','שבעה'],1],
+    ['מה שרים אחרי הדלקת הנרות?',['מעוז צור','לכה דודי','אדון עולם','התקווה'],1],
+    ['מה עושים בחנוכה עם מטבעות שוקולד?',['משחקים בסביבון ואוכלים','מתפללים איתם','שמים בחנוכייה','שותלים באדמה'],1],
+    // ── 🧒 medium ──
+    ['באיזה תאריך מתחילה חנוכה?',['כ"ה בכסלו','כ"ה בטבת','ט"ו בשבט','י"ד באדר'],2],
+    ['מי היה אבי בני חשמונאי?',['מתתיהו','יהודה','יוחנן','אלעזר'],2],
+    ['באיזה יישוב גר מתתיהו?',['מודיעין','ירושלים','חברון','בית לחם'],2],
+    ['מי היה המלך היווני שגזר את הגזירות?',['אנטיוכוס','אלכסנדר מוקדון','פרעה','נבוכדנצר'],2],
+    ['כמה נרות מדליקים בכל החנוכה (בלי השמש), לפי המנהג שלנו?',['36','44','8','40'],2],
+    ['מה מוסיפים בתפילה ובברכת המזון בחנוכה?',['על הניסים','יעלה ויבוא','עננו','משיב הרוח'],2],
+    ['מה ראשי התיבות של אותיות הסביבון בארץ ישראל?',['נס גדול היה פה','נס גדול היה שם','נר גדול הדליקו פה','נס גדול היום פה'],2],
+    ['כמה קנים היו למנורה שבבית המקדש?',['שבעה','שמונה','תשעה','שישה'],2],
+    ['כיצד נקראו לוחמי יהודה בן מתתיהו?',['המכבים','הקנאים','הצדוקים','הפרושים'],2],
+    ['למה נוהגים לאכול מאכלים מטוגנים בשמן בחנוכה?',['זכר לנס פך השמן','כי חורף קר','כי זה מנהג יווני','זכר למן'],2],
+    ['מה אומרים אחרי הדלקת הנרות?',['הנרות הללו','אשר יצר','הבדלה','קידוש'],2],
+    ['כמה ברכות מברכים בלילה הראשון של חנוכה?',['שלוש','שתיים','אחת','ארבע'],2],
+    ['איזו ברכה מוסיפים רק בלילה הראשון?',['שהחיינו','שעשה ניסים','להדליק נר','הטוב והמטיב'],2],
+    ['מה עשו החשמונאים כשנכנסו למקדש?',['טיהרו אותו וחנכו אותו מחדש','בנו אותו מחדש מהיסוד','עזבו אותו','הפכו אותו לארמון'],2],
+    ['מה אומרים בחנוכה בתפילת שחרית אחרי שמונה עשרה?',['הלל שלם','הלל בדילוג','סליחות','תחנון'],2],
+    ['של מי היה החותם על פך השמן שנמצא?',['כהן גדול','המלך','הנביא','החשמונאים'],2],
+    ['כמה זמן (לפחות) צריכים הנרות לדלוק?',['חצי שעה','רבע שעה','שעתיים','כל הלילה'],2],
+    ['איזה נר מדליקים ראשון בכל לילה?',['את הנר שנוסף הלילה','את הנר הימני ביותר','את הנר האמצעי','לא משנה'],2],
+    ['האם אומרים תחנון בחנוכה?',['לא','כן','רק בשבת','רק בלילה הראשון'],2],
+    ['מי היא הגיבורה שמוזכרת במסורת של חנוכה?',['יהודית','אסתר','דבורה','יעל'],2],
+    // ── 🎓 hard ──
+    ['באיזו מסכת בגמרא נמצא הדיון "מאי חנוכה"?',['שבת','ברכות','פסחים','מגילה'],3],
+    ['אם שכחו "על הניסים" בתפילת שמונה עשרה — מה עושים?',['לא חוזרים','חוזרים לתחילת התפילה','חוזרים לברכת מודים','אומרים בסוף היום'],3],
+    ['לפי בית שמאי — כמה נרות מדליקים בלילה הראשון?',['שמונה','אחד','ארבעה','שבעה'],3],
+    ['מה טעמם של בית הלל בהוספת נר בכל לילה?',['מעלין בקודש ואין מורידין','כנגד פרי החג','כנגד ימים היוצאים','כדי לפרסם יותר בסוף'],3],
+    ['מה טעם אחד מטעמי בית שמאי לפחות נר בכל לילה?',['כנגד פרי החג','מעלין בקודש','כנגד שבטי ישראל','כנגד ימי השבוע'],3],
+    ['מהו עיקר המצווה (בלי הידור)?',['נר איש וביתו','נר לכל אחד','נר בכל חלון','שמונה נרות בכל לילה'],3],
+    ['נר חנוכה שהניחו למעלה מכמה אמות — פסול?',['עשרים אמה','עשר אמות','שלושים אמה','שלוש אמות'],3],
+    ['עד מתי זמן הדלקה לכתחילה לפי הגמרא?',['עד שתכלה רגל מן השוק','עד חצות','עד עלות השחר','שעה אחרי השקיעה'],3],
+    ['נר חנוכה שכבה בתוך זמנו — מה דינו לפי הגמרא?',['אין זקוק לה','חייב להדליק ולברך','מדליק בלי ברכה','מדליק את כולם מחדש'],3],
+    ['עני שאין לו אלא לנר אחד — נר שבת או נר חנוכה?',['נר שבת (שלום בית)','נר חנוכה','מחלק את השמן','מה שירצה'],3],
+    ['יין לקידוש או נר חנוכה — מה קודם לעני?',['נר חנוכה (פרסומי ניסא)','יין לקידוש','מה שירצה','שניהם בשווה'],3],
+    ['מה מברך מי שרואה נר חנוכה ולא הדליק?',['שעשה ניסים','להדליק נר','הטוב והמטיב','אשר קדשנו'],3],
+    ['מאיזו פרשה קוראים בתורה בחנוכה?',['נשא — קרבנות הנשיאים','בהעלותך בלבד','מקץ בלבד','וזאת הברכה'],3],
+    ['מהי ההפטרה בשבת חנוכה הראשונה?',['רני ושמחי (זכריה)','ויעש חירום','קומי אורי','שובה ישראל'],3],
+    ['באיזו מסכת במשנה מוזכר נר חנוכה במפורש?',['בבא קמא','שבת','ראש השנה','תענית'],3],
+    ['מה כתוב בתחילת "על הניסים"?',['בימי מתתיהו בן יוחנן כהן גדול','בימי מרדכי ואסתר','בימי יהודה המכבי','בימי אנטיוכוס הרשע'],3],
+    ['ערב שבת — מתי מדליקים נר חנוכה?',['לפני הדלקת נרות שבת','אחרי צאת השבת','אחרי קידוש','בזמן רגיל אחרי צאת הכוכבים'],3],
+    ['בבית הכנסת במוצאי שבת — מה קודם?',['נר חנוכה ואחר כך הבדלה','הבדלה ואחר כך נר חנוכה','רק הבדלה','לא מדליקים'],3],
+    ['איזה מאכל נוהגים לאכול זכר למעשה יהודית (לפי הרמ"א)?',['מאכלי חלב','מאכלי בשר','דגים','לחם'],3],
+    ['על פי הגמרא — מה מקום הנחת נר חנוכה לכתחילה?',['על פתח ביתו מבחוץ','על השולחן','על הגג','בחדר השינה'],3],
 ];
 const TRIVIA={open:false,lastTurn:-1,used:[]};
+function playerLevel(p){return safeLevel(p&&p.level)}
 function maybeAskTrivia(){
     if(!document.getElementById('triviaOn').checked||TRIVIA.open)return;
     const tn=(G.round||1)*1000+(G.turnNo||0);
     if(tn===TRIVIA.lastTurn)return;TRIVIA.lastTurn=tn;
     if((G.turnNo||0)<3||Math.random()>.2)return;                       // about one turn in five, not at the very start
-    let pool=TRIVIA_Q.map((_,i)=>i).filter(i=>!TRIVIA.used.includes(i));if(!pool.length){TRIVIA.used=[];pool=TRIVIA_Q.map((_,i)=>i)}
+    const lvl=playerLevel(G.players[G.currentTurn]);
+    const ofLevel=TRIVIA_Q.map((_,i)=>i).filter(i=>TRIVIA_Q[i][2]===lvl);
+    let pool=ofLevel.filter(i=>!TRIVIA.used.includes(i));if(!pool.length){TRIVIA.used=TRIVIA.used.filter(i=>!ofLevel.includes(i));pool=ofLevel}
     const qi=pick(pool);TRIVIA.used.push(qi);
     const order=[0,1,2,3].sort(()=>Math.random()-.5);
-    const who=G.players[G.currentTurn]?.name||'';
+    const who=av(G.players[G.currentTurn])+(G.players[G.currentTurn]?.name||'');
     showTrivia(qi,order,who,true);
     if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'trivia_show',payload:{qi,order,who,from:MY_ID}});
 }
 let _trTimer=null;
 function showTrivia(qi,order,who,mine){
     TRIVIA.open=true;refreshSpinUI();
-    const [q,ans]=TRIVIA_Q[qi];
-    document.getElementById('triviaWho').textContent=mine?`שאלת חנוכה ל${who}! תשובה נכונה = מטבעות בונוס 🎁`:`שאלת חנוכה ל${who} — מחכים לתשובה...`;
+    const [q,ans,lvl]=TRIVIA_Q[qi];
+    document.getElementById('triviaWho').innerHTML=esc(mine?`שאלת חנוכה ל${who}! תשובה נכונה = מטבעות בונוס 🎁`:`שאלת חנוכה ל${who} — מחכים לתשובה...`)+`<span class="trivia-lvl">${LEVELS[lvl]}</span>`;
     document.getElementById('triviaQ').textContent=q;
     document.getElementById('triviaMsg').textContent='';
     const box=document.getElementById('triviaA');
@@ -1694,7 +1781,7 @@ function answerTrivia(i,qi,order,remote){
     playSfx(right?pick(SFX.he):pick(SFX.pe),{vol:.8});
     if(right){say('נכון! כל הכבוד');coinRain(10)}
     if(!remote){
-        if(right){const p=G.players[G.currentTurn];if(p){giveBonus(p,G.ante,'🧠 תשובה נכונה! —');renderGame(true)}}
+        if(right){const p=G.players[G.currentTurn];if(p){const lv=TRIVIA_Q[qi]?TRIVIA_Q[qi][2]:2;giveBonus(p,G.ante*(lv===3?1.5:1),'🧠 תשובה נכונה! —');renderGame(true)}}
         if(MODE==='online'&&channel){
             channel.send({type:'broadcast',event:'trivia_answer',payload:{i,from:MY_ID}});
             if(right){LAST_STATE=clone(G);channel.send({type:'broadcast',event:'state_update',payload:{state:LAST_STATE,from:MY_ID}})}
@@ -2221,6 +2308,32 @@ function chargeTone(on,val){
     if(!on&&_chargeOsc){try{_chargeGain.gain.setTargetAtTime(0,ctx.currentTime,.03);_chargeOsc.stop(ctx.currentTime+.12)}catch(e){}_chargeOsc=null}
 }
 
+// ── 🎵 "מעוז צור" — the traditional (public-domain) melody, played as a soft music box ──
+// [midi note, start beat, length in beats] — melody line taken from the traditional tune
+const MAOZ_TZUR=[[74,0,1],[69,1,1],[74,2,1],[79,3,1],[78,4,1],[76,5,1],[74,6,2],[81,8,1],[83,9,1],[76,10,1],[78,11,.5],[79,11.5,.5],[78,12,1],[76,13,1],[74,14,2],
+ [74,16,1],[69,17,1],[74,18,1],[79,19,1],[78,20,1],[76,21,1],[74,22,2],[81,24,1],[83,25,1],[76,26,1],[78,27,.5],[79,27.5,.5],[78,28,1],[76,29,1],[74,30,2],
+ [81,32,1.5],[81,33.5,.5],[83,34,1],[85,35,1],[86,36,2],[81,38,2],[86,40,1],[85,41,1],[83,42,1],[81,43,1],[81,44,.5],[79,44.5,.5],[78,45,.5],[79,45.5,.5],[76,46,2],
+ [78,48,1.5],[79,49.5,.5],[81,50,2],[76,52,1.5],[78,53.5,.5],[79,54,1.5],[79,55.5,.5],[78,56,1],[73,57,1],[74,58,1],[79,59,1],[78,60,1],[79,61,1],[81,62,2],
+ [78,64,1.5],[79,65.5,.5],[81,66,2],[76,68,1.5],[78,69.5,.5],[79,70,1.5],[79,71.5,.5],[78,72,1],[73,73,1],[74,74,1],[79,75,1],[78,76,1],[76,77,1],[74,78,2]];
+let _tuneNodes=[];
+function stopMaozTzur(){_tuneNodes.forEach(n=>{try{n.stop()}catch(e){}});_tuneNodes=[];const b=document.getElementById('tuneBtn');if(b)b.textContent='🎵 מעוז צור'}
+function playMaozTzur(){
+    const ctx=getAudioCtx();if(!ctx)return;
+    if(_tuneNodes.length){stopMaozTzur();return}
+    const bpm=96,spb=60/bpm,t0=ctx.currentTime+.15,out=ctx.createGain();out.gain.value=.16;out.connect(ctx.destination);
+    MAOZ_TZUR.forEach(([m,beat,len])=>{
+        const f=440*Math.pow(2,(m-12-69)/12),t=t0+beat*spb,d=Math.max(.25,len*spb);   // an octave lower — warmer
+        [[1,'triangle',1],[2,'sine',.35],[3,'sine',.12]].forEach(([h,type,v])=>{        // music-box: tone + soft overtones
+            const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f*h;
+            g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d+.35);
+            o.connect(g);g.connect(out);o.start(t);o.stop(t+d+.4);_tuneNodes.push(o);
+        });
+    });
+    const total=(80*spb+.6)*1000;
+    const b=document.getElementById('tuneBtn');if(b)b.textContent='⏹️ עצור';
+    setTimeout(()=>{if(_tuneNodes.length)stopMaozTzur()},total);
+}
+
 // ── Result sounds: always a little different ──
 function playResult(letter){
     if(!getAudioCtx())return;
@@ -2415,7 +2528,7 @@ function renderGameNow(){
     if(MODE==='online'&&G.started&&!G.over)saveSession();
     document.getElementById('potVal').textContent=G.pot;sizePile(G.pot);
     const cp=G.players[G.currentTurn];
-    document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?esc(cp.name):'—'}</strong>`;
+    document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?av(cp)+esc(cp.name):'—'}</strong>`;
 
     const area=document.getElementById('playersArea');
 
@@ -2444,7 +2557,7 @@ function renderGameNow(){
 function playerCard(p,i){
     const off=MODE==='online'&&G.started&&ONLINE.size>0&&!isOnline(p)&&p.alive;
     return `<div data-pid="${esc(p.id)}" class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${isWinner(p)?'winner':''} ${off?'offline':''}">
-        <div class="p-name"><span class="crown">👑</span>${esc(p.name)}${!p.alive?' ❌':''}${off?' <span title="לא מחובר">📴</span>':''}</div>
+        <div class="p-name"><span class="crown">👑</span>${av(p)}${esc(p.name)}${!p.alive?' ❌':''}${off?' <span title="לא מחובר">📴</span>':''}</div>
         <div class="p-amt">${p.alive?(Number(p.amount)||0):0}</div>
         <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${esc(p.change)}</div>
     </div>`;
@@ -2486,6 +2599,7 @@ function showWinner(){
     document.getElementById('winModal').classList.add('show');
     confettiRain();
     playSfx(pick(SFX.win));playSfx(pick(SFX.gimel),{delay:.9});setTimeout(()=>playApplause(3.5,.55),300);
+    setTimeout(()=>{if(G.over&&!_tuneNodes.length)playMaozTzur()},4200);   // and then "מעוז צור" to celebrate
     setTimeout(()=>say(winText.replace('🎉','').replace('—','')+' כל הכבוד!'),1200);
     addLogLocal(`🏆 ${winText}`); // every client shows it locally — no broadcast duplicates
 }
@@ -2589,7 +2703,7 @@ function closePeer(pid){
 }
 function peerLabel(pid){
     const fam=G.families?.find(f=>f.id===pid);if(fam)return 'משפ׳ '+fam.name;
-    return G.players.find(p=>p.id===pid)?.name||'שחקן';
+    const pl=G.players.find(p=>p.id===pid);return pl?av(pl)+pl.name:'שחקן';
 }
 function attachRemote(pid,track){
     let tile=document.getElementById('vid_'+pid);
