@@ -418,7 +418,11 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .spin-prompt{font-family:'Secular One',sans-serif;font-size:1.05rem;color:var(--gold);text-align:center;min-height:1.4em;text-shadow:0 0 12px rgba(245,200,66,.5);animation:promptPulse 1.6s ease-in-out infinite}
 @keyframes promptPulse{50%{opacity:.6;transform:scale(.97)}}
 .dreidel-controls:not(.can-spin) .spin-modes,.dreidel-controls:not(.can-spin) .spin-prompt{display:none}
-.dreidel-controls[data-mode="circle"] .spin-btn,.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn,.dreidel-controls[data-mode="clap"] .spin-btn,.dreidel-controls[data-mode="sing"] .spin-btn{display:none}
+.sing-btn{display:none}
+.dreidel-controls[data-mode="sing"].can-spin .sing-btn,.dreidel-controls[data-mode="sing"].sing-live .sing-btn{display:inline-flex}
+.sing-btn.armed{background:linear-gradient(180deg,#ff8a8a,#d94848)!important;color:#fff!important;animation:singPulse 1s infinite}
+@keyframes singPulse{50%{box-shadow:0 0 0 10px rgba(255,100,100,.15)}}
+.dreidel-controls[data-mode="circle"] .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn,.dreidel-controls[data-mode="clap"] .spin-btn,.dreidel-controls[data-mode="sing"] .spin-btn:not(.sing-btn){display:none}
 .spin-prompt.mic-off{cursor:pointer;text-decoration:underline dotted}
 @media(min-width:1000px){.spin-modes button{font-size:.95rem;padding:7px 16px}.spin-prompt{font-size:1.35rem}}
 .dreidel-art.grabbing{cursor:grabbing}
@@ -597,6 +601,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                 </div>
                 <div class="spin-prompt" id="spinPrompt"></div>
                 <button class="spin-btn" id="spinBtn">סובב!</button>
+                <button type="button" class="spin-btn sing-btn" id="singBtn" onclick="singButton()">🎤 מתחילים לשיר!</button>
                 <div class="power-meter hidden" id="powerMeter">
                     <div class="power-label" id="powerLabel">לחץ שוב!</div>
                     <div class="power-bar-bg"><div class="power-bar-fill" id="powerFill"></div></div>
@@ -703,7 +708,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v54';
+const APP_VERSION='v55';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1553,7 +1558,7 @@ const PROMPTS={
     hold:()=>'🎯 החזיקו את "סובב!" — ושחררו בשיא',
     shake:()=>'📳 נערו את הטלפון!',
     clap:()=>MIC.on?'👏 מחאו כפיים 3 פעמים מהר!':'👏 לחצו כאן כדי להפעיל את המיקרופון',
-    sing:()=>MIC.on?'🎤 שירו בקול "סביבון סוב סוב סוב"... כל עוד שרים — הוא מסתובב!':'🎤 לחצו כאן כדי להפעיל את המיקרופון'
+    sing:()=>!MIC.on?'🎤 לחצו "מתחילים לשיר!" — והמיקרופון יופעל':SING.on?'🎶 ממשיכים לשיר... כשמפסיקים — הוא עף!':SING.armed?'🎶 שירו "סביבון סוב סוב סוב"! (דיבור לא נחשב — רק שירה)':'🎤 לחצו "מתחילים לשיר!" ושירו'
 };
 const CIRCLE={engaged:false,grabbing:false,justLaunched:false,singing:false};
 // refresh the chooser / prompt / idle turning — call whenever the turn or state changes
@@ -1756,7 +1761,7 @@ setInterval(nudgeTick,1000);
 
 // ══════════ MICROPHONE: claps & singing (all processing stays on this device) ══════════
 const MIC={on:false,stream:null,ctx:null,an:null,buf:null,raf:0,own:false,noise:.01,lastClap:0,pending:null,
-           voiceStart:0,lastVoiced:0,loud:0,singing:false,frame:0,clarity:0};
+           voiceStart:0,lastVoiced:0,loud:0,singing:false,frame:0,clarity:0,f0:0,lastT:0,noteSt:0,noteHold:0,noteCounted:false,notes:[],vh:[]};
 let SFX_BUSY_UNTIL=0;            // our own sounds are playing — be stricter about claps
 async function micStart(){
     if(MIC.on)return true;
@@ -1784,9 +1789,10 @@ document.getElementById('micBadge').addEventListener('click',()=>{uiConfirm('ל�
 // how "pitched" the sound is (0..1) — singing is pitched, noise and claps are not
 function pitchClarity(b,sr){
     const N=1024,minL=Math.floor(sr/900),maxL=Math.min(b.length-N-1,Math.floor(sr/85));
-    let e0=0;for(let i=0;i<N;i++)e0+=b[i]*b[i];if(e0<1e-7)return 0;
-    let best=0;
-    for(let L=minL;L<maxL;L+=2){let s=0;for(let i=0;i<N;i++)s+=b[i]*b[i+L];const c=s/e0;if(c>best)best=c}
+    let e0=0;for(let i=0;i<N;i++)e0+=b[i]*b[i];if(e0<1e-7){MIC.f0=0;return 0}
+    let best=0,bestL=0;
+    for(let L=minL;L<maxL;L+=2){let s=0;for(let i=0;i<N;i++)s+=b[i]*b[i+L];const c=s/e0;if(c>best){best=c;bestL=L}}
+    MIC.f0=bestL?sr/bestL:0;
     return best;
 }
 function micLoop(){
@@ -1804,11 +1810,22 @@ function micLoop(){
         if(now-MIC.pending.t>75){const p=MIC.pending;MIC.pending=null;if(rms<p.rms*.5){MIC.lastClap=p.t;onClap()}}
     }else if(rms>Math.max(.03,MIC.noise*5)*strict&&peak>.12*strict&&zcr>.06&&now-MIC.lastClap>150){MIC.pending={t:now,rms}}
     // ── singing: a steady pitched voice ──
-    if(++MIC.frame%3===0)MIC.clarity=pitchClarity(b,MIC.ctx.sampleRate);
-    const voiced=rms>Math.max(.012,MIC.noise*2.5)&&zcr<.15&&MIC.clarity>.55;
-    if(voiced){if(!MIC.voiceStart)MIC.voiceStart=now;MIC.lastVoiced=now;MIC.loud=MIC.loud*.9+rms*.1}
-    else if(MIC.voiceStart&&now-MIC.lastVoiced>380)MIC.voiceStart=0;     // short gaps between words are fine
-    MIC.singing=!!MIC.voiceStart&&now-MIC.voiceStart>250;
+    // Talking is also "pitched", so what tells singing apart is HELD NOTES: the pitch stays put for ~¼ s.
+    // In speech the pitch slides all the time. We want two held notes within 3.5 s, and mostly voiced sound.
+    if(++MIC.frame%2===0)MIC.clarity=pitchClarity(b,MIC.ctx.sampleRate);
+    const voiced=rms>Math.max(.015,MIC.noise*3)&&zcr<.15&&MIC.clarity>.7&&MIC.f0>85&&MIC.f0<1000;
+    const dtm=MIC.lastT?Math.min(100,now-MIC.lastT):16;MIC.lastT=now;
+    if(voiced){
+        if(!MIC.voiceStart)MIC.voiceStart=now;MIC.lastVoiced=now;MIC.loud=MIC.loud*.9+rms*.1;
+        const st=12*Math.log2(MIC.f0);
+        if(MIC.noteSt&&Math.abs(st-MIC.noteSt)<.7){MIC.noteHold+=dtm;MIC.noteSt=MIC.noteSt*.9+st*.1}
+        else{MIC.noteSt=st;MIC.noteHold=0;MIC.noteCounted=false}
+        if(MIC.noteHold>=240&&!MIC.noteCounted){MIC.noteCounted=true;MIC.notes.push(now)}
+    }else{MIC.noteHold=0;MIC.noteSt=0;MIC.noteCounted=false;if(MIC.voiceStart&&now-MIC.lastVoiced>380)MIC.voiceStart=0}
+    while(MIC.notes.length&&now-MIC.notes[0]>3500)MIC.notes.shift();
+    MIC.vh.push(voiced?1:0);if(MIC.vh.length>90)MIC.vh.shift();          // ~1.5 s of frames
+    const vRatio=MIC.vh.reduce((a,x)=>a+x,0)/MIC.vh.length;
+    MIC.singing=MIC.notes.length>=2&&vRatio>=.45;
     MIC.raf=requestAnimationFrame(micLoop);
 }
 function onClap(){
@@ -1827,6 +1844,22 @@ function boostSpin(remote){
 }
 
 // ── 🎤 sing mode: the dreidel turns as long as you sing; stop → it flies on. A whole song (10s+) = bonus ──
+const SING={armed:false,armedAt:0,on:false};
+function singArm(v){SING.armed=v;SING.armedAt=performance.now();if(v){MIC.notes=[];MIC.vh=[]}singUI();refreshSpinUI()}
+function singUI(){
+    const b=document.getElementById('singBtn');if(!b)return;
+    b.textContent=SING.on?'⏹ סיימנו — שיעוף!':SING.armed?'⏹ עצרו':'🎤 מתחילים לשיר!';
+    b.classList.toggle('armed',SING.armed||SING.on);
+    document.querySelector('.dreidel-controls').classList.toggle('sing-live',SING.armed||SING.on);
+}
+async function singButton(){
+    unlockAudio();
+    if(SING.on){window._singStop&&window._singStop(true);return}          // stop now and let it fly with what was sung
+    if(SING.armed){singArm(false);return}                                  // stop listening
+    if(!canSpinNow())return;
+    if(!MIC.on){const ok=await micStart();if(!ok)return}
+    singArm(true);
+}
 (function wireSing(){
     const art=document.getElementById('dreidelSvg');let on=false,start=0,phase=0,last=0,face=0,shown=-1,loudSum=0,n=0;
     function draw(){const th=d3Rest(FACE_ORDER[face])+phase*90,f=FACE_ORDER.indexOf(d3FrontLetter(th));
@@ -1834,9 +1867,10 @@ function boostSpin(remote){
         d3Pose({theta:th,tilt:2})}
     function loop(t){
         requestAnimationFrame(loop);
-        if(spinMode()!=='sing'||!MIC.on){if(on)stop(false);return}
+        if(spinMode()!=='sing'||!MIC.on){if(on)stop(false);if(SING.armed)singArm(false);return}
         if(!on){
-            if(MIC.singing&&canSpinNow()){on=true;CIRCLE.singing=true;start=performance.now();phase=0;last=t;loudSum=0;n=0;
+            if(SING.armed&&(!canSpinNow()||performance.now()-SING.armedAt>25000)){singArm(false);return}   // turn passed / nobody sang
+            if(SING.armed&&MIC.singing&&canSpinNow()){on=true;SING.on=true;singUI();CIRCLE.singing=true;start=performance.now();phase=0;last=t;loudSum=0;n=0;
                 if(window._idleTurn)window._idleTurn(false);resetDreidel();face=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shown=face;
                 art.style.transition='none';
                 document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='🎤';
@@ -1855,13 +1889,15 @@ function boostSpin(remote){
         if(performance.now()-MIC.lastVoiced>900)stop(true);                // the song ended → let it fly
     }
     function stop(launch){
-        on=false;CIRCLE.singing=false;document.getElementById('powerFill').classList.remove('hot');art.style.transform='';if(!launch)d3Settle();
+        on=false;SING.on=false;SING.armed=false;singUI();CIRCLE.singing=false;document.getElementById('powerFill').classList.remove('hot');art.style.transform='';if(!launch)d3Settle();
         if(!launch||!canSpinNow()){resetSpinUI();return}
         const sec=Math.max(0,(MIC.lastVoiced-start)/1000),loud=n?loudSum/n:0;
+        if(sec<1.2){resetSpinUI();refreshSpinUI();return}                    // hardly sang — no spin
         const power=Math.max(.2,Math.min(1,.2+Math.min(.5,sec/14)+Math.min(.3,loud*3)));   // a longer song matters more than a louder one
         playWhoosh(power);
         spinFromInput(power,'sing',{singSec:Math.round(sec),skill:sec>=10?'song':null});
     }
+    window._singStop=l=>{if(on)stop(l)};
     requestAnimationFrame(loop);
 })();
 
