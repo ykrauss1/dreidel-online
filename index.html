@@ -708,7 +708,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v56';
+const APP_VERSION='v57';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1646,7 +1646,7 @@ setInterval(nudgeTick,1000);
     let acc=0,samples=[],lastMove=0,lastPt=null,lastHead=null,shownFace=-1,faceBase=0,raf=0,recent=0;
     let flickPts=[],x0=0,y0=0,idleOn=false,idleRaf=0,idlePhase=0,idleT=0,path=[];
     // a real circle, not a nudge: the hand's path over the last 1.5 s must be at least this big (px)
-    const MIN_CIRCLE_PX=45;
+    const MIN_CIRCLE_PX=35;
     function pathSize(){if(path.length<2)return 0;let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const [x,y] of path){a=Math.min(a,x);b=Math.max(b,x);c=Math.min(c,y);d=Math.max(d,y)}return Math.min(b-a,d-c)}
     function omega(win){const now=performance.now();let sum=0;for(const [t,d] of samples)if(now-t<=win)sum+=d;return sum/(win/1000)}
     function clear(){acc=0;samples=[];recent=0;lastPt=null;lastHead=null;path=[];ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
@@ -1714,10 +1714,9 @@ setInterval(nudgeTick,1000);
         ring.style.setProperty('--a',((acc*180/Math.PI)%360).toFixed(0)+'deg');
         const idle=performance.now()-lastMove;
         if(idle>150){                                     // the hand stopped
-            const turned=Math.abs(acc)>=TURN*.75;                             // it really turned since it was grabbed
+            const turned=true;                                                // a whole circle was already needed to grab it
             if(recent>MIN_W&&turned&&!CIRCLE.grabbing){launch(recent);return} // it was turning fast → let it fly
             if(recent<=MIN_W&&Math.abs(acc)>QUARTER)document.getElementById('powerLabel').textContent='מהר יותר... ועצרו!';
-            if(!turned&&idle>1500&&!CIRCLE.grabbing){letGo();return}         // just a nudge — let it go back to idling
             if(idle>4000&&!CIRCLE.grabbing){letGo();return}                  // nobody is turning it any more
         }
         raf=requestAnimationFrame(tick);
@@ -1729,10 +1728,10 @@ setInterval(nudgeTick,1000);
         if(spinMode()!=='circle')return;
         if(!canSpinNow()||charging){if(CIRCLE.engaged)letGo();return}
         if(e.target&&e.target.closest&&e.target.closest('.settings-panel,.spin-modes,.modal-bg'))return;  // not while using menus
-        if(!CIRCLE.engaged&&lastMove&&performance.now()-lastMove>350)clear();   // a pause: start counting again
+        if(!CIRCLE.engaged&&lastMove&&performance.now()-lastMove>350){clear();lastMove=performance.now()}   // a pause: start counting again (once)
         track(e.clientX,e.clientY);
         // a whole circle in one direction, and a real one (not a small twitch of the mouse)
-        if(!CIRCLE.engaged&&Math.abs(acc)>=TURN&&pathSize()>=MIN_CIRCLE_PX)engage();
+        if(!CIRCLE.engaged&&Math.abs(acc)>=TURN*.85&&pathSize()>=MIN_CIRCLE_PX)engage();
     },{passive:true});
 
     // ── press on the dreidel: finger-circling (touch, circle mode) or a flick ──
