@@ -680,7 +680,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v43';
+const APP_VERSION='v44';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -2524,14 +2524,14 @@ function playCoinBag(){playSfx(pick(SFX.coins),{vol:.6,rate:.95+Math.random()*.1
 
 // ── Narrator: a kid's voice that sometimes switches language (Hebrew, English, French, Russian, Yiddish, Amharic) ──
 // It uses the voices this device has. A real child voice is preferred (Ana, Maisie, Eloise, Gisela...);
-// otherwise the pitch goes up so it sounds like a kid. Yiddish rarely has a voice — then a German voice
-// reads it from Latin letters, which sounds pretty close.
+// otherwise the pitch goes up so it sounds like a kid. Yiddish: a real Yiddish voice if the device has one,
+// otherwise our own recorded clips (sounds/yi/) — never a German stand-in.
 const NARR_LANGS={
     he:{name:'עברית',re:/^(he|iw)\b/i,w:5},
     en:{name:'English',re:/^en\b/i,w:1.2},
     fr:{name:'Français',re:/^fr\b/i,w:1},
     ru:{name:'Русский',re:/^ru\b/i,w:1},
-    yi:{name:'ייִדיש',re:/^yi\b/i,alt:/^de\b/i,w:1.2},
+    yi:{name:'ייִדיש',re:/^yi\b/i,w:1.2},
     am:{name:'አማርኛ',re:/^am\b/i,w:.8}
 };
 const CHILD_VOICE=/\b(ana|maisie|eloise|gisela|xiaoyou|xiaoshuang|aigerim|child|kid|junior)\b/i;
@@ -2570,8 +2570,6 @@ const NARR_PHRASES={
         'נ':['Нун! Ничего!','Нун! Ну ладно!'],'פ':['Пей! Ой, плати!','Ой-ой! Пей!'],'ש':['Шин! Ой, плати!','Ой-ой! Шин!']},
     yi:{'ג':['גימל! אַלץ איז דײַנס!','גימל! אַ מחיה!'],'ה':['הײ! האַלב פֿאַר דיר!','הײ! נישקשה!'],
         'נ':['נון! גאָרנישט!','נון! נו, שוין!'],'פ':['פּײ! שטעל אַרײַן!','אױ װײ! פּײ!'],'ש':['שין! שטעל אַרײַן!','אױ װײ! שין!']},
-    yiLatin:{'ג':['Gimmel! Alz is dajns!','Gimmel! A mechaje!'],'ה':['Hej! Halb far dir!','Hej! Nischkoschä!'],
-        'נ':['Nun! Gornischt!','Nun! Nu, schojn!'],'פ':['Pej! Schtel arajn!','Oj wej! Pej!'],'ש':['Schin! Schtel arajn!','Oj wej! Schin!']},
     am:{'ג':['ጊሜል! ሁሉም ያንተ ነው!','እልል! ጊሜል!'],'ה':['ሄ! ግማሹ ያንተ ነው!','ሄ! ጥሩ ነው!'],
         'נ':['ኑን! ምንም!','ኑን! ችግር የለም!'],'פ':['ፔ! ክፈል!','ውይ! ፔ!'],'ש':['ሺን! ክፈል!','ውይ! ሺን!']}
 };
@@ -2599,8 +2597,7 @@ function narrate(letter,name){
     for(const k of pool){r-=NARR_LANGS[k].w;if(r<=0){lang=k;break}}
     _narrLast=lang;
     const shin=letter==='פ'&&shinMode();
-    let set=NARR_PHRASES[lang];
-    if(lang==='yi'&&NARR_VOICE.yi.alt)set=NARR_PHRASES.yiLatin;
+    const set=NARR_PHRASES[lang];
     const list=(shin&&set['ש'])?set['ש']:set[letter];
     const p=pick(list||NARR_PHRASES.he[letter]||['']);
     speakIn(lang,p.replace('{n}',lang==='he'?(name||''):'').replace('{L}',shin?'שין':'פה'));
