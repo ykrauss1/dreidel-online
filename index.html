@@ -209,7 +209,7 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 /* Settings */
 .settings-toggle{position:fixed;bottom:18px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .2s}
 .settings-toggle:hover{border-color:var(--gold-dim);transform:rotate(30deg)}
-.settings-panel{position:fixed;bottom:72px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border-l);border-radius:var(--r);padding:16px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideUp .2s ease-out}
+.settings-panel{position:fixed;bottom:72px;left:18px;z-index:200;background:var(--bg-card);border:1px solid var(--border-l);border-radius:var(--r);padding:16px;width:290px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideUp .2s ease-out}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .settings-panel h4{font-family:'Secular One',sans-serif;color:var(--gold);font-size:.9rem;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
 .settings-panel h4{position:sticky;top:-16px;margin:-16px -16px 12px;padding:12px 16px;background:var(--bg-card);z-index:2;border-bottom:1px solid var(--border)}
@@ -334,6 +334,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 
 /* Modal */
 .editor-wrap{position:fixed;inset:0;z-index:1100;background:#0b0e1f}.editor-wrap iframe{width:100%;height:100%;border:0;display:block}
+.settings-panel{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}.settings-panel::-webkit-scrollbar{width:8px}.settings-panel::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
+.sp-sec{border-bottom:1px solid var(--border);padding:8px 0}.sp-sec:last-child{border-bottom:none}
+.sp-sec>summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:.8rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.sp-sec>summary::-webkit-details-marker{display:none}.sp-sec>summary::after{content:'◂';color:var(--text-dim);transition:transform .2s}.sp-sec[open]>summary::after{transform:rotate(-90deg)}
+.sp-sec[open]>summary{margin-bottom:8px}
+.myrec-row{display:flex;gap:5px;align-items:center;margin:4px 0}.myrec-l{flex:1;font-size:.78rem}
 .ui-box{max-width:440px}.ui-msg{white-space:pre-line;font-size:1.05rem;line-height:1.6;margin:6px 0 18px;color:var(--text)}
 .ui-btns{display:flex;gap:10px;justify-content:center}.ui-btns .btn{min-width:110px}
 #uiModal{z-index:1200}
@@ -645,31 +651,38 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </div>
 <div class="settings-panel hidden" id="settingsPanel">
   <h4>⚙️ הגדרות <button onclick="closeSettings()" aria-label="סגור" title="סגור (Esc)">✕</button></h4>
-  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎨 צבעי פאות הסביבון</div>
+  <details class="sp-sec" open><summary>🔊 צלילים וקריין</summary>
+  <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
+  <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין ילד (מכריז את התוצאה)</label>
+  <div class="settings-row"><select id="narratorLang" class="input" style="padding:5px 8px;font-size:.8rem;flex:1"><option value="mix">🌍 עברית, ולפעמים אנגלית, צרפתית, רוסית, יידיש, אמהרית</option><option value="he">עברית בלבד</option></select><button class="btn btn-sm btn-outline" type="button" onclick="testNarrator()" title="להשמיע דוגמה">🔈</button></div>
+  <label class="sound-toggle"><input type="checkbox" id="clapBoostOn" checked> 👏 מחיאות כפיים מאריכות את הסיבוב (כשהמיקרופון פעיל)</label>
+  <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
+  <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
+  </details>
+  <details class="sp-sec"><summary>🎙️ הקלטות שלנו לקריין</summary>
+    <div style="font-size:.65rem;color:var(--text-dim);margin:4px 0">כל לחיצה על ⏺ מוסיפה הקלטה (עד 5 שניות). אפשר כמה הקלטות לכל תוצאה — הקריין יבחר ביניהן. נשמר במכשיר הזה.</div>
+    <div id="myRecRows"></div>
+  </details>
+  <details class="sp-sec"><summary>❓ שאלות חנוכה</summary>
+  <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
+  <button class="btn btn-outline btn-sm" type="button" style="width:100%;margin-top:6px" onclick="openTriviaEditor()">✏️ צפייה ועריכה של השאלות</button>
+  </details>
+  <details class="sp-sec"><summary>🎨 צבעי פאות הסביבון</summary>
   <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun"   value="#3a3a7a" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אפור-כחול</span></div>
   <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1e6040" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">ירוק</span></div>
   <div class="settings-row"><label>ה (חצי)</label><input type="color" id="colHeh"   value="#2a5abf" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">כחול</span></div>
   <div class="settings-row"><label id="colPehLabel">פ (לשלם)</label><input type="color" id="colPeh"  value="#a02020" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אדום</span></div>
-  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">⏱ זמן סיבוב</div>
+  </details>
+  <details class="sp-sec"><summary>⏱ זמן סיבוב</summary>
   <div class="settings-row"><label>מינ׳</label><input type="range" id="spinMin" min="0.5" max="3" step="0.5" value="1.5" oninput="document.getElementById('spinMinVal').textContent=this.value+'s'"><span class="val-label" id="spinMinVal">1.5s</span></div>
   <div class="settings-row"><label>מקס׳</label><input type="range" id="spinMax" min="2"   max="10" step="0.5" value="5"   oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">5s</span></div>
-  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">✡️ האות הרביעית</div>
+  </details>
+  <details class="sp-sec"><summary>✡️ האות הרביעית (פ / ש)</summary>
   <div class="settings-row"><select id="fourthLetter" class="input" style="padding:5px 8px;font-size:.8rem" onchange="applyFourthLetter()"><option value="פ">פ — נס גדול היה פה (ארץ ישראל)</option><option value="ש">ש — נס גדול היה שם (חוץ לארץ)</option></select></div>
-  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-  <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
-  <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין ילד (מכריז את התוצאה)</label>
-  <div class="settings-row"><select id="narratorLang" class="input" style="padding:5px 8px;font-size:.8rem;flex:1"><option value="mix">🌍 עברית, ולפעמים אנגלית, צרפתית, רוסית, יידיש, אמהרית</option><option value="he">עברית בלבד</option></select><button class="btn btn-sm btn-outline" type="button" onclick="testNarrator()" title="להשמיע דוגמה">🔈</button></div>
-  <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
-  <label class="sound-toggle"><input type="checkbox" id="clapBoostOn" checked> 👏 מחיאות כפיים מאריכות את הסיבוב (כשהמיקרופון פעיל)</label>
-  <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
-  <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
-  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-  <button class="btn btn-outline btn-sm" type="button" style="width:100%" onclick="openTriviaEditor()">✏️ עריכת שאלות החנוכה</button>
-  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
-  <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px">📲 אפליקציה</div>
+  </details>
+  <details class="sp-sec"><summary>📲 אפליקציה</summary>
   <div class="install-help" id="installHelp"></div>
+  </details>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -684,7 +697,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v51';
+const APP_VERSION='v52';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -2548,7 +2561,9 @@ function playCoinBag(){playSfx(pick(SFX.coins),{vol:.6,rate:.95+Math.random()*.1
 // otherwise the pitch goes up so it sounds like a kid. Yiddish: almost no device has a Yiddish voice, so we ship
 // short clips made with REYD (a real Yiddish TTS, trained on native speakers): sounds/yi_*.mp3 — the classic
 // dreidel words: נישט, גאַנץ, האַלב, שטעל אַרײַן.
+const MYREC={list:[],bufs:{},rec:null,letter:null,timer:0};   // our own recordings (declared early: the voice list uses it)
 const NARR_LANGS={
+    mine:{name:'🎙️ שלנו',w:3},
     he:{name:'עברית',re:/^(he|iw)\b/i,w:5},
     en:{name:'English',re:/^en\b/i,w:1.2},
     fr:{name:'Français',re:/^fr\b/i,w:1},
@@ -2568,7 +2583,8 @@ function findVoices(){
         const score=v=>(CHILD_VOICE.test(v.name)?100:0)+(/natural|neural|online|enhanced|premium/i.test(v.name)?20:0)+(FEMALE_VOICE.test(v.name)?10:0)+(v.localService?0:2);
         return c.sort((a,b)=>score(b)-score(a))[0]};
     for(const k in NARR_LANGS){
-        const L=NARR_LANGS[k];let v=best(L.re),alt=false;
+        const L=NARR_LANGS[k];if(!L.re)continue;            // 'mine' = our recordings, not a device voice
+        let v=best(L.re),alt=false;
         if(!v&&L.alt){v=best(L.alt);alt=!!v}
         if(v)NARR_VOICE[k]={voice:v,child:CHILD_VOICE.test(v.name),alt};else delete NARR_VOICE[k];
     }
@@ -2611,20 +2627,24 @@ function speakIn(lang,text){
 }
 function say(text){if(narrOn())speakIn('he',text)}
 // languages we can speak on this device (Yiddish always — from our own clips)
-function narrLangs(){const l=Object.keys(NARR_VOICE);if(!l.includes('yi')&&(window.AudioContext||window.webkitAudioContext))l.push('yi');return l}
+function narrLangs(){const l=Object.keys(NARR_VOICE);if(!l.includes('yi')&&(window.AudioContext||window.webkitAudioContext))l.push('yi');if(MYREC.list.length)l.unshift('mine');return l}
 let _narrLast='he';
 function narrate(letter,name,force){
     if(!force&&!narrOn())return;
     const mix=(document.getElementById('narratorLang')?.value||'mix')==='mix';
     let langs=narrLangs();if(!langs.length)return;
     if(!mix&&NARR_VOICE.he)langs=['he'];
+    const recL=(letter==='פ'||letter==='ש')?'פ':letter;
+    if(!MYREC.list.some(x=>x.letter===recL))langs=langs.filter(k=>k!=='mine');
     if(force&&langs.includes(force))langs=[force];
+    if(!langs.length)return;
     // mostly Hebrew; now and then another language (never the same foreign one twice in a row)
-    const pool=force?langs:langs.filter(k=>k==='he'||k!==_narrLast);
+    let pool=force?langs:langs.filter(k=>k==='he'||k!==_narrLast);if(!pool.length)pool=langs;
     let tot=pool.reduce((a,k)=>a+NARR_LANGS[k].w,0),r=Math.random()*tot,lang=pool[0];
     for(const k of pool){r-=NARR_LANGS[k].w;if(r<=0){lang=k;break}}
     _narrLast=lang;
     const shin=letter==='פ'&&shinMode();
+    if(lang==='mine'){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();myRecPlay(recL);return}
     if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
     const set=NARR_PHRASES[lang];
     const list=(shin&&set['ש'])?set['ש']:set[letter];   // the lines no longer name the letter
@@ -2634,7 +2654,60 @@ function narrate(letter,name,force){
 function testNarrator(){unlockAudio();narrate(pick(['ג','ה','נ','פ']),'')}
 // listen to each language: one button per language this device can speak; each click = the next letter
 let _sampleIdx=0;
-function narrSample(lang){unlockAudio();const l=['ג','ה','נ','פ'][_sampleIdx++%4];narrate(l,'',lang)}
+function narrSample(lang){unlockAudio();let ls=['ג','ה','נ','פ'];if(lang==='mine')ls=ls.filter(l=>MYREC.list.some(x=>x.letter===l));if(!ls.length)return;const l=ls[_sampleIdx++%ls.length];narrate(l,'',lang)}
+// ── 🎙️ our own recordings: the family records its own lines for each result (kept on this device) ──
+const MYREC_LETTERS=[['ג','🎉 ג — הכל'],['ה','👍 ה — חצי'],['נ','😐 נ — כלום'],['פ','😬 פ/ש — משלמים']];
+function myRecDB(){return new Promise((res,rej)=>{try{const r=indexedDB.open('dreidel_voices',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('clips',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function myRecLoad(){
+    if(typeof indexedDB==='undefined')return;
+    try{const db=await myRecDB();MYREC.list=await new Promise((res,rej)=>{const q=db.transaction('clips').objectStore('clips').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)})}catch(e){MYREC.list=[]}
+    renderMyRec();renderNarrSamples();
+}
+function myRecBuf(x){
+    if(MYREC.bufs[x.id])return MYREC.bufs[x.id];
+    const ctx=getAudioCtx();if(!ctx)return Promise.resolve(null);
+    return MYREC.bufs[x.id]=x.blob.arrayBuffer().then(ab=>new Promise(r=>ctx.decodeAudioData(ab,r,()=>r(null)))).catch(()=>null);
+}
+function myRecPlay(letter,id){
+    const pool=MYREC.list.filter(x=>id?x.id===id:x.letter===letter);if(!pool.length)return;
+    const x=pick(pool),ctx=getAudioCtx();if(!ctx)return;
+    myRecBuf(x).then(buf=>{if(!buf)return;const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=buf;g.gain.value=1.4;s.connect(g);g.connect(ctx.destination);s.start()});
+}
+async function myRecToggle(letter){
+    unlockAudio();
+    if(MYREC.rec){const same=MYREC.letter===letter;try{MYREC.rec.stop()}catch(e){}if(same)return}
+    if(!navigator.mediaDevices||!window.MediaRecorder){uiAlert('הדפדפן הזה לא תומך בהקלטה.');return}
+    let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}
+    catch(e){uiAlert('אין גישה למיקרופון. צריך לאשר את המיקרופון בדפדפן ולנסות שוב.');return}
+    const chunks=[],rec=new MediaRecorder(stream);MYREC.rec=rec;MYREC.letter=letter;renderMyRec();
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    rec.onstop=async()=>{
+        clearTimeout(MYREC.timer);stream.getTracks().forEach(t=>t.stop());MYREC.rec=null;MYREC.letter=null;
+        const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});
+        if(blob.size<1500){renderMyRec();return}
+        try{const db=await myRecDB();await new Promise((res,rej)=>{const q=db.transaction('clips','readwrite').objectStore('clips').add({letter,blob,added:Date.now()});q.onsuccess=res;q.onerror=()=>rej(q.error)})}
+        catch(e){uiAlert('לא הצלחתי לשמור את ההקלטה במכשיר.');}
+        await myRecLoad();myRecPlay(letter,MYREC.list.filter(x=>x.letter===letter).slice(-1)[0]?.id);
+    };
+    rec.start();MYREC.timer=setTimeout(()=>{try{rec.stop()}catch(e){}},5000);   // up to 5 seconds
+}
+async function myRecDeleteLetter(letter){
+    const n=MYREC.list.filter(x=>x.letter===letter).length;if(!n)return;
+    if(!(await uiConfirm(`למחוק את ${n===1?'ההקלטה':n+' ההקלטות'} של ${MYREC_LETTERS.find(x=>x[0]===letter)[1]}?`,'למחוק')))return;
+    try{const db=await myRecDB();const st=db.transaction('clips','readwrite').objectStore('clips');
+        MYREC.list.filter(x=>x.letter===letter).forEach(x=>{st.delete(x.id);delete MYREC.bufs[x.id]})}catch(e){}
+    setTimeout(myRecLoad,200);
+}
+function renderMyRec(){
+    const el=document.getElementById('myRecRows');if(!el)return;
+    el.innerHTML=MYREC_LETTERS.map(([l,label])=>{const n=MYREC.list.filter(x=>x.letter===l).length,on=MYREC.letter===l;
+        return `<div class="myrec-row"><span class="myrec-l">${label}</span>
+        <button type="button" class="btn btn-sm ${on?'btn-gold':'btn-outline'}" onclick="myRecToggle('${l}')">${on?'⏹ עצור':'⏺ הקלט'}</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="unlockAudio();myRecPlay('${l}')" ${n?'':'disabled'}>▶${n>1?' ('+n+')':''}</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="myRecDeleteLetter('${l}')" ${n?'':'disabled'} title="מחיקה">🗑</button></div>`}).join('');
+}
+setTimeout(myRecLoad,0);
 function renderNarrSamples(){
     const el=document.getElementById('narrSamples');if(!el)return;
     el.innerHTML=narrLangs().map(k=>`<button type="button" class="btn btn-sm btn-outline" onclick="narrSample('${k}')">🔈 ${NARR_LANGS[k].name}</button>`).join('');
