@@ -247,7 +247,16 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .fx-conf{position:fixed;left:0;top:0;width:8px;height:12px;pointer-events:none;z-index:902;border-radius:2px}
 .fx-big{position:fixed;left:50%;top:38%;pointer-events:none;z-index:903;font-family:'Secular One',sans-serif;font-size:5rem;color:#f5c842;text-shadow:0 0 30px rgba(245,200,66,.8),0 4px 12px rgba(0,0,0,.7);transform:translate(-50%,-50%)}
 /* ═══ mic / bonuses / trivia / reactions ═══ */
-.mic-badge{position:fixed;bottom:18px;left:66px;z-index:120;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--green);border-radius:20px;padding:5px 10px;color:var(--text);cursor:pointer;font-size:.9rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.tune-toggle{left:68px}
+.tune-player{position:fixed;bottom:70px;left:18px;z-index:200;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--gold-dim);border-radius:24px;padding:5px 10px;box-shadow:0 6px 24px rgba(0,0,0,.5);direction:ltr;max-width:calc(100vw - 130px)}
+.tune-player button{background:none;border:none;color:var(--text);font-size:1.05rem;cursor:pointer;width:32px;height:32px;border-radius:50%}
+.tune-player button:hover{background:var(--bg-input)}
+.tune-player .tp-main{background:var(--gold);color:#1a1300;font-size:1rem}
+.tune-player input{width:150px;accent-color:var(--gold)}
+.tune-player .tp-title{font-family:'Secular One',sans-serif;color:var(--gold);font-size:.9rem;direction:rtl;white-space:nowrap}
+.tune-player .tp-time{font-size:.75rem;color:var(--text-dim);min-width:70px;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.tune-player{left:10px;right:10px;bottom:112px;max-width:none}.tune-player input{flex:1;width:auto}.tune-player .tp-title{display:none}}
+.mic-badge{position:fixed;bottom:18px;left:118px;z-index:120;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--green);border-radius:20px;padding:5px 10px;color:var(--text);cursor:pointer;font-size:.9rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .mic-badge i{display:block;width:44px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--green) var(--lv,0%),rgba(255,255,255,.12) 0)}
 .mic-badge.clap{box-shadow:0 0 16px var(--green)}
 .dreidel-art.golden{filter:drop-shadow(0 0 22px #ffd700) drop-shadow(0 0 48px rgba(255,190,0,.75))}
@@ -323,6 +332,9 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .log-entry{padding:2px 0;font-size:.72rem;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.02)}
 
 /* Modal */
+.ui-box{max-width:440px}.ui-msg{white-space:pre-line;font-size:1.05rem;line-height:1.6;margin:6px 0 18px;color:var(--text)}
+.ui-btns{display:flex;gap:10px;justify-content:center}.ui-btns .btn{min-width:110px}
+#uiModal{z-index:1200}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center}
 .modal-bg.show{display:flex}
 .win-modal{background:var(--bg-card);border:2px solid var(--gold);border-radius:18px;padding:30px;text-align:center;box-shadow:0 0 60px var(--gold-glow-s);max-width:360px;width:90%;animation:mp .35s ease-out}
@@ -600,6 +612,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <div class="trivia-timer"><div id="triviaBar"></div></div>
     <div class="trivia-msg" id="triviaMsg"></div>
 </div></div>
+<div class="modal-bg" id="uiModal" role="dialog" aria-modal="true"><div class="win-modal ui-box"><div class="ui-msg" id="uiMsg"></div><div class="ui-btns"><button class="btn btn-gold" id="uiOk">אישור</button><button class="btn btn-outline" id="uiCancel">ביטול</button></div></div></div>
 <div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p><div class="win-titles" id="winTitles"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-gold" id="rematchBtn" onclick="rematch()">🔁 משחק חוזר — אותם שחקנים</button>
@@ -609,7 +622,18 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </div>
 
 <!-- ══ SETTINGS ══ -->
-<button class="settings-toggle" onclick="toggleSettings()">⚙️</button>
+<button class="settings-toggle" onclick="toggleSettings()" title="הגדרות">⚙️</button>
+<button class="settings-toggle tune-toggle" onclick="unlockAudio();document.getElementById('tunePlayer').classList.contains('hidden')?tunePlay():tuneToggle()" title="מעוז צור">🎵</button>
+<div class="tune-player hidden" id="tunePlayer" role="region" aria-label="נגן מעוז צור">
+  <span class="tp-title">🎵 מעוז צור</span>
+  <button onclick="tuneSkip(-8)" title="אחורה">⏪</button>
+  <button id="tunePlay" class="tp-main" onclick="tuneToggle()" title="נגן / השהה">▶</button>
+  <button onclick="tuneSkip(8)" title="קדימה">⏩</button>
+  <input type="range" id="tuneSeek" min="0" max="80" step="0.5" value="0" aria-label="מיקום בשיר"
+     onpointerdown="this._drag=1" onpointerup="this._drag=0" oninput="this._drag=1" onchange="this._drag=0;tuneSeek(+this.value)">
+  <span class="tp-time" id="tuneTime">0:00</span>
+  <button onclick="tuneClose()" title="סגור">✕</button>
+</div>
 <div class="settings-panel hidden" id="settingsPanel">
   <h4>⚙️ הגדרות <button onclick="closeSettings()" aria-label="סגור" title="סגור (Esc)">✕</button></h4>
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎨 צבעי פאות הסביבון</div>
@@ -620,7 +644,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">⏱ זמן סיבוב</div>
   <div class="settings-row"><label>מינ׳</label><input type="range" id="spinMin" min="0.5" max="3" step="0.5" value="1.5" oninput="document.getElementById('spinMinVal').textContent=this.value+'s'"><span class="val-label" id="spinMinVal">1.5s</span></div>
-  <div class="settings-row"><label>מקס׳</label><input type="range" id="spinMax" min="2"   max="7" step="0.5" value="4"   oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">4s</span></div>
+  <div class="settings-row"><label>מקס׳</label><input type="range" id="spinMax" min="2"   max="10" step="0.5" value="5"   oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">5s</span></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">✡️ האות הרביעית</div>
   <div class="settings-row"><select id="fourthLetter" class="input" style="padding:5px 8px;font-size:.8rem" onchange="applyFourthLetter()"><option value="פ">פ — נס גדול היה פה (ארץ ישראל)</option><option value="ש">ש — נס גדול היה שם (חוץ לארץ)</option></select></div>
@@ -647,7 +671,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v39';
+const APP_VERSION='v41';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -679,7 +703,24 @@ function readPersona(row){
 }
 function av(p){return p&&p.avatar?p.avatar+' ':''}
 
-function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){alert(e.message);return false}}
+// ── our own message / question window (never the browser's alert/confirm) ──
+window.UI_ALERTS=[];
+function uiDialog(msg,okText,cancelText){
+    return new Promise(res=>{
+        const m=document.getElementById('uiModal'),ok=document.getElementById('uiOk'),no=document.getElementById('uiCancel');
+        document.getElementById('uiMsg').textContent=msg;
+        ok.textContent=okText||'אישור';no.textContent=cancelText||'ביטול';no.style.display=cancelText===null?'none':'';
+        const done=v=>{m.classList.remove('show');ok.onclick=no.onclick=null;document.removeEventListener('keydown',key,true);res(v)};
+        const key=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();done(false)}else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();done(true)}};
+        ok.onclick=()=>done(true);no.onclick=()=>done(false);
+        m.onclick=e=>{if(e.target===m)done(false)};
+        document.addEventListener('keydown',key,true);
+        m.classList.add('show');setTimeout(()=>ok.focus(),30);
+    });
+}
+function uiAlert(msg){UI_ALERTS.push(msg);return uiDialog(msg,'הבנתי',null)}
+function uiConfirm(msg,okText){return uiDialog(msg,okText||'אישור','ביטול')}
+function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){uiAlert(e.message);return false}}
 
 // ═══════════ MODE / ONLINE TYPE ═══════════
 function selectMode(m){document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));document.querySelector(`.mode-card[data-mode="${m}"]`)?.classList.add('selected');MODE=m;document.getElementById('modeSelector').classList.add('collapsed');hide('localSetup');hide('onlineSetup');if(m==='local')show('localSetup');if(m==='online'){show('onlineSetup');if(!sb)connectSupabase()}}
@@ -769,7 +810,7 @@ async function createRoom(){
 async function joinRoom(){
     MY_ID='fam_'+Math.random().toString(36).substr(2,6);IS_HOST=false;
     ROOM_CODE=document.getElementById('joinCode').value.trim().toUpperCase();
-    if(!ROOM_CODE||ROOM_CODE.length<4){alert('קוד לא תקין');return}
+    if(!ROOM_CODE||ROOM_CODE.length<4){uiAlert('קוד לא תקין');return}
 
     let payload;
     // We read ONLINE_TYPE from the local selection (it should match the room)
@@ -793,7 +834,7 @@ async function joinRoom(){
     saveSession();
     // If no host answers within 8s — the room probably doesn't exist
     clearTimeout(JOIN_TIMER);
-    JOIN_TIMER=setTimeout(()=>{alert('לא נמצא חדר עם הקוד '+ROOM_CODE+'.\nבדוק את הקוד ונסה שוב.');leaveRoom()},8000);
+    JOIN_TIMER=setTimeout(()=>{uiAlert('לא נמצא חדר עם הקוד '+ROOM_CODE+'.\nבדוק את הקוד ונסה שוב.');leaveRoom()},8000);
 }
 
 function leaveRoom(){
@@ -841,7 +882,7 @@ function joinChannel(onReady){
 
     channel.on('broadcast',{event:'join_rejected'},({payload})=>{
         if(payload.target!==MY_ID)return;
-        alert('המשחק בחדר הזה כבר התחיל — אי אפשר להצטרף באמצע.');
+        uiAlert('המשחק בחדר הזה כבר התחיל — אי אפשר להצטרף באמצע.');
         leaveRoom();
     });
 
@@ -889,7 +930,7 @@ function joinChannel(onReady){
 
     channel.on('broadcast',{event:'spin_boost'},({payload})=>{if(payload.from!==MY_ID)boostSpin(true)});
     channel.on('broadcast',{event:'react'},({payload})=>{if(payload.from!==MY_ID)showReaction(payload.e,payload.from)});
-    channel.on('broadcast',{event:'trivia_show'},({payload})=>{if(payload.from!==MY_ID&&!REJOINING){TRIVIA.used.push(payload.qi);showTrivia(payload.qi,payload.order,payload.who,false)}});
+    channel.on('broadcast',{event:'trivia_show'},({payload})=>{if(payload.from!==MY_ID&&!REJOINING&&payload.item&&Array.isArray(payload.item.ans)){TRIVIA.used.push(payload.item.q);showTrivia(payload.item,payload.order,payload.who,false)}});
     channel.on('broadcast',{event:'trivia_answer'},({payload})=>{if(payload.from!==MY_ID&&TRIVIA.open)answerTrivia(payload.i,0,0,true)});
     channel.on('broadcast',{event:'game_log'},({payload})=>{if(!REJOINING)addLogLocal(payload.text)});
     channel.on('broadcast',{event:'rtc_offer'},({payload})=>{if(payload.target===MY_ID)handleOffer(payload.from,payload.sid,payload.desc)});
@@ -944,7 +985,7 @@ function rejoinGame(){
     const x=loadSession();if(!x)return;
     hide('rejoinBanner');
     MODE='online';ROOM_CODE=x.code;MY_ID=x.id;MY_FAMILY=x.fam;IS_HOST=!!x.host;
-    if(!sb){try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){alert(e.message);return}}
+    if(!sb){try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){uiAlert(e.message);return}}
     hide('modeScreen');show('onlineSetup');hide('onlineLobby');show('waitingRoom');
     document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
     document.getElementById('waitingTitle').textContent='מתחבר מחדש...';
@@ -959,7 +1000,7 @@ function startResync(explicit){
     clearTimeout(JOIN_TIMER);
     JOIN_TIMER=setTimeout(()=>{
         clearInterval(SYNC_RETRY);REJOINING=false;
-        if(explicit){alert('המשחק בחדר '+ROOM_CODE+' כבר לא פעיל.');clearSession();location.reload()}
+        if(explicit){uiAlert('המשחק בחדר '+ROOM_CODE+' כבר לא פעיל.').then(()=>{clearSession();location.reload()})}
     },explicit?10000:8000);
 }
 function finishResync(state){
@@ -968,7 +1009,7 @@ function finishResync(state){
     const wasStarted=!document.getElementById('gameScreen').classList.contains('hidden');
     G=state;
     const mine=G.players.find(p=>onlineKey(p)===MY_ID);
-    if(!mine){alert('לא נמצאת ברשימת השחקנים של החדר הזה.');clearSession();location.reload();return}
+    if(!mine){uiAlert('לא נמצאת ברשימת השחקנים של החדר הזה.').then(()=>{clearSession();location.reload()});return}
     document.getElementById('waitingTitle').textContent='ממתינים לשחקנים...';
     if(G.started){
         enterOnlineGameScreen();
@@ -1065,7 +1106,7 @@ function renderLobby(){
 }
 
 function startOnlineGame(){
-    if(G.players.length<2){alert('צריך לפחות 2 שחקנים');return}
+    if(G.players.length<2){uiAlert('צריך לפחות 2 שחקנים');return}
 
     // Order players based on turnOrder setting
     if(G.families&&G.families.length>0){
@@ -1627,7 +1668,7 @@ const MIC={on:false,stream:null,ctx:null,an:null,buf:null,raf:0,own:false,noise:
 let SFX_BUSY_UNTIL=0;            // our own sounds are playing — be stricter about claps
 async function micStart(){
     if(MIC.on)return true;
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('הדפדפן הזה לא תומך במיקרופון.');return false}
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){uiAlert('הדפדפן הזה לא תומך במיקרופון.');return false}
     try{
         let st=null;
         if(localStream&&localStream.getAudioTracks().length)st=new MediaStream(localStream.getAudioTracks()); // the video call's mic
@@ -1637,7 +1678,7 @@ async function micStart(){
         const src=MIC.ctx.createMediaStreamSource(st);MIC.an=MIC.ctx.createAnalyser();MIC.an.fftSize=2048;src.connect(MIC.an);
         MIC.buf=new Float32Array(MIC.an.fftSize);MIC.on=true;micLoop();updateMicBadge();
         return true;
-    }catch(e){alert('אין גישה למיקרופון.\nאפשרו מיקרופון בהגדרות הדפדפן (סמל המנעול ליד הכתובת) ונסו שוב.');return false}
+    }catch(e){uiAlert('אין גישה למיקרופון.\nאפשרו מיקרופון בהגדרות הדפדפן (סמל המנעול ליד הכתובת) ונסו שוב.');return false}
 }
 function micStop(){
     cancelAnimationFrame(MIC.raf);
@@ -1647,7 +1688,7 @@ function micStop(){
     updateMicBadge();refreshSpinUI();
 }
 function updateMicBadge(){document.getElementById('micBadge').classList.toggle('hidden',!MIC.on)}
-document.getElementById('micBadge').addEventListener('click',()=>{if(confirm('לכבות את המיקרופון?'))micStop()});
+document.getElementById('micBadge').addEventListener('click',()=>{uiConfirm('לכבות את המיקרופון?','לכבות').then(y=>{if(y)micStop()})});
 // how "pitched" the sound is (0..1) — singing is pitched, noise and claps are not
 function pitchClarity(b,sr){
     const N=1024,minL=Math.floor(sr/900),maxL=Math.min(b.length-N-1,Math.floor(sr/85));
@@ -1733,72 +1774,13 @@ function boostSpin(remote){
 })();
 
 // ══════════ ❓ HANUKKAH QUESTIONS — every so often before a turn; right answer = bonus ══════════
-// [question, [RIGHT answer first, then wrong ones], level]   1 = 👶 easy (kids) · 2 = 🧒 medium · 3 = 🎓 hard (adults / Gemara)
-const TRIVIA_Q=[
-    // ── 👶 easy ──
-    ['מה מסובבים בחנוכה?',['סביבון','רעשן','שופר','לולב'],1],
-    ['מה מדליקים בחנוכה?',['נרות בחנוכייה','מדורה','זיקוקים','פנס'],1],
-    ['איזה מאכל אוכלים בחנוכה?',['סופגניות','מצות','אוזני המן','תפוח בדבש'],1],
-    ['כמה נרות מדליקים בלילה הראשון (בלי השמש)?',['אחד','שמונה','שניים','שלושה'],1],
-    ['כמה נרות מדליקים בלילה השני (בלי השמש)?',['שניים','אחד','שלושה','שמונה'],1],
-    ['כמה ימים נמשך חג החנוכה?',['שמונה','שבעה','שלושה','עשרה'],1],
-    ['מה מצאו החשמונאים במקדש?',['פך שמן','ספר תורה','כתר זהב','חרב'],1],
-    ['מה פירוש האות ג׳ על הסביבון במשחק?',['לוקחים את כל הקופה','לא לוקחים כלום','לוקחים חצי','משלמים לקופה'],1],
-    ['מה פירוש האות נ׳ על הסביבון במשחק?',['כלום','הכל','חצי','משלמים'],1],
-    ['מי ניצח במלחמה — המכבים או היוונים?',['המכבים','היוונים','אף אחד','שניהם'],1],
-    ['איפה שמים את החנוכייה?',['ליד החלון או הפתח','במקרר','מתחת למיטה','בארון'],1],
-    ['מה נותנים לילדים בחנוכה?',['דמי חנוכה','משלוח מנות','ארבעה כוסות','ערבה'],1],
-    ['באיזו עונה חל חנוכה?',['חורף','קיץ','אביב','סתיו מוקדם'],1],
-    ['איזה חג בא אחרי חנוכה?',['ט"ו בשבט','פסח','סוכות','ראש השנה'],1],
-    ['איך קוראים לנר שמדליק את שאר הנרות?',['שמש','מלך','גדול','ראשון'],1],
-    ['באיזה שמן הדליקו את המנורה במקדש?',['שמן זית','שמן קנולה','שמן חמניות','נפט'],1],
-    ['מי היה המנהיג של המכבים בקרבות?',['יהודה המכבי','משה רבנו','דוד המלך','יהושע'],1],
-    ['כמה נרות דולקים בלילה האחרון — כולל השמש?',['תשעה','שמונה','עשרה','שבעה'],1],
-    ['מה שרים אחרי הדלקת הנרות?',['מעוז צור','לכה דודי','אדון עולם','התקווה'],1],
-    ['מה עושים בחנוכה עם מטבעות שוקולד?',['משחקים בסביבון ואוכלים','מתפללים איתם','שמים בחנוכייה','שותלים באדמה'],1],
-    // ── 🧒 medium ──
-    ['באיזה תאריך מתחילה חנוכה?',['כ"ה בכסלו','כ"ה בטבת','ט"ו בשבט','י"ד באדר'],2],
-    ['מי היה אבי בני חשמונאי?',['מתתיהו','יהודה','יוחנן','אלעזר'],2],
-    ['באיזה יישוב גר מתתיהו?',['מודיעין','ירושלים','חברון','בית לחם'],2],
-    ['מי היה המלך היווני שגזר את הגזירות?',['אנטיוכוס','אלכסנדר מוקדון','פרעה','נבוכדנצר'],2],
-    ['כמה נרות מדליקים בכל החנוכה (בלי השמש), לפי המנהג שלנו?',['36','44','8','40'],2],
-    ['מה מוסיפים בתפילה ובברכת המזון בחנוכה?',['על הניסים','יעלה ויבוא','עננו','משיב הרוח'],2],
-    ['מה ראשי התיבות של אותיות הסביבון בארץ ישראל?',['נס גדול היה פה','נס גדול היה שם','נר גדול הדליקו פה','נס גדול היום פה'],2],
-    ['כמה קנים היו למנורה שבבית המקדש?',['שבעה','שמונה','תשעה','שישה'],2],
-    ['כיצד נקראו לוחמי יהודה בן מתתיהו?',['המכבים','הקנאים','הצדוקים','הפרושים'],2],
-    ['למה נוהגים לאכול מאכלים מטוגנים בשמן בחנוכה?',['זכר לנס פך השמן','כי חורף קר','כי זה מנהג יווני','זכר למן'],2],
-    ['מה אומרים אחרי הדלקת הנרות?',['הנרות הללו','אשר יצר','הבדלה','קידוש'],2],
-    ['כמה ברכות מברכים בלילה הראשון של חנוכה?',['שלוש','שתיים','אחת','ארבע'],2],
-    ['איזו ברכה מוסיפים רק בלילה הראשון?',['שהחיינו','שעשה ניסים','להדליק נר','הטוב והמטיב'],2],
-    ['מה עשו החשמונאים כשנכנסו למקדש?',['טיהרו אותו וחנכו אותו מחדש','בנו אותו מחדש מהיסוד','עזבו אותו','הפכו אותו לארמון'],2],
-    ['מה אומרים בחנוכה בתפילת שחרית אחרי שמונה עשרה?',['הלל שלם','הלל בדילוג','סליחות','תחנון'],2],
-    ['של מי היה החותם על פך השמן שנמצא?',['כהן גדול','המלך','הנביא','החשמונאים'],2],
-    ['כמה זמן (לפחות) צריכים הנרות לדלוק?',['חצי שעה','רבע שעה','שעתיים','כל הלילה'],2],
-    ['איזה נר מדליקים ראשון בכל לילה?',['את הנר שנוסף הלילה','את הנר הימני ביותר','את הנר האמצעי','לא משנה'],2],
-    ['האם אומרים תחנון בחנוכה?',['לא','כן','רק בשבת','רק בלילה הראשון'],2],
-    ['מי היא הגיבורה שמוזכרת במסורת של חנוכה?',['יהודית','אסתר','דבורה','יעל'],2],
-    // ── 🎓 hard ──
-    ['באיזו מסכת בגמרא נמצא הדיון "מאי חנוכה"?',['שבת','ברכות','פסחים','מגילה'],3],
-    ['אם שכחו "על הניסים" בתפילת שמונה עשרה — מה עושים?',['לא חוזרים','חוזרים לתחילת התפילה','חוזרים לברכת מודים','אומרים בסוף היום'],3],
-    ['לפי בית שמאי — כמה נרות מדליקים בלילה הראשון?',['שמונה','אחד','ארבעה','שבעה'],3],
-    ['מה טעמם של בית הלל בהוספת נר בכל לילה?',['מעלין בקודש ואין מורידין','כנגד פרי החג','כנגד ימים היוצאים','כדי לפרסם יותר בסוף'],3],
-    ['מה טעם אחד מטעמי בית שמאי לפחות נר בכל לילה?',['כנגד פרי החג','מעלין בקודש','כנגד שבטי ישראל','כנגד ימי השבוע'],3],
-    ['מהו עיקר המצווה (בלי הידור)?',['נר איש וביתו','נר לכל אחד','נר בכל חלון','שמונה נרות בכל לילה'],3],
-    ['נר חנוכה שהניחו למעלה מכמה אמות — פסול?',['עשרים אמה','עשר אמות','שלושים אמה','שלוש אמות'],3],
-    ['עד מתי זמן הדלקה לכתחילה לפי הגמרא?',['עד שתכלה רגל מן השוק','עד חצות','עד עלות השחר','שעה אחרי השקיעה'],3],
-    ['נר חנוכה שכבה בתוך זמנו — מה דינו לפי הגמרא?',['אין זקוק לה','חייב להדליק ולברך','מדליק בלי ברכה','מדליק את כולם מחדש'],3],
-    ['עני שאין לו אלא לנר אחד — נר שבת או נר חנוכה?',['נר שבת (שלום בית)','נר חנוכה','מחלק את השמן','מה שירצה'],3],
-    ['יין לקידוש או נר חנוכה — מה קודם לעני?',['נר חנוכה (פרסומי ניסא)','יין לקידוש','מה שירצה','שניהם בשווה'],3],
-    ['מה מברך מי שרואה נר חנוכה ולא הדליק?',['שעשה ניסים','להדליק נר','הטוב והמטיב','אשר קדשנו'],3],
-    ['מאיזו פרשה קוראים בתורה בחנוכה?',['נשא — קרבנות הנשיאים','בהעלותך בלבד','מקץ בלבד','וזאת הברכה'],3],
-    ['מהי ההפטרה בשבת חנוכה הראשונה?',['רני ושמחי (זכריה)','ויעש חירום','קומי אורי','שובה ישראל'],3],
-    ['באיזו מסכת במשנה מוזכר נר חנוכה במפורש?',['בבא קמא','שבת','ראש השנה','תענית'],3],
-    ['מה כתוב בתחילת "על הניסים"?',['בימי מתתיהו בן יוחנן כהן גדול','בימי מרדכי ואסתר','בימי יהודה המכבי','בימי אנטיוכוס הרשע'],3],
-    ['ערב שבת — מתי מדליקים נר חנוכה?',['לפני הדלקת נרות שבת','אחרי צאת השבת','אחרי קידוש','בזמן רגיל אחרי צאת הכוכבים'],3],
-    ['בבית הכנסת במוצאי שבת — מה קודם?',['נר חנוכה ואחר כך הבדלה','הבדלה ואחר כך נר חנוכה','רק הבדלה','לא מדליקים'],3],
-    ['איזה מאכל נוהגים לאכול זכר למעשה יהודית (לפי הרמ"א)?',['מאכלי חלב','מאכלי בשר','דגים','לחם'],3],
-    ['על פי הגמרא — מה מקום הנחת נר חנוכה לכתחילה?',['על פתח ביתו מבחוץ','על השולחן','על הגג','בחדר השינה'],3],
-];
+// The questions live in trivia.json (edit them in trivia-editor.html). Each: {level 1-3, q, right, wrong[2-3]}
+let TRIVIA_Q=[];      // [{q, ans:[right,...wrong], lvl}]
+function loadTrivia(list){
+    TRIVIA_Q=(list||[]).filter(x=>x&&typeof x.q==='string'&&x.q.trim()&&typeof x.right==='string'&&Array.isArray(x.wrong)&&x.wrong.length>=1)
+        .map(x=>({q:x.q.trim(),ans:[x.right,...x.wrong.slice(0,3)].map(t=>String(t).trim()),lvl:[1,2,3].includes(+x.level)?+x.level:2}));
+}
+if(typeof fetch==='function')fetch('trivia.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{if(j)loadTrivia(j.questions)}).catch(()=>{});
 const TRIVIA={open:false,lastTurn:-1,used:[]};
 function playerLevel(p){return safeLevel(p&&p.level)}
 function maybeAskTrivia(){
@@ -1807,18 +1789,20 @@ function maybeAskTrivia(){
     if(tn===TRIVIA.lastTurn)return;TRIVIA.lastTurn=tn;
     if((G.turnNo||0)<3||Math.random()>.2)return;                       // about one turn in five, not at the very start
     const lvl=playerLevel(G.players[G.currentTurn]);
-    const ofLevel=TRIVIA_Q.map((_,i)=>i).filter(i=>TRIVIA_Q[i][2]===lvl);
-    let pool=ofLevel.filter(i=>!TRIVIA.used.includes(i));if(!pool.length){TRIVIA.used=TRIVIA.used.filter(i=>!ofLevel.includes(i));pool=ofLevel}
-    const qi=pick(pool);TRIVIA.used.push(qi);
-    const order=[0,1,2,3].sort(()=>Math.random()-.5);
+    let ofLevel=TRIVIA_Q.filter(x=>x.lvl===lvl);if(!ofLevel.length)ofLevel=TRIVIA_Q;if(!ofLevel.length)return;
+    let pool=ofLevel.filter(x=>!TRIVIA.used.includes(x.q));if(!pool.length){TRIVIA.used=TRIVIA.used.filter(t=>!ofLevel.some(x=>x.q===t));pool=ofLevel}
+    const item=pick(pool);TRIVIA.used.push(item.q);
+    const order=item.ans.map((_,i)=>i).sort(()=>Math.random()-.5);
     const who=av(G.players[G.currentTurn])+(G.players[G.currentTurn]?.name||'');
-    showTrivia(qi,order,who,true);
-    if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'trivia_show',payload:{qi,order,who,from:MY_ID}});
+    showTrivia(item,order,who,true);
+    // the question itself travels, so homes with an older copy of the file still show the same one
+    if(MODE==='online'&&channel)channel.send({type:'broadcast',event:'trivia_show',payload:{item,order,who,from:MY_ID}});
 }
 let _trTimer=null;
-function showTrivia(qi,order,who,mine){
+function showTrivia(item,order,who,mine){
     TRIVIA.open=true;refreshSpinUI();
-    const [q,ans,lvl]=TRIVIA_Q[qi];
+    const q=String(item.q),ans=item.ans.map(String),lvl=[1,2,3].includes(item.lvl)?item.lvl:2,qi=item;
+    order=(Array.isArray(order)?order:[]).filter(i=>i>=0&&i<ans.length);if(order.length!==ans.length)order=ans.map((_,i)=>i);
     document.getElementById('triviaWho').innerHTML=esc(mine?`שאלת חנוכה ל${who}! תשובה נכונה = מטבעות בונוס 🎁`:`שאלת חנוכה ל${who} — מחכים לתשובה...`)+`<span class="trivia-lvl">${LEVELS[lvl]}</span>`;
     document.getElementById('triviaQ').textContent=q;
     document.getElementById('triviaMsg').textContent='';
@@ -1840,7 +1824,7 @@ function answerTrivia(i,qi,order,remote){
     playSfx(right?pick(SFX.he):pick(SFX.pe),{vol:.8});
     if(right){say('נכון! כל הכבוד');coinRain(10)}
     if(!remote){
-        if(right){const p=G.players[G.currentTurn];if(p){const lv=TRIVIA_Q[qi]?TRIVIA_Q[qi][2]:2;giveBonus(p,G.ante*(lv===3?1.5:1),'🧠 תשובה נכונה! —');renderGame(true)}}
+        if(right){const p=G.players[G.currentTurn];if(p){const lv=qi&&qi.lvl||2;giveBonus(p,G.ante*(lv===3?1.5:1),'🧠 תשובה נכונה! —');renderGame(true)}}
         if(MODE==='online'&&channel){
             channel.send({type:'broadcast',event:'trivia_answer',payload:{i,from:MY_ID}});
             if(right){LAST_STATE=clone(G);channel.send({type:'broadcast',event:'state_update',payload:{state:LAST_STATE,from:MY_ID}})}
@@ -2358,24 +2342,82 @@ const MAOZ_TZUR=[[74,0,1],[69,1,1],[74,2,1],[79,3,1],[78,4,1],[76,5,1],[74,6,2],
  [81,32,1.5],[81,33.5,.5],[83,34,1],[85,35,1],[86,36,2],[81,38,2],[86,40,1],[85,41,1],[83,42,1],[81,43,1],[81,44,.5],[79,44.5,.5],[78,45,.5],[79,45.5,.5],[76,46,2],
  [78,48,1.5],[79,49.5,.5],[81,50,2],[76,52,1.5],[78,53.5,.5],[79,54,1.5],[79,55.5,.5],[78,56,1],[73,57,1],[74,58,1],[79,59,1],[78,60,1],[79,61,1],[81,62,2],
  [78,64,1.5],[79,65.5,.5],[81,66,2],[76,68,1.5],[78,69.5,.5],[79,70,1.5],[79,71.5,.5],[78,72,1],[73,73,1],[74,74,1],[79,75,1],[78,76,1],[76,77,1],[74,78,2]];
-let _tuneNodes=[];
-function stopMaozTzur(){_tuneNodes.forEach(n=>{try{n.stop()}catch(e){}});_tuneNodes=[];const b=document.getElementById('tuneBtn');if(b)b.textContent='🎵 מעוז צור'}
-function playMaozTzur(){
-    const ctx=getAudioCtx();if(!ctx)return;
-    if(_tuneNodes.length){stopMaozTzur();return}
-    const bpm=96,spb=60/bpm,t0=ctx.currentTime+.15,out=ctx.createGain();out.gain.value=.16;out.connect(ctx.destination);
-    MAOZ_TZUR.forEach(([m,beat,len])=>{
-        const f=440*Math.pow(2,(m-12-69)/12),t=t0+beat*spb,d=Math.max(.25,len*spb);   // an octave lower — warmer
-        [[1,'triangle',1],[2,'sine',.35],[3,'sine',.12]].forEach(([h,type,v])=>{        // music-box: tone + soft overtones
-            const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f*h;
-            g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d+.35);
-            o.connect(g);g.connect(out);o.start(t);o.stop(t+d+.4);_tuneNodes.push(o);
-        });
+// ── 🎵 "מעוז צור" player: bright bells, a bouncy bass + off-beat chords, a light shaker. Play / pause / ⏪ ⏩ / seek ──
+const TUNE={playing:false,pos:0,bpm:124,nodes:[],timer:0,t0:0,p0:0,out:null,chords:null,len:0};
+TUNE.len=Math.ceil(Math.max(...MAOZ_TZUR.map(([,b,l])=>b+l)));
+// a simple harmony for every half bar, chosen from the melody itself (D major)
+TUNE.chords=(()=>{
+    const C={D:[2,6,9],G:[7,11,2],A:[9,1,4],Bm:[11,2,6],Em:[4,7,11]},pref={D:.35,A:.3,G:.25,Bm:.1,Em:.1},root={D:50,G:43,A:45,Bm:47,Em:40},out=[];
+    for(let b=0;b<TUNE.len;b+=2){
+        let best='D',bs=-1;
+        for(const k in C){let sc=pref[k];MAOZ_TZUR.forEach(([m,nb,l])=>{const o=Math.min(nb+l,b+2)-Math.max(nb,b);if(o>0&&C[k].includes(m%12))sc+=o*(nb===b?1.5:1)});if(sc>bs){bs=sc;best=k}}
+        out.push({beat:b,root:root[best],pcs:C[best]});
+    }
+    return out;
+})();
+function _mf(m){return 440*Math.pow(2,(m-69)/12)}
+function _tnote(ctx,t,f,d,parts,dest){
+    parts.forEach(([h,type,v,dec])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f*h;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(.0008,t+Math.min(d,dec||d)+.25);
+        o.connect(g);g.connect(dest);o.start(t);o.stop(t+Math.min(d,dec||d)+.3);TUNE.nodes.push(o);
     });
-    const total=(80*spb+.6)*1000;
-    const b=document.getElementById('tuneBtn');if(b)b.textContent='⏹️ עצור';
-    setTimeout(()=>{if(_tuneNodes.length)stopMaozTzur()},total);
 }
+function _shaker(ctx,t,v,dest){
+    if(!_shaker.buf){const n=ctx.sampleRate*.06|0,bf=ctx.createBuffer(1,n,ctx.sampleRate),d=bf.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);_shaker.buf=bf}
+    const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=_shaker.buf;f.type='highpass';f.frequency.value=6000;g.gain.value=v;
+    s.connect(f);f.connect(g);g.connect(dest);s.start(t);TUNE.nodes.push(s);
+}
+// schedule everything between beat a and beat b (ctx time = t0 + (beat-p0)*spb)
+function _tuneSchedule(a,b){
+    const ctx=getAudioCtx(),spb=60/TUNE.bpm,at=x=>TUNE.t0+(x-TUNE.p0)*spb,o=TUNE.out;
+    MAOZ_TZUR.forEach(([m,beat,len])=>{if(beat>=a&&beat<b){const d=Math.max(.18,len*spb);
+        _tnote(ctx,at(beat),_mf(m),d*1.1,[[1,'sine',.55],[2,'sine',.16,.5],[2.76,'sine',.07,.18],[4.07,'sine',.03,.08]],o)}});   // glockenspiel-ish lead
+    for(let x=Math.ceil(a*2)/2;x<b;x+=.5){
+        const c=TUNE.chords[Math.min(TUNE.chords.length-1,Math.floor(x/2))],t=at(x);
+        if(x%1===0){                                                                   // on the beat: bass (root, then fifth)
+            const m=(x%2===0)?c.root:c.root+7;_tnote(ctx,t,_mf(m),spb*.7,[[1,'triangle',.5],[2,'sine',.12]],o);
+        }else{                                                                         // off the beat: short "chk" chord + shaker
+            c.pcs.forEach(pc=>{const m=60+((pc-60)%12+12)%12;_tnote(ctx,t,_mf(m),spb*.22,[[1,'triangle',.07]],o)});
+            _shaker(ctx,t,.18,o);
+        }
+    }
+}
+function _tuneTick(){
+    if(!TUNE.playing)return;
+    const ctx=getAudioCtx(),spb=60/TUNE.bpm,now=(ctx.currentTime-TUNE.t0)/spb+TUNE.p0;
+    TUNE.pos=Math.max(TUNE.p0,now);
+    const ahead=now+.6/spb;
+    if(ahead>TUNE.sched){_tuneSchedule(TUNE.sched,Math.min(ahead,TUNE.len));TUNE.sched=Math.min(ahead,TUNE.len)}
+    tuneUI();
+    if(TUNE.pos>=TUNE.len+.5){tunePause();TUNE.pos=0;tuneUI()}
+}
+function tuneHalt(){clearInterval(TUNE.timer);TUNE.nodes.forEach(n=>{try{n.stop()}catch(e){}});TUNE.nodes=[];if(TUNE.out){try{TUNE.out.disconnect()}catch(e){}TUNE.out=null}}
+function tunePlay(from){
+    const ctx=getAudioCtx();if(!ctx)return;try{ctx.resume&&ctx.resume()}catch(e){}
+    tuneHalt();
+    if(typeof from==='number')TUNE.pos=Math.max(0,Math.min(TUNE.len-1,from));
+    if(TUNE.pos>=TUNE.len-.5)TUNE.pos=0;
+    TUNE.out=ctx.createGain();TUNE.out.gain.value=.2;TUNE.out.connect(ctx.destination);
+    TUNE.p0=TUNE.pos;TUNE.t0=ctx.currentTime+.08;TUNE.sched=TUNE.pos;TUNE.playing=true;
+    document.getElementById('tunePlayer').classList.remove('hidden');
+    _tuneTick();TUNE.timer=setInterval(_tuneTick,60);tuneUI();
+}
+function tunePause(){TUNE.playing=false;tuneHalt();tuneUI()}
+function tuneSeek(beat){const was=TUNE.playing;TUNE.pos=Math.max(0,Math.min(TUNE.len-1,beat));if(was)tunePlay();else tuneUI()}
+function tuneSkip(beats){tuneSeek(TUNE.pos+beats)}
+function tuneToggle(){TUNE.playing?tunePause():tunePlay()}
+function tuneClose(){tunePause();TUNE.pos=0;document.getElementById('tunePlayer').classList.add('hidden')}
+function tuneUI(){
+    const pb=document.getElementById('tunePlay');if(pb)pb.textContent=TUNE.playing?'⏸':'▶';
+    const r=document.getElementById('tuneSeek');if(r&&!r._drag){r.max=TUNE.len;r.value=TUNE.pos.toFixed(2)}
+    const spb=60/TUNE.bpm,f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+    const tt=document.getElementById('tuneTime');if(tt)tt.textContent=f(TUNE.pos*spb)+' / '+f(TUNE.len*spb);
+    const b=document.getElementById('tuneBtn');if(b)b.textContent=TUNE.playing?'⏸ מעוז צור':'🎵 מעוז צור';
+}
+// old names (still called from a few places)
+function playMaozTzur(){tuneToggle()}
+function stopMaozTzur(){tuneClose()}
 
 // ── Result sounds: always a little different ──
 function playResult(letter){
@@ -2655,7 +2697,7 @@ function showWinner(){
     document.getElementById('winModal').classList.add('show');
     confettiRain();
     playSfx(pick(SFX.win));playSfx(pick(SFX.gimel),{delay:.9});setTimeout(()=>playApplause(3.5,.55),300);
-    setTimeout(()=>{if(G.over&&!_tuneNodes.length)playMaozTzur()},4200);   // and then "מעוז צור" to celebrate
+    setTimeout(()=>{if(G.over&&!TUNE.playing)tunePlay(0)},4200);   // and then "מעוז צור" to celebrate
     setTimeout(()=>say(winText.replace('🎉','').replace('—','')+' כל הכבוד!'),1200);
     addLogLocal(`🏆 ${winText}`); // every client shows it locally — no broadcast duplicates
 }
@@ -2809,7 +2851,7 @@ function updateVideoTiles(){
 
 async function startCamera(){
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-        alert('הדפדפן שלך אינו תומך בגישה למצלמה.\nנסה Chrome או Edge.');
+        uiAlert('הדפדפן שלך אינו תומך בגישה למצלמה.\nנסה Chrome או Edge.');
         return;
     }
     try{
@@ -2824,13 +2866,13 @@ async function startCamera(){
     }catch(e){
         const isFirefox=navigator.userAgent.toLowerCase().includes('firefox');
         if(isFirefox){
-            alert('פיירפוקס חוסם מצלמה על אתר זה.\n\nפתרון:\n1. לחץ על סמל המנעול/מידע בסרגל הכתובת\n2. בחר "הרשאות" ← "השתמש במצלמה" ← "אפשר"\n3. רענן את הדף ונסה שוב\n\nלחלופין — השתמש ב-Chrome או Edge.');
+            uiAlert('פיירפוקס חוסם מצלמה על אתר זה.\n\nפתרון:\n1. לחץ על סמל המנעול/מידע בסרגל הכתובת\n2. בחר "הרשאות" ← "השתמש במצלמה" ← "אפשר"\n3. רענן את הדף ונסה שוב\n\nלחלופין — השתמש ב-Chrome או Edge.');
         } else if(e.name==='NotAllowedError'){
-            alert('הגישה למצלמה נדחתה.\nאפשר הרשאות מצלמה בהגדרות הדפדפן ונסה שוב.');
+            uiAlert('הגישה למצלמה נדחתה.\nאפשר הרשאות מצלמה בהגדרות הדפדפן ונסה שוב.');
         } else if(e.name==='NotFoundError'){
-            alert('לא נמצאה מצלמה במכשיר זה.');
+            uiAlert('לא נמצאה מצלמה במכשיר זה.');
         } else {
-            alert('שגיאה בגישה למצלמה: '+e.message);
+            uiAlert('שגיאה בגישה למצלמה: '+e.message);
         }
     }
 }
@@ -2894,7 +2936,7 @@ document.addEventListener('visibilitychange',()=>{
     if(MODE==='online'&&channel&&G.started&&!G.over&&!REJOINING)startResync(false); // may have missed spins while in background
 });
 
-function confirmNewGame(){if(G.over||confirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?')){clearSession();location.reload()}}
+function confirmNewGame(){(G.over?Promise.resolve(true):uiConfirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?','כן, משחק חדש')).then(y=>{if(y){clearSession();location.reload()}})}
 
 function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen'){keepAwake();showNight()}}
 function hide(id){document.getElementById(id).classList.add('hidden')}

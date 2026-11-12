@@ -10,9 +10,9 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v39';
+const CACHE = 'dreidel-v41';
 const FALLBACK = './index.html';
-const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png', './d3-face.webp', './d3-face.png', './d3-tip.webp', './d3-tip.png', './d3-handle.webp', './d3-handle.png', './bg-table.webp', './bg-table.jpg', './bg-table-portrait.webp', './bg-table-portrait.jpg', './coin.webp', './coin.png', './pile.webp', './pile.png'];
+const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png', './d3-face.webp', './d3-face.png', './d3-tip.webp', './d3-tip.png', './d3-handle.webp', './d3-handle.png', './bg-table.webp', './bg-table.jpg', './bg-table-portrait.webp', './bg-table-portrait.jpg', './coin.webp', './coin.png', './pile.webp', './pile.png', './trivia.json'];
 
 // Third-party static assets that are safe to keep (fonts + the supabase-js library)
 const CACHEABLE_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];
@@ -70,6 +70,17 @@ self.addEventListener('fetch', function (e) {
             return hit || new Response('<h1 dir="rtl">אין חיבור</h1>', { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
           });
         })
+    );
+    return;
+  }
+
+  // The questions: always try the network first, so a newly uploaded trivia.json shows at once
+  if (url.origin === self.location.origin && /trivia\.json$/.test(url.pathname)) {
+    e.respondWith(
+      fetch(req).then(function (res) {
+        if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(function (c) { c.put('./trivia.json', copy); }).catch(function () {}); }
+        return res;
+      }).catch(function () { return caches.match('./trivia.json'); })
     );
     return;
   }

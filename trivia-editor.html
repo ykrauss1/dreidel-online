@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>עורך שאלות חנוכה — סביבון</title>
+<link rel="icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&family=Secular+One&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0e1f;--card:#151a33;--card2:#1c2242;--input:#0f1430;--border:#2a3160;--border-l:#3a4380;--text:#e8ecff;--dim:#9aa3d0;--gold:#f5c842;--green:#3ecf8e;--red:#ff6b6b;--blue:#6fa3ff;--r:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Heebo',sans-serif;background:radial-gradient(ellipse at top,#1a2050,var(--bg) 60%) fixed;color:var(--text);min-height:100vh;padding-bottom:120px}
+h1{font-family:'Secular One',sans-serif;color:var(--gold);font-size:1.7rem;text-shadow:0 0 18px rgba(245,200,66,.4)}
+.wrap{max-width:980px;margin:0 auto;padding:18px 16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.sub{color:var(--dim);font-size:.9rem;line-height:1.6;margin-bottom:14px}
+.bar{position:sticky;top:0;z-index:20;background:rgba(11,14,31,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 0;margin-bottom:14px}
+.bar .wrap{padding-top:0;padding-bottom:0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{background:var(--card);border:1px solid var(--border-l);color:var(--text);border-radius:20px;padding:6px 14px;cursor:pointer;font:inherit;font-size:.9rem}
+.chip.on{background:var(--gold);color:#1a1300;border-color:var(--gold);font-weight:700}
+.chip b{opacity:.75;font-weight:400;margin-right:4px}
+input,textarea,select{font:inherit;color:var(--text);background:var(--input);border:1px solid var(--border-l);border-radius:9px;padding:8px 10px;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(245,200,66,.2)}
+textarea{resize:vertical;min-height:44px;line-height:1.5}
+.search{flex:1;min-width:180px}
+.btn{font:inherit;cursor:pointer;border-radius:10px;padding:9px 16px;border:1px solid var(--border-l);background:var(--card2);color:var(--text);font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--gold)}
+.btn-gold{background:linear-gradient(180deg,#ffd966,#e0a92a);color:#1a1300;border-color:#e0a92a}
+.btn-red{color:var(--red)}
+.btn-sm{padding:5px 10px;font-size:.85rem;border-radius:8px}
+.list{display:flex;flex-direction:column;gap:12px}
+.q{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:relative}
+.q.err{border-color:var(--red)}
+.q.new{animation:flash 1.2s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--gold)}100%{box-shadow:none}}
+.q-head{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.q-num{color:var(--dim);font-size:.85rem;min-width:34px}
+.q-head select{width:auto}
+.q-head .sp{flex:1}
+.lbl{font-size:.8rem;color:var(--dim);margin:8px 0 4px}
+.ans{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ans .right{border-color:rgba(62,207,142,.6);background:rgba(62,207,142,.07)}
+.ans .wrong{border-color:rgba(255,107,107,.35)}
+.ans label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;color:var(--dim)}
+.errs{color:var(--red);font-size:.85rem;margin-top:8px;line-height:1.5}
+.empty{text-align:center;color:var(--dim);padding:40px 10px}
+.foot{position:fixed;bottom:0;left:0;right:0;z-index:20;background:rgba(11,14,31,.96);border-top:1px solid var(--border);padding:10px 0}
+.foot .wrap{padding-top:0;padding-bottom:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.foot .status{flex:1;font-size:.88rem;color:var(--dim);min-width:160px}
+.status .dirty{color:var(--gold);font-weight:700}
+.status .bad{color:var(--red);font-weight:700}
+.note{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:.88rem;line-height:1.7;color:var(--dim);margin-bottom:14px}
+.note b{color:var(--text)}
+.draft{background:rgba(245,200,66,.1);border:1px solid var(--gold);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.draft span{flex:1;min-width:200px}
+.hidden{display:none!important}
+/* our own windows — never the browser's */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.box{background:var(--card);border:1px solid var(--border-l);border-radius:18px;padding:22px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);text-align:center}
+.box .msg{white-space:pre-line;line-height:1.7;margin-bottom:18px}
+.box .btns{display:flex;gap:10px;justify-content:center}
+.pv-lvl{font-size:.8rem;color:var(--dim)}
+.pv-q{font-family:'Secular One',sans-serif;font-size:1.3rem;line-height:1.4;margin:10px 0 16px}
+.pv-a{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.pv-a button{font:inherit;font-size:1rem;padding:12px;border-radius:12px;border:1px solid var(--border-l);background:var(--card2);color:var(--text);cursor:pointer}
+.pv-a button.right{background:rgba(62,207,142,.25);border-color:var(--green)}
+.pv-a button.wrong{background:rgba(255,107,107,.2);border-color:var(--red)}
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--gold);border-radius:12px;padding:10px 16px;z-index:60;display:flex;gap:12px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+@media(max-width:640px){.ans,.pv-a{grid-template-columns:1fr}h1{font-size:1.35rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>❓ עורך שאלות חנוכה</h1><a class="btn btn-sm" href="./">→ למשחק</a></div>
+  <p class="sub">כאן עורכים, מוסיפים ומוחקים שאלות. העבודה נשמרת אוטומטית בדפדפן הזה, עד שמורידים את הקובץ.</p>
+  <div class="note">
+    <b>איך זה מגיע למשחק:</b> כשמסיימים לוחצים <b>"⬇️ הורדת trivia.json"</b>, שמים את הקובץ בתיקיית <b>dreidel-online</b> במקום הקיים, ומריצים את סקריפט הסנכרון.<br>
+    <b>מי יכול לשנות?</b> רק מי שמעלה לגיטהאב. המשחק קורא את השאלות רק מהקובץ שבגיטהאב, ומי שפותח את העמוד הזה יכול לכל היותר להוריד עותק לעצמו.
+  </div>
+  <div class="draft hidden" id="draftBox"><span id="draftTxt"></span><button class="btn btn-sm btn-gold" id="draftKeep">להמשיך מהטיוטה</button><button class="btn btn-sm" id="draftDrop">לחזור לקובץ</button></div>
+</div>
+<div class="bar"><div class="wrap">
+  <button class="chip on" data-f="0">הכל<b id="c0"></b></button>
+  <button class="chip" data-f="1">👶 קל<b id="c1"></b></button>
+  <button class="chip" data-f="2">🧒 בינוני<b id="c2"></b></button>
+  <button class="chip" data-f="3">🎓 קשה<b id="c3"></b></button>
+  <input class="search" id="search" type="search" placeholder="🔍 חיפוש בשאלות ובתשובות">
+  <button class="btn btn-gold" id="addBtn">➕ שאלה חדשה</button>
+</div></div>
+<div class="wrap"><div class="list" id="list"></div></div>
+<div class="foot"><div class="wrap">
+  <div class="status" id="status">טוען...</div>
+  <button class="btn" id="importBtn">📂 טעינת קובץ</button>
+  <button class="btn btn-red" id="revertBtn">↩️ ביטול השינויים</button>
+  <button class="btn btn-gold" id="exportBtn">⬇️ הורדת trivia.json</button>
+  <input type="file" id="fileIn" accept=".json,application/json" class="hidden">
+</div></div>
+
+<div class="modal hidden" id="dlg"><div class="box"><div class="msg" id="dlgMsg"></div><div class="btns"><button class="btn btn-gold" id="dlgOk">אישור</button><button class="btn" id="dlgNo">ביטול</button></div></div></div>
+<div class="modal hidden" id="pv"><div class="box"><div class="pv-lvl" id="pvLvl"></div><div class="pv-q" id="pvQ"></div><div class="pv-a" id="pvA"></div><button class="btn" id="pvClose">סגירה</button></div></div>
+<div class="toast hidden" id="toast"><span id="toastTxt"></span><button class="btn btn-sm btn-gold" id="toastUndo">ביטול</button></div>
+
+<script>
+const LV={1:'👶 קל',2:'🧒 בינוני',3:'🎓 קשה'};
+const DRAFT_KEY='dreidel_trivia_draft';
+let ORIG=null;          // the file as loaded
+let DATA=null;          // {extra keys..., questions:[{level,q,right,wrong[]}]}
+let FILTER=0,QUERY='',nextId=1;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ── our own dialog ──
+function ask(msg,okText,noText){return new Promise(res=>{
+    $('dlgMsg').textContent=msg;$('dlgOk').textContent=okText||'אישור';
+    $('dlgNo').textContent=noText||'ביטול';$('dlgNo').classList.toggle('hidden',noText===null);
+    const d=$('dlg');d.classList.remove('hidden');
+    const done=v=>{d.classList.add('hidden');document.removeEventListener('keydown',k,true);res(v)};
+    const k=e=>{if(e.key==='Escape'){e.preventDefault();done(false)}};
+    $('dlgOk').onclick=()=>done(true);$('dlgNo').onclick=()=>done(false);d.onclick=e=>{if(e.target===d)done(false)};
+    document.addEventListener('keydown',k,true);setTimeout(()=>$('dlgOk').focus(),30);
+})}
+const tell=msg=>ask(msg,'הבנתי',null);
+
+// ── load ──
+function norm(list){return (list||[]).map(x=>({_id:nextId++,level:[1,2,3].includes(+x.level)?+x.level:2,q:String(x.q||''),right:String(x.right||''),
+    wrong:[0,1,2].map(i=>String((x.wrong||[])[i]||''))}))}
+function useFile(j){
+    const {questions,...rest}=j||{};
+    DATA={...rest,questions:norm(questions)};
+}
+async function load(){
+    try{
+        const r=await fetch('trivia.json',{cache:'no-cache'});if(!r.ok)throw new Error(r.status);
+        ORIG=await r.json();
+    }catch(e){ORIG={questions:[]};await tell('לא הצלחתי לטעון את trivia.json ('+e.message+').\nאפשר לטעון קובץ מהמחשב בכפתור "📂 טעינת קובץ".')}
+    useFile(ORIG);
+    let d=null;try{d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null')}catch(e){}
+    if(d&&d.data&&JSON.stringify(clean(d.data))!==JSON.stringify(clean(DATA))){
+        $('draftTxt').textContent=`📝 יש טיוטה שלא הורדה מ־${new Date(d.at).toLocaleString('he-IL',{dateStyle:'short',timeStyle:'short'})} (${d.data.questions.length} שאלות).`;
+        $('draftBox').classList.remove('hidden');
+        $('draftKeep').onclick=()=>{useFile(d.data);$('draftBox').classList.add('hidden');render()};
+        $('draftDrop').onclick=()=>{localStorage.removeItem(DRAFT_KEY);$('draftBox').classList.add('hidden')};
+    }
+    render();
+}
+
+// ── checks ──
+function problems(x,all){
+    const p=[],t=s=>s.trim();
+    if(!t(x.q))p.push('חסרה שאלה');
+    if(!t(x.right))p.push('חסרה התשובה הנכונה');
+    const w=x.wrong.map(t).filter(Boolean);
+    if(w.length<2)p.push('צריך לפחות 2 תשובות שגויות');
+    const a=[t(x.right),...w].filter(Boolean);
+    if(new Set(a).size!==a.length)p.push('יש תשובה שחוזרת פעמיים');
+    if(t(x.q)&&all.some(o=>o!==x&&t(o.q)===t(x.q)))p.push('השאלה הזו כבר קיימת');
+    return p;
+}
+function clean(d){const {questions,...rest}=d;return{...rest,questions:questions.map(x=>({level:x.level,q:x.q.trim(),right:x.right.trim(),wrong:x.wrong.map(s=>s.trim()).filter(Boolean)}))}}
+function save(){
+    try{localStorage.setItem(DRAFT_KEY,JSON.stringify({at:Date.now(),data:clean(DATA)}))}catch(e){}
+    status();
+}
+function status(){
+    const qs=DATA.questions,bad=qs.filter(x=>problems(x,qs).length).length;
+    const dirty=JSON.stringify(clean(DATA))!==JSON.stringify(clean({...ORIG,questions:norm(ORIG.questions||[])}));
+    for(const l of [0,1,2,3])$('c'+l).textContent=l?qs.filter(x=>x.level===l).length:qs.length;
+    $('status').innerHTML=`${qs.length} שאלות`+(dirty?' · <span class="dirty">יש שינויים שלא הורדו</span>':' · אין שינויים')+(bad?` · <span class="bad">${bad} עם בעיה</span>`:'');
+}
+
+// ── list ──
+function matches(x){
+    if(FILTER&&x.level!==FILTER)return false;
+    if(!QUERY)return true;
+    return [x.q,x.right,...x.wrong].join(' ').includes(QUERY);
+}
+function card(x,n){
+    const p=problems(x,DATA.questions);
+    return `<div class="q${p.length?' err':''}" data-id="${x._id}">
+      <div class="q-head"><span class="q-num">#${n}</span>
+        <select data-k="level">${[1,2,3].map(l=>`<option value="${l}"${x.level===l?' selected':''}>${LV[l]}</option>`).join('')}</select>
+        <span class="sp"></span>
+        <button class="btn btn-sm" data-act="pv" title="איך זה ייראה במשחק">👁 תצוגה</button>
+        <button class="btn btn-sm" data-act="dup" title="שכפול">⧉</button>
+        <button class="btn btn-sm btn-red" data-act="del" title="מחיקה">🗑</button></div>
+      <div class="lbl">השאלה</div><textarea data-k="q" rows="2" placeholder="כתבו כאן את השאלה">${esc(x.q)}</textarea>
+      <div class="ans" style="margin-top:8px">
+        <label>✅ התשובה הנכונה<input class="right" data-k="right" value="${esc(x.right)}"></label>
+        ${x.wrong.map((w,i)=>`<label>❌ תשובה שגויה ${i+1}${i===2?' (לא חובה)':''}<input class="wrong" data-k="w${i}" value="${esc(w)}"></label>`).join('')}
+      </div>
+      <div class="errs">${p.map(esc).join(' · ')}</div></div>`;
+}
+function render(){
+    const qs=DATA.questions.map((x,i)=>[x,i+1]).filter(([x])=>matches(x));
+    $('list').innerHTML=qs.length?qs.map(([x,n])=>card(x,n)).join(''):`<div class="empty">${DATA.questions.length?'אין שאלות שמתאימות לסינון':'אין עדיין שאלות — לחצו "➕ שאלה חדשה"'}</div>`;
+    status();
+}
+function find(el){const c=el.closest('.q');return c&&DATA.questions.find(x=>x._id===+c.dataset.id)}
+function refreshCard(c,x){
+    const p=problems(x,DATA.questions);c.classList.toggle('err',!!p.length);c.querySelector('.errs').textContent=p.join(' · ');
+}
+$('list').addEventListener('input',e=>{
+    const x=find(e.target),k=e.target.dataset.k;if(!x||!k)return;
+    if(k==='level'){x.level=+e.target.value;save();if(FILTER&&FILTER!==x.level)setTimeout(render,250);return}
+    if(k==='q'||k==='right')x[k]=e.target.value;else if(k[0]==='w')x.wrong[+k[1]]=e.target.value;
+    // a change can fix or make a duplicate elsewhere, so re-check every visible card
+    document.querySelectorAll('.q').forEach(c=>{const y=DATA.questions.find(o=>o._id===+c.dataset.id);if(y)refreshCard(c,y)});
+    save();
+});
+$('list').addEventListener('change',e=>{if(e.target.dataset.k==='level')e.target.dispatchEvent(new Event('input',{bubbles:true}))});
+let lastDel=null,toastT=0;
+$('list').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-act]');if(!b)return;const x=find(b);if(!x)return;
+    const i=DATA.questions.indexOf(x);
+    if(b.dataset.act==='del'){
+        DATA.questions.splice(i,1);lastDel={x,i};render();save();
+        $('toastTxt').textContent='השאלה נמחקה';$('toast').classList.remove('hidden');
+        clearTimeout(toastT);toastT=setTimeout(()=>$('toast').classList.add('hidden'),6000);
+    }else if(b.dataset.act==='dup'){
+        const y={...x,_id:nextId++,wrong:[...x.wrong],q:x.q+' (עותק)'};DATA.questions.splice(i+1,0,y);render();save();flash(y);
+    }else if(b.dataset.act==='pv')preview(x);
+});
+$('toastUndo').onclick=()=>{if(lastDel){const {x,i}=lastDel;lastDel=null;DATA.questions.splice(i,0,x);render();save();flash(x)}$('toast').classList.add('hidden')};
+function flash(x){if(!x)return;const c=document.querySelector(`.q[data-id="${x._id}"]`);if(c){c.classList.add('new');c.scrollIntoView({block:'center',behavior:'smooth'});const t=c.querySelector('textarea');if(t)t.focus({preventScroll:true})}}
+
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{FILTER=+c.dataset.f;document.querySelectorAll('.chip').forEach(o=>o.classList.toggle('on',o===c));render()});
+$('search').addEventListener('input',e=>{QUERY=e.target.value.trim();render()});
+$('addBtn').onclick=()=>{
+    const x={_id:nextId++,level:FILTER||2,q:'',right:'',wrong:['','','']};
+    DATA.questions.push(x);QUERY='';$('search').value='';render();save();flash(x);
+};
+
+// ── preview: as the game shows it ──
+function preview(x){
+    const a=[x.right,...x.wrong].map(s=>s.trim()).filter(Boolean),order=a.map((_,i)=>i).sort(()=>Math.random()-.5);
+    $('pvLvl').textContent=LV[x.level];$('pvQ').textContent=x.q||'(אין שאלה)';
+    $('pvA').innerHTML=order.map(i=>`<button data-i="${i}">${esc(a[i])}</button>`).join('');
+    $('pvA').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('pvA').querySelectorAll('button').forEach(o=>{if(o.dataset.i==='0')o.classList.add('right');else if(o===b)o.classList.add('wrong')})});
+    $('pv').classList.remove('hidden');
+}
+$('pvClose').onclick=()=>$('pv').classList.add('hidden');
+$('pv').onclick=e=>{if(e.target===$('pv'))$('pv').classList.add('hidden')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('pv').classList.add('hidden')});
+
+// ── export / import / revert ──
+$('exportBtn').onclick=async()=>{
+    const qs=DATA.questions,bad=qs.map((x,i)=>[i+1,problems(x,qs)]).filter(([,p])=>p.length);
+    if(bad.length){await tell(`לא הורדתי — יש ${bad.length} שאלות עם בעיה:\n`+bad.slice(0,6).map(([n,p])=>`#${n}: ${p.join(', ')}`).join('\n')+(bad.length>6?'\n…':'')+'\n\nהן מסומנות באדום ברשימה.');return}
+    const out=clean(DATA);
+    const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='trivia.json';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+    await tell('✅ הקובץ ירד.\nשימו אותו בתיקיית dreidel-online (במקום הקובץ הקיים) והריצו את סקריפט הסנכרון.\nאחרי ההעלאה השאלות החדשות יופיעו במשחק.');
+};
+$('importBtn').onclick=()=>$('fileIn').click();
+$('fileIn').onchange=async e=>{
+    const f=e.target.files[0];e.target.value='';if(!f)return;
+    try{const j=JSON.parse(await f.text());if(!Array.isArray(j.questions))throw new Error('אין בקובץ רשימת questions');
+        if(!(await ask(`לטעון את "${f.name}" (${j.questions.length} שאלות) במקום מה שפתוח עכשיו?`,'לטעון')))return;
+        useFile(j);render();save();
+    }catch(err){tell('הקובץ לא תקין: '+err.message)}
+};
+$('revertBtn').onclick=async()=>{
+    if(!(await ask('לבטל את כל השינויים ולחזור לקובץ שבאתר?','כן, לבטל')))return;
+    localStorage.removeItem(DRAFT_KEY);useFile(ORIG);render();
+};
+window.addEventListener('beforeunload',()=>save());
+load();
+</script>
+</body>
+</html>
