@@ -254,9 +254,9 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .tune-player button:hover{background:var(--bg-input)}
 .tune-player .tp-main{background:var(--gold);color:#1a1300;font-size:1rem}
 .tune-player input{width:150px;accent-color:var(--gold)}
-.tune-player .tp-title{font-family:'Secular One',sans-serif;color:var(--gold);font-size:.9rem;direction:rtl;white-space:nowrap}
+.tune-player .tp-track{direction:rtl;background:var(--bg-input);color:var(--gold);border:1px solid var(--border-l);border-radius:14px;padding:4px 8px;font-family:inherit;font-size:.85rem;max-width:170px}
 .tune-player .tp-time{font-size:.75rem;color:var(--text-dim);min-width:70px;font-variant-numeric:tabular-nums}
-@media(max-width:600px){.tune-player{left:10px;right:10px;bottom:112px;max-width:none}.tune-player input{flex:1;width:auto}.tune-player .tp-title{display:none}}
+@media(max-width:600px){.tune-player{left:10px;right:10px;bottom:112px;max-width:none}.tune-player input{flex:1;width:auto}.tune-player .tp-track{max-width:110px}}
 .mic-badge{position:fixed;bottom:18px;left:118px;z-index:120;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--green);border-radius:20px;padding:5px 10px;color:var(--text);cursor:pointer;font-size:.9rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .mic-badge i{display:block;width:44px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--green) var(--lv,0%),rgba(255,255,255,.12) 0)}
 .mic-badge.clap{box-shadow:0 0 16px var(--green)}
@@ -333,6 +333,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .log-entry{padding:2px 0;font-size:.72rem;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.02)}
 
 /* Modal */
+.editor-wrap{position:fixed;inset:0;z-index:1100;background:#0b0e1f}.editor-wrap iframe{width:100%;height:100%;border:0;display:block}
 .ui-box{max-width:440px}.ui-msg{white-space:pre-line;font-size:1.05rem;line-height:1.6;margin:6px 0 18px;color:var(--text)}
 .ui-btns{display:flex;gap:10px;justify-content:center}.ui-btns .btn{min-width:110px}
 #uiModal{z-index:1200}
@@ -439,7 +440,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
         <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
         <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
     </div>
-    <div style="text-align:center;margin-top:10px"><button class="btn btn-outline btn-sm" id="tuneBtn" onclick="unlockAudio();playMaozTzur()">🎵 מעוז צור</button></div>
+    <div style="text-align:center;margin-top:10px"><button class="btn btn-outline btn-sm" id="tuneBtn" onclick="unlockAudio();playMaozTzur()">🎵 שירים</button></div>
     <div class="install-banner" id="rejoinBanner" style="border-color:var(--blue)">
         <span style="font-size:1.4rem">🔄</span>
         <div class="ib-text" id="rejoinText"><b>יש לך משחק פתוח</b></div>
@@ -613,6 +614,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <div class="trivia-timer"><div id="triviaBar"></div></div>
     <div class="trivia-msg" id="triviaMsg"></div>
 </div></div>
+<div class="editor-wrap hidden" id="editorWrap" role="dialog" aria-modal="true" aria-label="עורך שאלות"><iframe id="editorFrame" title="עורך שאלות"></iframe></div>
 <div class="modal-bg" id="uiModal" role="dialog" aria-modal="true"><div class="win-modal ui-box"><div class="ui-msg" id="uiMsg"></div><div class="ui-btns"><button class="btn btn-gold" id="uiOk">אישור</button><button class="btn btn-outline" id="uiCancel">ביטול</button></div></div></div>
 <div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p><div class="win-titles" id="winTitles"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -626,7 +628,10 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 <button class="settings-toggle" onclick="toggleSettings()" title="הגדרות">⚙️</button>
 <button class="settings-toggle tune-toggle" onclick="unlockAudio();document.getElementById('tunePlayer').classList.contains('hidden')?tunePlay():tuneToggle()" title="מעוז צור">🎵</button>
 <div class="tune-player hidden" id="tunePlayer" role="region" aria-label="נגן מעוז צור">
-  <span class="tp-title">🎵 מעוז צור</span>
+  <select id="tuneTrack" class="tp-track" onchange="tuneChoose(this.value)" aria-label="בחירת שיר"><option value="maoz">🕎 מעוז צור</option></select>
+  <button onclick="tuneAddPick()" title="הוספת שיר מהמחשב / מהטלפון">➕</button>
+  <button id="tuneDel" onclick="tuneDelete()" title="הסרת השיר מהרשימה" style="display:none">🗑</button>
+  <input type="file" id="tuneFile" accept="audio/*" multiple hidden onchange="tuneAddFiles(this.files);this.value=''">
   <button onclick="tuneSkip(-8)" title="אחורה">⏪</button>
   <button id="tunePlay" class="tp-main" onclick="tuneToggle()" title="נגן / השהה">▶</button>
   <button onclick="tuneSkip(8)" title="קדימה">⏩</button>
@@ -651,10 +656,13 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <div class="settings-row"><select id="fourthLetter" class="input" style="padding:5px 8px;font-size:.8rem" onchange="applyFourthLetter()"><option value="פ">פ — נס גדול היה פה (ארץ ישראל)</option><option value="ש">ש — נס גדול היה שם (חוץ לארץ)</option></select></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
-  <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין (מכריז את התוצאה)</label>
+  <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין ילד (מכריז את התוצאה)</label>
+  <div class="settings-row"><select id="narratorLang" class="input" style="padding:5px 8px;font-size:.8rem;flex:1"><option value="mix">🌍 עברית, ולפעמים אנגלית, צרפתית, רוסית, יידיש, אמהרית</option><option value="he">עברית בלבד</option></select><button class="btn btn-sm btn-outline" type="button" onclick="testNarrator()" title="להשמיע דוגמה">🔈</button></div>
   <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
   <label class="sound-toggle"><input type="checkbox" id="clapBoostOn" checked> 👏 מחיאות כפיים מאריכות את הסיבוב (כשהמיקרופון פעיל)</label>
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
+  <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+  <button class="btn btn-outline btn-sm" type="button" style="width:100%" onclick="openTriviaEditor()">✏️ עריכת שאלות החנוכה</button>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:6px">📲 אפליקציה</div>
   <div class="install-help" id="installHelp"></div>
@@ -672,7 +680,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v42';
+const APP_VERSION='v43';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1049,7 +1057,7 @@ setInterval(timerTick,1000);
 
 // ═══════════ SETTINGS PERSISTENCE ═══════════
 const SETTINGS_KEY='dreidel_settings';
-const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','triviaOn','clapBoostOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
+const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','narratorLang','triviaOn','clapBoostOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -2354,7 +2362,7 @@ const MAOZ_TZUR=[[74,0,1],[69,1,1],[74,2,1],[79,3,1],[78,4,1],[76,5,1],[74,6,2],
  [78,48,1.5],[79,49.5,.5],[81,50,2],[76,52,1.5],[78,53.5,.5],[79,54,1.5],[79,55.5,.5],[78,56,1],[73,57,1],[74,58,1],[79,59,1],[78,60,1],[79,61,1],[81,62,2],
  [78,64,1.5],[79,65.5,.5],[81,66,2],[76,68,1.5],[78,69.5,.5],[79,70,1.5],[79,71.5,.5],[78,72,1],[73,73,1],[74,74,1],[79,75,1],[78,76,1],[76,77,1],[74,78,2]];
 // ── 🎵 "מעוז צור" player: bright bells, a bouncy bass + off-beat chords, a light shaker. Play / pause / ⏪ ⏩ / seek ──
-const TUNE={playing:false,pos:0,bpm:124,nodes:[],timer:0,t0:0,p0:0,out:null,chords:null,len:0};
+const TUNE={track:'maoz',playing:false,pos:0,bpm:124,nodes:[],timer:0,t0:0,p0:0,out:null,chords:null,len:0};
 TUNE.len=Math.ceil(Math.max(...MAOZ_TZUR.map(([,b,l])=>b+l)));
 // a simple harmony for every half bar, chosen from the melody itself (D major)
 TUNE.chords=(()=>{
@@ -2403,8 +2411,64 @@ function _tuneTick(){
     tuneUI();
     if(TUNE.pos>=TUNE.len+.5){tunePause();TUNE.pos=0;tuneUI()}
 }
+// songs from the user's own computer / phone: kept on this device (IndexedDB), played with an <audio>
+const SONGS={list:[],aud:null,url:null,loaded:null};
+function songsDB(){return new Promise((res,rej)=>{try{const r=indexedDB.open('dreidel_songs',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('songs',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function songsLoad(){
+    if(typeof indexedDB==='undefined'){tuneFillList();return}
+    try{const db=await songsDB();SONGS.list=await new Promise((res,rej)=>{const q=db.transaction('songs').objectStore('songs').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)})}catch(e){SONGS.list=[]}
+    let saved=null;try{saved=localStorage.getItem('dreidel_tune')}catch(e){}
+    if(saved&&saved!=='maoz'&&SONGS.list.some(x=>String(x.id)===saved))TUNE.track=saved;
+    tuneFillList();
+}
+function tuneFillList(){
+    const sel=document.getElementById('tuneTrack');if(!sel)return;
+    sel.innerHTML='<option value="maoz">🕎 מעוז צור</option>'+SONGS.list.map(x=>`<option value="${x.id}">🎵 ${esc(x.name)}</option>`).join('');
+    sel.value=TUNE.track;document.getElementById('tuneDel').style.display=tuneIsFile()?'':'none';
+}
+function tuneIsFile(){return TUNE.track!=='maoz'}
+function tuneAud(){
+    if(!SONGS.aud){SONGS.aud=new Audio();SONGS.aud.preload='auto';
+        SONGS.aud.addEventListener('timeupdate',tuneUI);SONGS.aud.addEventListener('loadedmetadata',tuneUI);
+        SONGS.aud.addEventListener('ended',()=>{TUNE.playing=false;SONGS.aud.currentTime=0;tuneUI()})}
+    const x=SONGS.list.find(o=>String(o.id)===String(TUNE.track));
+    if(x&&SONGS.loaded!==x.id){if(SONGS.url)URL.revokeObjectURL(SONGS.url);SONGS.url=URL.createObjectURL(x.blob);SONGS.aud.src=SONGS.url;SONGS.loaded=x.id}
+    return x?SONGS.aud:null;
+}
+function tuneChoose(v){
+    const was=TUNE.playing;tunePause();TUNE.track=String(v);TUNE.pos=0;
+    try{localStorage.setItem('dreidel_tune',TUNE.track)}catch(e){}
+    if(tuneIsFile()){const a=tuneAud();if(a)a.currentTime=0}
+    tuneFillList();if(was||true)tunePlay(0);
+}
+function tuneAddPick(){document.getElementById('tuneFile').click()}
+async function tuneAddFiles(files){
+    files=[...files].filter(f=>/^audio\//.test(f.type)||/\.(mp3|m4a|aac|wav|ogg|oga|flac|opus|webm)$/i.test(f.name));
+    if(!files.length){uiAlert('זה לא נראה כמו קובץ שמע. אפשר לבחור mp3, m4a, wav, ogg וכדומה.');return}
+    let last=null;
+    try{const db=await songsDB();
+        for(const f of files){last=await new Promise((res,rej)=>{const q=db.transaction('songs','readwrite').objectStore('songs').add({name:f.name.replace(/\.[^.]+$/,''),type:f.type,blob:f,added:Date.now()});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+    }catch(e){uiAlert('לא הצלחתי לשמור את השיר במכשיר ('+(e&&e.message||e)+').');return}
+    await songsLoad();if(last!=null)tuneChoose(last);
+}
+async function tuneDelete(){
+    if(!tuneIsFile())return;
+    const x=SONGS.list.find(o=>String(o.id)===TUNE.track);if(!x)return;
+    if(!(await uiConfirm(`להסיר את "${x.name}" מרשימת השירים?\n(הקובץ במחשב/בטלפון לא נמחק)`,'להסיר')))return;
+    tunePause();
+    try{const db=await songsDB();await new Promise((res,rej)=>{const q=db.transaction('songs','readwrite').objectStore('songs').delete(x.id);q.onsuccess=res;q.onerror=()=>rej(q.error)})}catch(e){}
+    TUNE.track='maoz';try{localStorage.setItem('dreidel_tune','maoz')}catch(e){}
+    await songsLoad();tuneUI();
+}
 function tuneHalt(){clearInterval(TUNE.timer);TUNE.nodes.forEach(n=>{try{n.stop()}catch(e){}});TUNE.nodes=[];if(TUNE.out){try{TUNE.out.disconnect()}catch(e){}TUNE.out=null}}
 function tunePlay(from){
+    if(tuneIsFile()){
+        const a=tuneAud();if(!a){TUNE.track='maoz';tuneFillList();return tunePlay(from)}
+        if(typeof from==='number')a.currentTime=from;
+        document.getElementById('tunePlayer').classList.remove('hidden');
+        TUNE.playing=true;a.play().catch(()=>{TUNE.playing=false;tuneUI()});tuneUI();return;
+    }
     const ctx=getAudioCtx();if(!ctx)return;try{ctx.resume&&ctx.resume()}catch(e){}
     tuneHalt();
     if(typeof from==='number')TUNE.pos=Math.max(0,Math.min(TUNE.len-1,from));
@@ -2414,20 +2478,29 @@ function tunePlay(from){
     document.getElementById('tunePlayer').classList.remove('hidden');
     _tuneTick();TUNE.timer=setInterval(_tuneTick,60);tuneUI();
 }
-function tunePause(){TUNE.playing=false;tuneHalt();tuneUI()}
-function tuneSeek(beat){const was=TUNE.playing;TUNE.pos=Math.max(0,Math.min(TUNE.len-1,beat));if(was)tunePlay();else tuneUI()}
-function tuneSkip(beats){tuneSeek(TUNE.pos+beats)}
+function tunePause(){TUNE.playing=false;if(SONGS.aud)SONGS.aud.pause();tuneHalt();tuneUI()}
+function tuneSeek(beat){if(tuneIsFile()){const a=tuneAud();if(a&&isFinite(a.duration))a.currentTime=Math.max(0,Math.min(a.duration-.2,beat));tuneUI();return}
+    const was=TUNE.playing;TUNE.pos=Math.max(0,Math.min(TUNE.len-1,beat));if(was)tunePlay();else tuneUI()}
+function tuneSkip(beats){if(tuneIsFile()){const a=tuneAud();if(a)tuneSeek(a.currentTime+Math.sign(beats)*10);return}tuneSeek(TUNE.pos+beats)}
 function tuneToggle(){TUNE.playing?tunePause():tunePlay()}
-function tuneClose(){tunePause();TUNE.pos=0;document.getElementById('tunePlayer').classList.add('hidden')}
+function tuneClose(){tunePause();TUNE.pos=0;if(SONGS.aud)try{SONGS.aud.currentTime=0}catch(e){}document.getElementById('tunePlayer').classList.add('hidden')}
 function tuneUI(){
     const pb=document.getElementById('tunePlay');if(pb)pb.textContent=TUNE.playing?'⏸':'▶';
-    const r=document.getElementById('tuneSeek');if(r&&!r._drag){r.max=TUNE.len;r.value=TUNE.pos.toFixed(2)}
-    const spb=60/TUNE.bpm,f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
-    const tt=document.getElementById('tuneTime');if(tt)tt.textContent=f(TUNE.pos*spb)+' / '+f(TUNE.len*spb);
-    const b=document.getElementById('tuneBtn');if(b)b.textContent=TUNE.playing?'⏸ מעוז צור':'🎵 מעוז צור';
+    const r=document.getElementById('tuneSeek'),tt=document.getElementById('tuneTime'),f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+    if(tuneIsFile()){
+        const a=SONGS.aud,d=a&&isFinite(a.duration)?a.duration:0,c=a?a.currentTime:0;
+        if(r&&!r._drag){r.step=.5;r.max=d||1;r.value=c}
+        if(tt)tt.textContent=f(c)+' / '+(d?f(d):'--:--');
+    }else{
+        const spb=60/TUNE.bpm;
+        if(r&&!r._drag){r.step=.5;r.max=TUNE.len;r.value=TUNE.pos.toFixed(2)}
+        if(tt)tt.textContent=f(TUNE.pos*spb)+' / '+f(TUNE.len*spb);
+    }
+    const b=document.getElementById('tuneBtn');if(b)b.textContent=TUNE.playing?'⏸ שירים':'🎵 שירים';
 }
 // old names (still called from a few places)
 function playMaozTzur(){tuneToggle()}
+setTimeout(songsLoad,0);
 function stopMaozTzur(){tuneClose()}
 
 // ── Result sounds: always a little different ──
@@ -2449,30 +2522,90 @@ function playResult(letter){
 }
 function playCoinBag(){playSfx(pick(SFX.coins),{vol:.6,rate:.95+Math.random()*.15})}
 
-// ── Narrator (Hebrew text-to-speech, if the device has a Hebrew voice) ──
-let HE_VOICE=null;
-function findHebrewVoice(){
+// ── Narrator: a kid's voice that sometimes switches language (Hebrew, English, French, Russian, Yiddish, Amharic) ──
+// It uses the voices this device has. A real child voice is preferred (Ana, Maisie, Eloise, Gisela...);
+// otherwise the pitch goes up so it sounds like a kid. Yiddish rarely has a voice — then a German voice
+// reads it from Latin letters, which sounds pretty close.
+const NARR_LANGS={
+    he:{name:'עברית',re:/^(he|iw)\b/i,w:5},
+    en:{name:'English',re:/^en\b/i,w:1.2},
+    fr:{name:'Français',re:/^fr\b/i,w:1},
+    ru:{name:'Русский',re:/^ru\b/i,w:1},
+    yi:{name:'ייִדיש',re:/^yi\b/i,alt:/^de\b/i,w:1.2},
+    am:{name:'አማርኛ',re:/^am\b/i,w:.8}
+};
+const CHILD_VOICE=/\b(ana|maisie|eloise|gisela|xiaoyou|xiaoshuang|aigerim|child|kid|junior)\b/i;
+const FEMALE_VOICE=/\b(hila|carmit|zira|jenny|aria|samantha|karen|moira|tessa|amelie|am[ée]lie|hortense|denise|julie|marie|audrey|svetlana|dariya|irina|milena|katya|mekdes|hedda|katja|anna|petra|female|google)\b/i;
+const NARR_VOICE={};      // lang → {voice, child, yiAlt}
+function findVoices(){
     if(!window.speechSynthesis)return;
     const vs=speechSynthesis.getVoices();
-    HE_VOICE=vs.find(v=>/^(he|iw)(-|_|$)/i.test(v.lang))||null;
+    const best=re=>{const c=vs.filter(v=>re.test(v.lang.replace('_','-')));if(!c.length)return null;
+        const score=v=>(CHILD_VOICE.test(v.name)?100:0)+(/natural|neural|online|enhanced|premium/i.test(v.name)?20:0)+(FEMALE_VOICE.test(v.name)?10:0)+(v.localService?0:2);
+        return c.sort((a,b)=>score(b)-score(a))[0]};
+    for(const k in NARR_LANGS){
+        const L=NARR_LANGS[k];let v=best(L.re),alt=false;
+        if(!v&&L.alt){v=best(L.alt);alt=!!v}
+        if(v)NARR_VOICE[k]={voice:v,child:CHILD_VOICE.test(v.name),alt};else delete NARR_VOICE[k];
+    }
+    HE_VOICE=NARR_VOICE.he?NARR_VOICE.he.voice:null;
     const note=document.getElementById('narratorNote');
-    if(note)note.textContent=HE_VOICE?'':'(אין במכשיר הזה קול עברי — הקריין לא יישמע)';
+    if(note){const have=Object.keys(NARR_VOICE);
+        note.textContent=!have.length?'(אין במכשיר הזה קולות דיבור — הקריין לא יישמע)':
+            'שפות שיש במכשיר: '+have.map(k=>NARR_LANGS[k].name).join(' · ')+(NARR_VOICE.he?'':' (אין קול עברי — הקריין ידבר בשפות האחרות)');}
 }
-if(window.speechSynthesis){findHebrewVoice();speechSynthesis.onvoiceschanged=findHebrewVoice}
-const PHRASES={
-    'ג':['גימל! כל הקופה ל{n}!','וואו! גימל!','יש! {n} לוקח הכל!','גימל! איזה מזל!','כל הקופה! גימל!'],
-    'ה':['הא! חצי קופה ל{n}','חצי! לא רע בכלל','הא! יופי','חצי קופה! יפה'],
-    'נ':['נון. כלום','נו, לא נורא','נון, ממשיכים','כלום, התור עובר'],
-    'פ':['אוי! {n} משלם','{L}, משלמים לקופה','אוי ואבוי','לא נורא, בפעם הבאה']
+let HE_VOICE=null;
+if(window.speechSynthesis){findVoices();speechSynthesis.onvoiceschanged=findVoices}
+// {n} = the player's name (Hebrew only), {L} = פה / שין
+const NARR_PHRASES={
+    he:{'ג':['גימל! יששש! הכל ל{n}!','וואו! גימל! איזה כיף!','גימל! כל הקופה! הידד!','גימל! {n} לוקח הכל!'],
+        'ה':['הא! חצי בשבילך!','הא! יופי טופי!','חצי קופה! הידד!','הא! לא רע בכלל!'],
+        'נ':['נון! אוף, כלום','נון! לא נורא, ממשיכים!','נון! נו, באמת...','כלום! התור עובר'],
+        'פ':['אוי! {L}! משלמים!','{L}! אופס, אחד לקופה','אוי ואבוי, {L}!','{L}! לא נורא, בפעם הבאה']},
+    en:{'ג':['Gimel! You win everything!','Wow! Gimel! Yay!'],'ה':['Hey! Half for you!','Hey! Not bad!'],
+        'נ':['Nun! Nothing this time!','Nun! Oh well!'],'פ':['Pey! Oops, pay one!','Uh oh! Pey! Pay up!'],'ש':['Shin! Oops, pay one!','Uh oh! Shin! Pay up!']},
+    fr:{'ג':['Guimel ! Tu gagnes tout !','Youpi ! Guimel !'],'ה':['Hé ! La moitié pour toi !','Hé ! Pas mal !'],
+        'נ':['Noun ! Rien du tout !','Noun ! Tant pis !'],'פ':['Pé ! Oh là là, il faut payer !','Pé ! Oups !'],'ש':['Chine ! Oh là là, il faut payer !','Chine ! Oups !']},
+    ru:{'ג':['Гимел! Всё твоё!','Ура! Гимел!'],'ה':['Хей! Половина тебе!','Хей! Неплохо!'],
+        'נ':['Нун! Ничего!','Нун! Ну ладно!'],'פ':['Пей! Ой, плати!','Ой-ой! Пей!'],'ש':['Шин! Ой, плати!','Ой-ой! Шин!']},
+    yi:{'ג':['גימל! אַלץ איז דײַנס!','גימל! אַ מחיה!'],'ה':['הײ! האַלב פֿאַר דיר!','הײ! נישקשה!'],
+        'נ':['נון! גאָרנישט!','נון! נו, שוין!'],'פ':['פּײ! שטעל אַרײַן!','אױ װײ! פּײ!'],'ש':['שין! שטעל אַרײַן!','אױ װײ! שין!']},
+    yiLatin:{'ג':['Gimmel! Alz is dajns!','Gimmel! A mechaje!'],'ה':['Hej! Halb far dir!','Hej! Nischkoschä!'],
+        'נ':['Nun! Gornischt!','Nun! Nu, schojn!'],'פ':['Pej! Schtel arajn!','Oj wej! Pej!'],'ש':['Schin! Schtel arajn!','Oj wej! Schin!']},
+    am:{'ג':['ጊሜል! ሁሉም ያንተ ነው!','እልል! ጊሜል!'],'ה':['ሄ! ግማሹ ያንተ ነው!','ሄ! ጥሩ ነው!'],
+        'נ':['ኑን! ምንም!','ኑን! ችግር የለም!'],'פ':['ፔ! ክፈል!','ውይ! ፔ!'],'ש':['ሺን! ክፈል!','ውይ! ሺን!']}
 };
-function say(text){
-    if(!HE_VOICE||!document.getElementById('narratorOn')?.checked||!document.getElementById('soundOn')?.checked)return;
-    try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.voice=HE_VOICE;u.lang=HE_VOICE.lang;u.rate=1.05;u.pitch=1.1;speechSynthesis.speak(u)}catch(e){}
+function narrOn(){return document.getElementById('narratorOn')?.checked&&document.getElementById('soundOn')?.checked}
+function speakIn(lang,text){
+    const nv=NARR_VOICE[lang];if(!nv||!text)return false;
+    try{
+        speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(text);u.voice=nv.voice;u.lang=nv.voice.lang;
+        u.pitch=nv.child?1.2:1.75;           // no child voice on this device → a higher, kid-like pitch
+        u.rate=nv.child?1.05:1.12;u.volume=1;
+        speechSynthesis.speak(u);return true;
+    }catch(e){return false}
 }
+function say(text){if(narrOn())speakIn('he',text)}
+let _narrLast='he';
 function narrate(letter,name){
-    const p=pick(PHRASES[letter]||['']);
-    say(p.replace('{n}',name||'').replace('{L}',letter==='פ'&&shinMode()?'שין':'פה'));
+    if(!narrOn())return;
+    const mix=(document.getElementById('narratorLang')?.value||'mix')==='mix';
+    let langs=Object.keys(NARR_VOICE);if(!langs.length)return;
+    if(!mix&&NARR_VOICE.he)langs=['he'];
+    // mostly Hebrew; now and then another language (never the same foreign one twice in a row)
+    const pool=langs.filter(k=>k==='he'||k!==_narrLast);
+    let tot=pool.reduce((a,k)=>a+NARR_LANGS[k].w,0),r=Math.random()*tot,lang=pool[0];
+    for(const k of pool){r-=NARR_LANGS[k].w;if(r<=0){lang=k;break}}
+    _narrLast=lang;
+    const shin=letter==='פ'&&shinMode();
+    let set=NARR_PHRASES[lang];
+    if(lang==='yi'&&NARR_VOICE.yi.alt)set=NARR_PHRASES.yiLatin;
+    const list=(shin&&set['ש'])?set['ש']:set[letter];
+    const p=pick(list||NARR_PHRASES.he[letter]||['']);
+    speakIn(lang,p.replace('{n}',lang==='he'?(name||''):'').replace('{L}',shin?'שין':'פה'));
 }
+function testNarrator(){unlockAudio();narrate(pick(['ג','ה','נ','פ']),'')}
 
 // unlock audio + load sounds on the first touch/click (browsers require a gesture)
 let _unlocked=false;
@@ -2489,8 +2622,22 @@ document.getElementById('soundOn').addEventListener('change',()=>{if(document.ge
 // ══════ SETTINGS ══════
 function toggleSettings(){ renderInstallHelp(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
 function closeSettings(){ document.getElementById('settingsPanel').classList.add('hidden'); }
+// the questions editor opens inside the game (same page that also works on its own)
+function openTriviaEditor(){
+    closeSettings();
+    const f=document.getElementById('editorFrame');
+    if(!f.src)f.src='trivia-editor.html?embed=1';
+    document.getElementById('editorWrap').classList.remove('hidden');
+    try{f.focus()}catch(e){}
+}
+function closeTriviaEditor(){document.getElementById('editorWrap').classList.add('hidden')}
+window.addEventListener('message',e=>{
+    if(e.origin!==location.origin||!e.data)return;
+    if(e.data.type==='editor-close')closeTriviaEditor();
+});
 document.addEventListener('keydown',e=>{
     if(e.key!=='Escape')return;
+    if(!document.getElementById('editorWrap').classList.contains('hidden')){closeTriviaEditor();return}
     const sp=document.getElementById('settingsPanel');
     if(!sp.classList.contains('hidden')){e.preventDefault();closeSettings();return}
     const pk=document.getElementById('avatarPicker');if(pk&&!pk.classList.contains('hidden'))pk.classList.add('hidden');

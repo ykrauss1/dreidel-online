@@ -72,7 +72,7 @@ textarea{resize:vertical;min-height:44px;line-height:1.5}
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><h1>❓ עורך שאלות חנוכה</h1><a class="btn btn-sm" href="./">→ למשחק</a></div>
+  <div class="top"><h1>❓ עורך שאלות חנוכה</h1><a class="btn btn-sm" href="./" id="backBtn">→ למשחק</a></div>
   <p class="sub">כאן עורכים, מוסיפים ומוחקים שאלות. העבודה נשמרת אוטומטית בדפדפן הזה, עד שמורידים את הקובץ.</p>
   <div class="note">
     <b>איך זה מגיע למשחק:</b> כשמסיימים לוחצים <b>"⬇️ הורדת trivia.json"</b>, שמים את הקובץ בתיקיית <b>dreidel-online</b> במקום הקיים, ומריצים את סקריפט הסנכרון.<br>
@@ -266,6 +266,13 @@ $('revertBtn').onclick=async()=>{
     localStorage.removeItem(DRAFT_KEY);useFile(ORIG);render();
 };
 window.addEventListener('beforeunload',()=>save());
+// inside the game: the back link becomes "close", and Esc (when no window of ours is open) closes too
+const EMBED=/[?&]embed=1/.test(location.search)&&window.parent!==window;
+if(EMBED){
+    const b=$('backBtn');b.textContent='✕ סגירה';b.removeAttribute('href');b.style.cursor='pointer';
+    b.onclick=()=>{save();parent.postMessage({type:'editor-close'},location.origin)};
+    window.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('dlg').classList.contains('hidden')&&$('pv').classList.contains('hidden')){save();parent.postMessage({type:'editor-close'},location.origin)}},true);
+}
 load();
 </script>
 </body>
