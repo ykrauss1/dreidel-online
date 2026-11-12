@@ -681,7 +681,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v47';
+const APP_VERSION='v48';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -2539,7 +2539,8 @@ const NARR_LANGS={
 const CHILD_VOICE=/\b(ana|maisie|eloise|gisela|xiaoyou|xiaoshuang|aigerim|child|kid|junior)\b/i;
 const FEMALE_VOICE=/\b(hila|carmit|zira|jenny|aria|samantha|karen|moira|tessa|amelie|am[ée]lie|hortense|denise|julie|marie|audrey|svetlana|dariya|irina|milena|katya|mekdes|hedda|katja|anna|petra|female|google)\b/i;
 const NARR_VOICE={};      // lang → {voice, child}
-const YI_CLIPS={'נ':['yi_nun1'],'ג':['yi_gimel1'],'ה':['yi_he1'],'פ':['yi_pay1']};   // the longer lines — they say more
+// only the result (no letter name), two lines per letter, said by a bobe (grandma) or a zeyde (grandpa)
+const YI_CLIPS=(()=>{const o={};[['נ','nun'],['ג','gimel'],['ה','he'],['פ','pay']].forEach(([l,k])=>{o[l]=[];for(const who of ['bobe','zeyde'])for(const i of [1,2])o[l].push(`yi_${k}${i}_${who}`)});return o})();
 function findVoices(){
     if(!window.speechSynthesis)return;
     const vs=speechSynthesis.getVoices();
@@ -2562,20 +2563,20 @@ let HE_VOICE=null;
 if(window.speechSynthesis){findVoices();speechSynthesis.onvoiceschanged=findVoices}
 // {n} = the player's name (Hebrew only), {L} = פה / שין
 const NARR_PHRASES={
-    he:{'ג':['גימל! יששש! הכל ל{n}!','וואו! גימל! איזה כיף!','גימל! כל הקופה! הידד!','גימל! {n} לוקח הכל!'],
-        'ה':['הא! חצי בשבילך!','הא! יופי טופי!','חצי קופה! הידד!','הא! לא רע בכלל!'],
-        'נ':['נון! אוף, כלום','נון! לא נורא, ממשיכים!','נון! נו, באמת...','כלום! התור עובר'],
-        'פ':['אוי! {L}! משלמים!','{L}! אופס, אחד לקופה','אוי ואבוי, {L}!','{L}! לא נורא, בפעם הבאה']},
-    en:{'ג':['Gimel! You win everything!','Wow! Gimel! Yay!'],'ה':['Hey! Half for you!','Hey! Not bad!'],
-        'נ':['Nun! Nothing this time!','Nun! Oh well!'],'פ':['Pey! Oops, pay one!','Uh oh! Pey! Pay up!'],'ש':['Shin! Oops, pay one!','Uh oh! Shin! Pay up!']},
-    fr:{'ג':['Guimel ! Tu gagnes tout !','Youpi ! Guimel !'],'ה':['Hé ! La moitié pour toi !','Hé ! Pas mal !'],
-        'נ':['Noun ! Rien du tout !','Noun ! Tant pis !'],'פ':['Pé ! Oh là là, il faut payer !','Pé ! Oups !'],'ש':['Chine ! Oh là là, il faut payer !','Chine ! Oups !']},
-    ru:{'ג':['Гимел! Всё твоё!','Ура! Гимел!'],'ה':['Хей! Половина тебе!','Хей! Неплохо!'],
-        'נ':['Нун! Ничего!','Нун! Ну ладно!'],'פ':['Пей! Ой, плати!','Ой-ой! Пей!'],'ש':['Шин! Ой, плати!','Ой-ой! Шин!']},
-    yi:{'ג':['גימל! אַלץ איז דײַנס!'],'ה':['הײ! האַלב פֿאַר דיר!'],
-        'נ':['נון! גאָרנישט!'],'פ':['אױ װײ! שטעל אַרײַן!'],'ש':['אױ װײ! שטעל אַרײַן!']},
-    am:{'ג':['ጊሜል! ሁሉም ያንተ ነው!','እልል! ጊሜል!'],'ה':['ሄ! ግማሹ ያንተ ነው!','ሄ! ጥሩ ነው!'],
-        'נ':['ኑን! ምንም!','ኑን! ችግር የለም!'],'פ':['ፔ! ክፈል!','ውይ! ፔ!'],'ש':['ሺን! ክፈል!','ውይ! ሺን!']}
+    he:{'ג':['יששש! הכל ל{n}!','וואו! כל הקופה! איזה כיף!','הכל שלך! הידד!','{n} לוקח את כל הקופה!'],
+        'ה':['חצי בשבילך! יופי!','יופי טופי, חצי קופה!','חצי קופה! הידד!','חצי! לא רע בכלל!'],
+        'נ':['אוף, כלום הפעם','כלום! לא נורא, ממשיכים!','נו, באמת... כלום','כלום! התור עובר'],
+        'פ':['אוי! משלמים לקופה!','אופס, אחד לקופה','אוי ואבוי, צריך לשלם!','משלמים! לא נורא, בפעם הבאה']},
+    en:{'ג':['You win everything! Yay!','Wow! The whole pot is yours!'],'ה':['Half for you! Nice!','Half the pot! Not bad!'],
+        'נ':['Nothing this time!','Oh well, nothing!'],'פ':['Oops! Pay one!','Uh oh! Pay up!']},
+    fr:{'ג':['Tu gagnes tout ! Youpi !','Bravo ! Tout est à toi !'],'ה':['La moitié pour toi !','La moitié ! Pas mal !'],
+        'נ':['Rien du tout !','Rien ! Tant pis !'],'פ':['Oh là là, il faut payer !','Oups ! Tu paies !']},
+    ru:{'ג':['Всё твоё! Ура!','Ура! Всё тебе!'],'ה':['Половина тебе!','Половина! Неплохо!'],
+        'נ':['Ничего!','Ну ладно, ничего!'],'פ':['Ой, плати!','Ой-ой! Надо платить!']},
+    yi:{'ג':['אַלץ איז דײַנס! מזל־טובֿ!','אַלץ איז דײַנס! אַ מחיה!'],'ה':['האַלב פֿאַר דיר, נישקשה!','האַלב, אױך גוט!'],
+        'נ':['גאָרנישט, גאָר גאָרנישט!','נו, גאָרנישט! אַן אַנדער מאָל!'],'פ':['אױ װײ, אױ װײ! שטעל אַרײַן!','אױ װײ! צאָל, שטעל אַרײַן!'],'ש':['אױ װײ, אױ װײ! שטעל אַרײַן!','אױ װײ! צאָל, שטעל אַרײַן!']},
+    am:{'ג':['ሁሉም ያንተ ነው!','እልል! ሁሉም ያንተ ነው!'],'ה':['ግማሹ ያንተ ነው!','ግማሽ! ጥሩ ነው!'],
+        'נ':['ምንም!','ምንም! ችግር የለም!'],'פ':['ውይ! ክፈል!','ውይ! መክፈል አለብህ!']}
 };
 function narrOn(){return document.getElementById('narratorOn')?.checked&&document.getElementById('soundOn')?.checked}
 function speakIn(lang,text){
@@ -2606,7 +2607,7 @@ function narrate(letter,name,force){
     const shin=letter==='פ'&&shinMode();
     if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
     const set=NARR_PHRASES[lang];
-    const list=(shin&&set['ש'])?set['ש']:set[letter];
+    const list=(shin&&set['ש'])?set['ש']:set[letter];   // the lines no longer name the letter
     const p=pick(list||NARR_PHRASES.he[letter]||['']);
     speakIn(lang,p.replace('{n}',lang==='he'?(name||''):'').replace('{L}',shin?'שין':'פה'));
 }

@@ -4,6 +4,6 @@ Obtained from GitHub mirrors: Boyquotes/kenney-*-for-godot, Calinou/kenney-inter
 
 Yiddish narrator clips (yi_*.mp3)
   Synthesized with REYD — Reading Electronic Yiddish Documents (Webber, Lo, Bleaman), a Yiddish text-to-speech
-  system trained on recordings of native Yiddish speakers (female voice, Lithuanian Yiddish), via the project's
-  public demo. Pitch raised for a child-like voice.
+  system trained on recordings of native Yiddish speakers (female and male voices, Lithuanian Yiddish — 'bobe' and 'zeyde'), via the project's
+  public demo. The female voice is pitched up a little.
   https://github.com/REYD-TTS
