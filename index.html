@@ -661,6 +661,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
   <label class="sound-toggle"><input type="checkbox" id="clapBoostOn" checked> 👏 מחיאות כפיים מאריכות את הסיבוב (כשהמיקרופון פעיל)</label>
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
+  <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
   <button class="btn btn-outline btn-sm" type="button" style="width:100%" onclick="openTriviaEditor()">✏️ עריכת שאלות החנוכה</button>
   <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
@@ -680,7 +681,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v45';
+const APP_VERSION='v46';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -2538,7 +2539,7 @@ const NARR_LANGS={
 const CHILD_VOICE=/\b(ana|maisie|eloise|gisela|xiaoyou|xiaoshuang|aigerim|child|kid|junior)\b/i;
 const FEMALE_VOICE=/\b(hila|carmit|zira|jenny|aria|samantha|karen|moira|tessa|amelie|am[ée]lie|hortense|denise|julie|marie|audrey|svetlana|dariya|irina|milena|katya|mekdes|hedda|katja|anna|petra|female|google)\b/i;
 const NARR_VOICE={};      // lang → {voice, child}
-const YI_CLIPS={'נ':['yi_nun0','yi_nun1'],'ג':['yi_gimel0','yi_gimel1'],'ה':['yi_he0','yi_he1'],'פ':['yi_pay0','yi_pay1']};
+const YI_CLIPS={'נ':['yi_nun1'],'ג':['yi_gimel1'],'ה':['yi_he1'],'פ':['yi_pay1']};   // the longer lines — they say more
 function findVoices(){
     if(!window.speechSynthesis)return;
     const vs=speechSynthesis.getVoices();
@@ -2554,7 +2555,8 @@ function findVoices(){
     const note=document.getElementById('narratorNote');
     if(note){const have=narrLangs();
         note.textContent=!have.length?'(אין במכשיר הזה קולות דיבור — הקריין לא יישמע)':
-            'שפות שיש במכשיר: '+have.map(k=>NARR_LANGS[k].name).join(' · ')+(NARR_VOICE.he?'':' (אין קול עברי — הקריין ידבר בשפות האחרות)');}
+            'לשמוע כל שפה (כל לחיצה — אות אחרת):'+(NARR_VOICE.he?'':' (אין קול עברי — הקריין ידבר בשפות האחרות)');}
+    renderNarrSamples();
 }
 let HE_VOICE=null;
 if(window.speechSynthesis){findVoices();speechSynthesis.onvoiceschanged=findVoices}
@@ -2570,8 +2572,8 @@ const NARR_PHRASES={
         'נ':['Noun ! Rien du tout !','Noun ! Tant pis !'],'פ':['Pé ! Oh là là, il faut payer !','Pé ! Oups !'],'ש':['Chine ! Oh là là, il faut payer !','Chine ! Oups !']},
     ru:{'ג':['Гимел! Всё твоё!','Ура! Гимел!'],'ה':['Хей! Половина тебе!','Хей! Неплохо!'],
         'נ':['Нун! Ничего!','Нун! Ну ладно!'],'פ':['Пей! Ой, плати!','Ой-ой! Пей!'],'ש':['Шин! Ой, плати!','Ой-ой! Шин!']},
-    yi:{'ג':['גימל! גאַנץ!','גימל! אַלץ איז דײַנס!'],'ה':['הײ! האַלב!','הײ! האַלב פֿאַר דיר!'],
-        'נ':['נון! נישט!','נון! גאָרנישט!'],'פ':['שטעל אַרײַן!','אױ װײ! שטעל אַרײַן!'],'ש':['שין! שטעל אַרײַן!','אױ װײ! שטעל אַרײַן!']},
+    yi:{'ג':['גימל! אַלץ איז דײַנס!'],'ה':['הײ! האַלב פֿאַר דיר!'],
+        'נ':['נון! גאָרנישט!'],'פ':['אױ װײ! שטעל אַרײַן!'],'ש':['אױ װײ! שטעל אַרײַן!']},
     am:{'ג':['ጊሜል! ሁሉም ያንተ ነው!','እልል! ጊሜል!'],'ה':['ሄ! ግማሹ ያንተ ነው!','ሄ! ጥሩ ነው!'],
         'נ':['ኑን! ምንም!','ኑን! ችግር የለም!'],'פ':['ፔ! ክፈል!','ውይ! ፔ!'],'ש':['ሺን! ክፈል!','ውይ! ሺን!']}
 };
@@ -2590,13 +2592,14 @@ function say(text){if(narrOn())speakIn('he',text)}
 // languages we can speak on this device (Yiddish always — from our own clips)
 function narrLangs(){const l=Object.keys(NARR_VOICE);if(!l.includes('yi')&&(window.AudioContext||window.webkitAudioContext))l.push('yi');return l}
 let _narrLast='he';
-function narrate(letter,name){
-    if(!narrOn())return;
+function narrate(letter,name,force){
+    if(!force&&!narrOn())return;
     const mix=(document.getElementById('narratorLang')?.value||'mix')==='mix';
     let langs=narrLangs();if(!langs.length)return;
     if(!mix&&NARR_VOICE.he)langs=['he'];
+    if(force&&langs.includes(force))langs=[force];
     // mostly Hebrew; now and then another language (never the same foreign one twice in a row)
-    const pool=langs.filter(k=>k==='he'||k!==_narrLast);
+    const pool=force?langs:langs.filter(k=>k==='he'||k!==_narrLast);
     let tot=pool.reduce((a,k)=>a+NARR_LANGS[k].w,0),r=Math.random()*tot,lang=pool[0];
     for(const k of pool){r-=NARR_LANGS[k].w;if(r<=0){lang=k;break}}
     _narrLast=lang;
@@ -2608,6 +2611,13 @@ function narrate(letter,name){
     speakIn(lang,p.replace('{n}',lang==='he'?(name||''):'').replace('{L}',shin?'שין':'פה'));
 }
 function testNarrator(){unlockAudio();narrate(pick(['ג','ה','נ','פ']),'')}
+// listen to each language: one button per language this device can speak; each click = the next letter
+let _sampleIdx=0;
+function narrSample(lang){unlockAudio();const l=['ג','ה','נ','פ'][_sampleIdx++%4];narrate(l,'',lang)}
+function renderNarrSamples(){
+    const el=document.getElementById('narrSamples');if(!el)return;
+    el.innerHTML=narrLangs().map(k=>`<button type="button" class="btn btn-sm btn-outline" onclick="narrSample('${k}')">🔈 ${NARR_LANGS[k].name}</button>`).join('');
+}
 
 // unlock audio + load sounds on the first touch/click (browsers require a gesture)
 let _unlocked=false;
