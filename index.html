@@ -684,7 +684,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v50';
+const APP_VERSION='v51';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -733,6 +733,11 @@ function uiDialog(msg,okText,cancelText){
 }
 function uiAlert(msg){UI_ALERTS.push(msg);return uiDialog(msg,'הבנתי',null)}
 function uiConfirm(msg,okText){return uiDialog(msg,okText||'אישור','ביטול')}
+// one tiny database read when the game opens: Supabase's free plan pauses projects without database
+// activity, and live game messages alone don't count (a GitHub job also reads it every two days)
+function sbKeepAlive(){try{if(typeof fetch!=='function'||!navigator.onLine)return;
+    fetch(SB_URL+'/rest/v1/keepalive?select=id&limit=1',{headers:{apikey:SB_KEY}}).catch(()=>{})}catch(e){}}
+setTimeout(sbKeepAlive,4000);
 function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){uiAlert(e.message);return false}}
 
 // ═══════════ MODE / ONLINE TYPE ═══════════

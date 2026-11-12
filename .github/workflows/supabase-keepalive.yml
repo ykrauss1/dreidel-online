@@ -1,0 +1,19 @@
+# Keeps the free Supabase project awake: Supabase pauses a free project after ~7 days without
+# database activity, and the game's live messages (Realtime) don't count as such. This reads one
+# row from the tiny public "keepalive" table every two days.
+name: Supabase keep-alive
+on:
+  schedule:
+    - cron: '17 5 */2 * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read the keepalive row
+        run: |
+          code=$(curl -s -o /tmp/out.txt -w '%{http_code}' \
+            "https://vhcxfrrafpqhvmmunoxp.supabase.co/rest/v1/keepalive?select=id&limit=1" \
+            -H "apikey: sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN")
+          echo "HTTP $code"; cat /tmp/out.txt; echo
+          test "$code" = "200"
