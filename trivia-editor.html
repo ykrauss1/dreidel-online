@@ -184,7 +184,7 @@ function card(x,n){
         <button class="btn btn-sm" data-act="pv" title="איך זה ייראה במשחק">👁 תצוגה</button>
         <button class="btn btn-sm" data-act="dup" title="שכפול">⧉</button>
         <button class="btn btn-sm btn-red" data-act="del" title="מחיקה">🗑</button></div>
-      <div class="lbl">השאלה</div><textarea data-k="q" rows="2" placeholder="כתבו כאן את השאלה">${esc(x.q)}</textarea>
+      <div class="lbl">השאלה</div><textarea data-k="q" rows="2" placeholder="כאן כותבים את השאלה">${esc(x.q)}</textarea>
       <div class="ans" style="margin-top:8px">
         <label>✅ התשובה הנכונה<input class="right" data-k="right" value="${esc(x.right)}"></label>
         ${x.wrong.map((w,i)=>`<label>❌ תשובה שגויה ${i+1}${i===2?' (לא חובה)':''}<input class="wrong" data-k="w${i}" value="${esc(w)}"></label>`).join('')}

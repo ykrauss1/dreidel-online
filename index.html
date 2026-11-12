@@ -344,6 +344,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .sp-sec>summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:.8rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
 .sp-sec>summary::-webkit-details-marker{display:none}.sp-sec>summary::after{content:'◂';color:var(--text-dim);transition:transform .2s}.sp-sec[open]>summary::after{transform:rotate(-90deg)}
 .sp-sec[open]>summary{margin-bottom:8px}
+.nudge-nums{flex-wrap:wrap;gap:6px;font-size:.72rem}.nudge-nums input{width:46px;padding:2px 4px;background:var(--bg-input);color:var(--text);border:1px solid var(--border-l);border-radius:6px}
+.nudge-lines{width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-l);border-radius:8px;padding:6px;font:inherit;font-size:.75rem;resize:vertical}
 .myrec-row{display:flex;gap:5px;align-items:center;margin:4px 0}.myrec-l{flex:1;font-size:.78rem}
 .ui-box{max-width:440px}.ui-msg{white-space:pre-line;font-size:1.05rem;line-height:1.6;margin:6px 0 18px;color:var(--text)}
 .ui-btns{display:flex;gap:10px;justify-content:center}.ui-btns .btn{min-width:110px}
@@ -601,7 +603,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                 </div>
                 <div class="spin-prompt" id="spinPrompt"></div>
                 <button class="spin-btn" id="spinBtn">סובב!</button>
-                <button type="button" class="spin-btn sing-btn" id="singBtn" onclick="singButton()">🎤 מתחילים לשיר!</button>
+                <button type="button" class="spin-btn sing-btn" id="singBtn" onclick="singButton()">🎤 התחל לשיר!</button>
                 <div class="power-meter hidden" id="powerMeter">
                     <div class="power-label" id="powerLabel">לחץ שוב!</div>
                     <div class="power-bar-bg"><div class="power-bar-fill" id="powerFill"></div></div>
@@ -624,7 +626,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </div>
 
 <div class="app-version" id="appVersion"></div>
-<button class="mic-badge hidden" id="micBadge" title="המיקרופון פעיל — לחצו לכיבוי"><span>🎤</span><i id="micLevel"></i></button>
+<button class="mic-badge hidden" id="micBadge" title="המיקרופון פעיל — לחיצה מכבה אותו"><span>🎤</span><i id="micLevel"></i></button>
 <div class="react-bar hidden" id="reactBar"><button>👏</button><button>😂</button><button>😱</button><button>🎉</button><button>❤️</button><button>🔥</button></div>
 <div class="modal-bg" id="triviaModal"><div class="win-modal trivia">
     <div class="big-icon">❓</div>
@@ -674,6 +676,15 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <div style="font-size:.65rem;color:var(--text-dim);margin:4px 0">כל לחיצה על ⏺ מוסיפה הקלטה (עד 5 שניות). אפשר כמה הקלטות לכל תוצאה — הקריין יבחר ביניהן. נשמר במכשיר הזה.</div>
     <div id="myRecRows"></div>
   </details>
+  <details class="sp-sec"><summary>⏰ תזכורת לשחקן שמתמהמה</summary>
+  <label class="sound-toggle"><input type="checkbox" id="nudgeOn" checked> להזכיר לשחקן שתורו הגיע</label>
+  <div class="settings-row nudge-nums"><label>מופיעה אחרי <input type="number" id="nudgeAfter" min="5" max="300" value="15"> שנ׳</label>
+    <label>מוצגת <input type="number" id="nudgeShow" min="2" max="30" value="5"> שנ׳</label>
+    <label>עד <input type="number" id="nudgeTimes" min="1" max="10" value="3"> פעמים</label></div>
+  <div style="font-size:.65rem;color:var(--text-dim);margin:6px 0 3px">ההודעות — שורה לכל הודעה. <b>{שם}</b> = שם השחקן. <b>[אתה|את]</b> = לבן | לבת.</div>
+  <textarea id="nudgeLines" class="nudge-lines" rows="5" dir="rtl"></textarea>
+  <button type="button" class="btn btn-sm btn-outline" style="margin-top:4px" onclick="document.getElementById('nudgeLines').value=NUDGE_DEFAULT;saveSettings()">↺ ברירת המחדל</button>
+  </details>
   <details class="sp-sec"><summary>❓ שאלות חנוכה</summary>
   <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
   <button class="btn btn-outline btn-sm" type="button" style="width:100%;margin-top:6px" onclick="openTriviaEditor()">✏️ צפייה ועריכה של השאלות</button>
@@ -708,7 +719,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v57';
+const APP_VERSION='v59';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -727,7 +738,7 @@ function initPersonas(root){
     (root||document).querySelectorAll('.persona:not(.ready)').forEach(sp=>{
         sp.classList.add('ready');
         const ai=(+sp.dataset.av||0)%AVATARS.length,lv=safeLevel(sp.dataset.lvl||2);
-        sp.innerHTML=`<button type="button" class="av-btn" title="לחצו להחלפת דמות">${AVATARS[ai]}</button><select class="lvl-sel" title="רמת שאלות החנוכה">${[1,2,3].map(l=>`<option value="${l}" ${l===lv?'selected':''}>${LEVELS[l]}</option>`).join('')}</select>`;
+        sp.innerHTML=`<button type="button" class="av-btn" title="לחיצה מחליפה דמות">${AVATARS[ai]}</button><select class="lvl-sel" title="רמת שאלות החנוכה">${[1,2,3].map(l=>`<option value="${l}" ${l===lv?'selected':''}>${LEVELS[l]}</option>`).join('')}</select>`;
         sp.querySelector('.av-btn').onclick=e=>{const b=e.currentTarget;b.textContent=AVATARS[(AVATARS.indexOf(b.textContent)+1)%AVATARS.length];
             b.animate&&b.animate([{transform:'scale(1.4) rotate(-15deg)'},{transform:'none'}],{duration:250});saveSettings()};
         sp.querySelector('.lvl-sel').onchange=()=>saveSettings();
@@ -1090,7 +1101,7 @@ setInterval(timerTick,1000);
 
 // ═══════════ SETTINGS PERSISTENCE ═══════════
 const SETTINGS_KEY='dreidel_settings';
-const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','narratorLang','triviaOn','clapBoostOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
+const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','narratorLang','triviaOn','nudgeOn','nudgeAfter','nudgeShow','nudgeTimes','nudgeLines','clapBoostOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -1457,6 +1468,25 @@ function handleSpinClick(how){
     }
 }
 
+// ── Masculine / feminine: the game talks to one player, in the masculine, unless the name is clearly a girl's ──
+const FEMALE_NAMES=new Set(('שרה רבקה רחל לאה חנה מרים אסתר רות נעמי דבורה יהודית אילה איילה חני מיכל יעל אביגיל אביטל הדס שירן אורטל טליה נועה מאיה '+
+ 'שני ענבל קרן דנה גלי הילה רינת רעות אפרת אסנת יוכבד בתיה ברכה פרידה גיטל גיטי פייגי פייגה רבקי צביה מלכה שיינדי שיינדל בילה רייזי אלישבע נחמה '+
+ 'חיה חוי חווה צירל צירי פערל פרל דבורי שרי שירה תמר הודיה הודיה אורה אורית יפית גילה גילי סיגל ליאת ליה לירון מירב מורן נגה נגה אלה אסתי מירי '+
+ 'רחלי לאהלה חנהלה שושנה שושי אהובה טובה טובי זהבה פנינה מזל ברוריה שולמית שלומית צפורה ציפי ציפורה דינה דינה רוחמה רוחמי אדל יהודית שפרה שפרינצה '+
+ 'סבתא סבתאל׳ה סבתוש אמא אמאל׳ה אמי ממי דודה מורה גננת מרגלית בלומה בלימי חנצי פריידי סימה עדינה גאולה אסנת הדסה רנה רננה רינה אביה אביבה נחמי רבקהלה בת-שבע בתשבע בת שבע').split(/\s+/));
+const MALE_HEB_ENDING_H=new Set('משה שלמה יהודה אריה יונה נחמיה ירמיה ישעיה זכריה עובדיה מתתיה שמעיה אליה טוביה שמחה מנשה אפרים חנוכה'.split(' '));
+function isFemaleName(name){
+    const w=String(name||'').trim().split(/[\s,]+/)[0].replace(/[^\u0590-\u05FFa-zA-Z\-]/g,'');
+    if(!w)return false;
+    if(FEMALE_NAMES.has(w))return true;
+    if(MALE_HEB_ENDING_H.has(w))return false;
+    if(/^[\u0590-\u05FF]{2,}(ה|ית)$/.test(w)&&!/(יה)$/.test(w))return true;      // נועה, אורית... (but not ...יה like ירמיה)
+    if(/^(sarah|rachel|leah|chana|hannah|miriam|esther|ruth|naomi|devorah|yael|michal|abigail|maya|noa|tamar|shira|chaya|rivka|rebecca|batsheva|ayala|chani)$/i.test(w))return true;
+    return false;
+}
+function curFemale(){return isFemaleName(G.players[G.currentTurn]?.name)}
+function G2(m,f,p){return (p?isFemaleName(p.name||p):curFemale())?f:m}   // G2('סובב','סובבי') — for the player whose turn it is (or p)
+
 // ── All the ways to spin end here ──
 function canSpinNow(){
     const b=document.getElementById('spinBtn');
@@ -1478,19 +1508,20 @@ function spinFromInput(power,how,extra){
     const cp=G.players[G.currentTurn];
     if(cp){
         const n=cp.name;
-        const msg=bull?`🎯 ${n} שחרר בדיוק בשיא!`
-            :how==='flick'&&spinPower>0.7?`🌀 ${n} סובב ביד בכל הכוח!`
-            :how==='circle'&&spinPower>0.8?`🌪️ ${n} סובב את הסביבון כמו סופה!`
-            :how==='circle'&&spinPower>0.45?`🌀 ${n} סובב יפה!`
-            :how==='circle'&&spinPower<0.3?`🐢 ${n} סובב לאט לאט...`
-            :how==='shake'?`📳 ${n} נער את הטלפון!`
-            :how==='clap'?`👏 ${n} מחא כפיים — והסביבון הסתובב!`
-            :how==='sing'?`🎤 ${n} שר — והסביבון הסתובב!`
-            :spinPower>0.85?`💪 ${n} סיבב בכוח עצום!`
-            :spinPower>0.65?`⚡ ${n} סיבב בחוזקה`
-            :spinPower>0.4 ?`👌 ${n} סיבב בינוני`
-            :spinPower>0.2 ?`😅 ${n} סיבב בעצלתיים...`
-            :`😴 ${n} בקושי הזיז את הסביבון`;
+        const f=isFemaleName(n),g=(m,w)=>f?w:m;
+        const msg=bull?`🎯 ${n} ${g('שחרר','שחררה')} בדיוק בשיא!`
+            :how==='flick'&&spinPower>0.7?`🌀 ${n} ${g('סובב','סובבה')} ביד בכל הכוח!`
+            :how==='circle'&&spinPower>0.8?`🌪️ ${n} ${g('סובב','סובבה')} את הסביבון כמו סופה!`
+            :how==='circle'&&spinPower>0.45?`🌀 ${n} ${g('סובב','סובבה')} יפה!`
+            :how==='circle'&&spinPower<0.3?`🐢 ${n} ${g('סובב','סובבה')} לאט לאט...`
+            :how==='shake'?`📳 ${n} ${g('נער','ניערה')} את הטלפון!`
+            :how==='clap'?`👏 ${n} ${g('מחא','מחאה')} כפיים — והסביבון הסתובב!`
+            :how==='sing'?`🎤 ${n} ${g('שר','שרה')} — והסביבון הסתובב!`
+            :spinPower>0.85?`💪 ${n} ${g('סיבב','סיבבה')} בכוח עצום!`
+            :spinPower>0.65?`⚡ ${n} ${g('סיבב','סיבבה')} בחוזקה`
+            :spinPower>0.4 ?`👌 ${n} ${g('סיבב','סיבבה')} בינוני`
+            :spinPower>0.2 ?`😅 ${n} ${g('סיבב','סיבבה')} בעצלתיים...`
+            :`😴 ${n} בקושי ${g('הזיז','הזיזה')} את הסביבון`;
         addLog(msg);
     }
     setTimeout(()=>doSpin(),how==='flick'||how==='circle'?0:180);
@@ -1515,7 +1546,7 @@ function startCharge(){
     charging=true;chargeT0=performance.now();
     document.getElementById('powerMeter').classList.remove('hidden');
     document.getElementById('powerClicks').textContent='🎯';
-    document.getElementById('powerLabel').textContent='שחררו בשיא!';
+    document.getElementById('powerLabel').textContent=G2('שחרר בשיא!','שחררי בשיא!');
     document.getElementById('powerFill').classList.add('hot');
     document.getElementById('spinBtn').textContent='שחרר!';
     document.getElementById('dreidelSvg').classList.add('charging');
@@ -1564,13 +1595,17 @@ document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressA
 const SPIN_MODES=['circle','flick','taps','hold','shake','clap','sing'];
 function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
 const PROMPTS={
-    circle:()=>IS_TOUCH?'🌀 שימו אצבע על הסביבון וסובבו במעגלים... ועזבו!':'🌀 התחילו לסובב את העכבר במעגלים... ועצרו!',
-    flick:()=>IS_TOUCH?'✊ החליקו את הסביבון מהר הצידה':'✊ תפסו את הסביבון בעכבר ומשכו מהר הצידה',
-    taps:()=>'👆 לחצו 3 פעמים מהר על "סובב!"'+(IS_TOUCH?'':' (או רווח)'),
-    hold:()=>'🎯 החזיקו את "סובב!" — ושחררו בשיא',
-    shake:()=>'📳 נערו את הטלפון!',
-    clap:()=>MIC.on?'👏 מחאו כפיים 3 פעמים מהר!':'👏 לחצו כאן כדי להפעיל את המיקרופון',
-    sing:()=>!MIC.on?'🎤 לחצו "מתחילים לשיר!" — והמיקרופון יופעל':SING.on?'🎶 ממשיכים לשיר... כשמפסיקים — הוא מסתובב לבד!':SING.armed?'🎶 שירו "סביבון סוב סוב סוב"! (דיבור לא נחשב — רק שירה)':'🎤 לחצו "מתחילים לשיר!" ושירו'
+    circle:()=>IS_TOUCH?G2('🌀 שים אצבע על הסביבון וסובב במעגלים... ועזוב!','🌀 שימי אצבע על הסביבון וסובבי במעגלים... ועזבי!')
+                       :G2('🌀 סובב את העכבר במעגלים... ועצור!','🌀 סובבי את העכבר במעגלים... ועצרי!'),
+    flick:()=>IS_TOUCH?G2('✊ החלק את הסביבון מהר הצידה','✊ החליקי את הסביבון מהר הצידה'):G2('✊ תפוס את הסביבון בעכבר ומשוך מהר הצידה','✊ תפסי את הסביבון בעכבר ומשכי מהר הצידה'),
+    taps:()=>G2('👆 לחץ 3 פעמים מהר על "סובב!"','👆 לחצי 3 פעמים מהר על "סובב!"')+(IS_TOUCH?'':' (או רווח)'),
+    hold:()=>G2('🎯 החזק את "סובב!" — ושחרר בשיא','🎯 החזיקי את "סובב!" — ושחררי בשיא'),
+    shake:()=>G2('📳 נער את הטלפון!','📳 נערי את הטלפון!'),
+    clap:()=>MIC.on?G2('👏 מחא כפיים 3 פעמים מהר!','👏 מחאי כפיים 3 פעמים מהר!'):'👏 לחיצה כאן מפעילה את המיקרופון',
+    sing:()=>!MIC.on?G2('🎤 לחץ "התחל לשיר!" — והמיקרופון יופעל','🎤 לחצי "התחילי לשיר!" — והמיקרופון יופעל')
+        :SING.on?G2('🎶 המשך לשיר... כשתפסיק — הוא יסתובב לבד!','🎶 המשיכי לשיר... כשתפסיקי — הוא יסתובב לבד!')
+        :SING.armed?G2('🎶 שיר בקול: "סביבון סוב סוב סוב"! (רק שירה נחשבת, לא דיבור)','🎶 שירי בקול: "סביבון סוב סוב סוב"! (רק שירה נחשבת, לא דיבור)')
+        :G2('🎤 לחץ "התחל לשיר!" ושיר','🎤 לחצי "התחילי לשיר!" ושירי')
 };
 const CIRCLE={engaged:false,grabbing:false,justLaunched:false,singing:false};
 // refresh the chooser / prompt / idle turning — call whenever the turn or state changes
@@ -1605,17 +1640,32 @@ function fitDreidel(needBtn){
         if(r.bottom>innerHeight||r.top<0)b.scrollIntoView({block:'nearest',behavior:'smooth'})}
 }
 window.addEventListener('resize',()=>{refreshSpinUI.key='';refreshSpinUI()});
-document.getElementById('spinPrompt').addEventListener('click',()=>{const m=spinMode();if((m==='clap'||m==='sing')&&!MIC.on)micStart().then(refreshSpinUI)});
+document.getElementById('spinPrompt').addEventListener('click',()=>{const m=spinMode();if(m==='clap'&&!MIC.on)micStart().then(refreshSpinUI);if(m==='sing')singButton()});
 document.getElementById('spinModes').addEventListener('click',e=>{
     const b=e.target.closest('button[data-m]');if(!b)return;
-    if((b.dataset.m==='clap'||b.dataset.m==='sing')&&!MIC.on)micStart().then(refreshSpinUI);
+    if(b.dataset.m==='clap'&&!MIC.on)micStart().then(refreshSpinUI);
+    if(b.dataset.m!=='clap'&&MIC.on){if(SING.armed)singArm(false);if(!SING.on)micStop()}   // the mic is not needed in this mode → close it
     lsSet('dreidel_spinmode',b.dataset.m);playClickSound();resetSpinUI();refreshSpinUI();
     if(b.dataset.m==='shake'){try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')DeviceMotionEvent.requestPermission().catch(()=>{})}catch(_){}}
 });
 setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal closes, …)
 // ── "נו, משה! תורך!": if the player whose turn it is takes too long, a friendly nudge with their name ──
-const NUDGE={key:'',since:0,count:0,FIRST:15000,EVERY:20000,MAX:3};
-const NUDGE_LINES=['נו {n}! תורך! קדימה!','{n}, הסביבון מחכה לך!','הלו, {n}! תורך לסובב!','{n}, אנחנו מחכים... סובבו!','יאללה {n}, סובבו כבר!'];
+const NUDGE={key:'',since:0,count:0,FIRST:15000,EVERY:20000,MAX:3,SHOW:5000};
+// editable in the settings: one line each, {שם} = the player's name, [אתה|את] = boy | girl
+const NUDGE_DEFAULT='נו {שם}, תורך!\n{שם}, כולם מחכים רק לך!\n{שם}, הסביבון מחכה לך!\n{שם}, תורך לסובב!\nהלו {שם}, [אתה|את] איתנו? תורך!';
+function nudgeCfg(){
+    const num=(id,d,lo,hi)=>{const v=parseFloat(document.getElementById(id)?.value);return isFinite(v)?Math.max(lo,Math.min(hi,v)):d};
+    NUDGE.on=document.getElementById('nudgeOn')?.checked!==false;
+    NUDGE.FIRST=num('nudgeAfter',15,5,300)*1000;NUDGE.SHOW=num('nudgeShow',5,2,30)*1000;NUDGE.MAX=Math.round(num('nudgeTimes',3,1,10));
+    NUDGE.EVERY=Math.max(NUDGE.SHOW+3000,NUDGE.FIRST);
+    const t=(document.getElementById('nudgeLines')?.value||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    return t.length?t:NUDGE_DEFAULT.split('\n');
+}
+setTimeout(()=>{const nl=document.getElementById('nudgeLines');if(nl&&!nl.value.trim())nl.value=NUDGE_DEFAULT},60);
+function nudgeText(line,name){
+    const f=isFemaleName(name);
+    return line.replace(/\{(שם|n)\}/g,name).replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,m,w)=>f?w:m);
+}
 function nudgeTick(){
     const gs=document.getElementById('gameScreen');
     const p=G.players[G.currentTurn];
@@ -1623,17 +1673,18 @@ function nudgeTick(){
     if(key!==NUDGE.key){NUDGE.key=key;NUDGE.since=Date.now();NUDGE.count=0;hideNudge();return}
     const waiting=gs&&!gs.classList.contains('hidden')&&G.players.length&&!G.over&&!spinning&&!TRIVIA.open&&!CIRCLE.engaged&&!CIRCLE.singing&&!charging&&p&&p.alive!==false
         &&!document.querySelector('.modal-bg.show')&&!document.hidden;
-    if(!waiting){NUDGE.since=Date.now();return}                     // the clock only runs while really waiting
+    nudgeCfg();
+    if(!waiting||!NUDGE.on){NUDGE.since=Date.now();return}          // the clock only runs while really waiting
     const due=NUDGE.FIRST+NUDGE.count*NUDGE.EVERY;
     if(NUDGE.count<NUDGE.MAX&&Date.now()-NUDGE.since>=due){NUDGE.count++;showNudge(p)}
 }
 function showNudge(p){
     const name=(p.name||'').trim()||'שחקן';
-    const line=pick(NUDGE_LINES).replace('{n}',name);
+    const line=nudgeText(pick(nudgeCfg()),name);
     let el=document.getElementById('nudgeBubble');
     if(!el){el=document.createElement('div');el.id='nudgeBubble';el.className='nudge-bubble';document.querySelector('.dreidel-controls').prepend(el)}
     el.textContent='👉 '+av(p)+line;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
-    clearTimeout(NUDGE.hideT);NUDGE.hideT=setTimeout(hideNudge,5000);
+    clearTimeout(NUDGE.hideT);NUDGE.hideT=setTimeout(hideNudge,NUDGE.SHOW);
     playSfx(pick(SFX.click),{vol:.7,rate:1.3});
     if(narrOn())speakIn('he',line);
 }
@@ -1692,7 +1743,7 @@ setInterval(nudgeTick,1000);
         clearTimeout(spinClickTimer);spinClicks=0;spinClickTimes=[];
         document.getElementById('powerMeter').classList.remove('hidden');
         document.getElementById('powerClicks').textContent='🌀';
-        document.getElementById('powerLabel').textContent='סובבו... ועצרו!';
+        document.getElementById('powerLabel').textContent=G2('סובב... ועצור!','סובבי... ועצרי!');
         document.getElementById('powerFill').classList.add('hot');
         art.style.transition='none';ring.classList.add('show','wound');
         refreshSpinUI();
@@ -1716,7 +1767,7 @@ setInterval(nudgeTick,1000);
         if(idle>150){                                     // the hand stopped
             const turned=true;                                                // a whole circle was already needed to grab it
             if(recent>MIN_W&&turned&&!CIRCLE.grabbing){launch(recent);return} // it was turning fast → let it fly
-            if(recent<=MIN_W&&Math.abs(acc)>QUARTER)document.getElementById('powerLabel').textContent='מהר יותר... ועצרו!';
+            if(recent<=MIN_W&&Math.abs(acc)>QUARTER)document.getElementById('powerLabel').textContent=G2('מהר יותר... ועצור!','מהר יותר... ועצרי!');
             if(idle>4000&&!CIRCLE.grabbing){letGo();return}                  // nobody is turning it any more
         }
         raf=requestAnimationFrame(tick);
@@ -1787,7 +1838,7 @@ async function micStart(){
         const src=MIC.ctx.createMediaStreamSource(st);MIC.an=MIC.ctx.createAnalyser();MIC.an.fftSize=2048;src.connect(MIC.an);
         MIC.buf=new Float32Array(MIC.an.fftSize);MIC.on=true;micLoop();updateMicBadge();
         return true;
-    }catch(e){uiAlert('אין גישה למיקרופון.\nאפשרו מיקרופון בהגדרות הדפדפן (סמל המנעול ליד הכתובת) ונסו שוב.');return false}
+    }catch(e){uiAlert('אין גישה למיקרופון.\nצריך לאפשר מיקרופון בהגדרות הדפדפן (סמל המנעול ליד הכתובת) ולנסות שוב.');return false}
 }
 function micStop(){
     cancelAnimationFrame(MIC.raf);
@@ -1825,19 +1876,20 @@ function micLoop(){
     // Talking is also "pitched", so what tells singing apart is HELD NOTES: the pitch stays put for ~¼ s.
     // In speech the pitch slides all the time. We want two held notes within 3.5 s, and mostly voiced sound.
     if(++MIC.frame%2===0)MIC.clarity=pitchClarity(b,MIC.ctx.sampleRate);
-    const voiced=rms>Math.max(.015,MIC.noise*3)&&zcr<.15&&MIC.clarity>.7&&MIC.f0>85&&MIC.f0<1000;
+    const voiced=rms>Math.max(.01,MIC.noise*2.2)&&zcr<.18&&MIC.clarity>.6&&MIC.f0>80&&MIC.f0<1100;
     const dtm=MIC.lastT?Math.min(100,now-MIC.lastT):16;MIC.lastT=now;
     if(voiced){
         if(!MIC.voiceStart)MIC.voiceStart=now;MIC.lastVoiced=now;MIC.loud=MIC.loud*.9+rms*.1;
         const st=12*Math.log2(MIC.f0);
-        if(MIC.noteSt&&Math.abs(st-MIC.noteSt)<.7){MIC.noteHold+=dtm;MIC.noteSt=MIC.noteSt*.9+st*.1}
+        if(MIC.noteSt&&Math.abs(st-MIC.noteSt)<1.2){MIC.noteHold+=dtm;MIC.noteSt=MIC.noteSt*.85+st*.15}   // a real voice wobbles (vibrato)
         else{MIC.noteSt=st;MIC.noteHold=0;MIC.noteCounted=false}
-        if(MIC.noteHold>=240&&!MIC.noteCounted){MIC.noteCounted=true;MIC.notes.push(now)}
+        if(MIC.noteHold>=170&&!MIC.noteCounted){MIC.noteCounted=true;MIC.notes.push(now)}
+        if(SING.armed||SING.on)SING.voicedMs=(SING.voicedMs||0)+dtm;
     }else{MIC.noteHold=0;MIC.noteSt=0;MIC.noteCounted=false;if(MIC.voiceStart&&now-MIC.lastVoiced>380)MIC.voiceStart=0}
-    while(MIC.notes.length&&now-MIC.notes[0]>3500)MIC.notes.shift();
+    while(MIC.notes.length&&now-MIC.notes[0]>4000)MIC.notes.shift();
     MIC.vh.push(voiced?1:0);if(MIC.vh.length>90)MIC.vh.shift();          // ~1.5 s of frames
     const vRatio=MIC.vh.reduce((a,x)=>a+x,0)/MIC.vh.length;
-    MIC.singing=MIC.notes.length>=2&&vRatio>=.45;
+    MIC.singing=MIC.notes.length>=2&&vRatio>=.35;
     MIC.raf=requestAnimationFrame(micLoop);
 }
 function onClap(){
@@ -1857,17 +1909,22 @@ function boostSpin(remote){
 
 // ── 🎤 sing mode: the dreidel turns as long as you sing; stop → it flies on. A whole song (10s+) = bonus ──
 const SING={armed:false,armedAt:0,on:false};
-function singArm(v){SING.armed=v;SING.armedAt=performance.now();if(v){MIC.notes=[];MIC.vh=[]}singUI();refreshSpinUI()}
+function singArm(v){SING.armed=v;SING.shownDone=false;SING.armedAt=performance.now();if(v){MIC.notes=[];MIC.vh=[];SING.voicedMs=0}else if(!SING.on&&MIC.on&&spinMode()==='sing')micStop();singUI();refreshSpinUI()}
 function singUI(){
     const b=document.getElementById('singBtn');if(!b)return;
-    b.textContent=SING.on?'⏹ סיימנו — תסתובב!':SING.armed?'⏹ עצרו':'🎤 מתחילים לשיר!';
+    b.textContent=SING.on||(SING.armed&&(SING.voicedMs||0)>=1500)?'⏹ סיימתי — תסתובב!':SING.armed?G2('⏹ עצור','⏹ עצרי'):G2('🎤 התחל לשיר!','🎤 התחילי לשיר!');
     b.classList.toggle('armed',SING.armed||SING.on);
     document.querySelector('.dreidel-controls').classList.toggle('sing-live',SING.armed||SING.on);
 }
 async function singButton(){
     unlockAudio();
     if(SING.on){window._singStop&&window._singStop(true);return}          // stop now and let it fly with what was sung
-    if(SING.armed){singArm(false);return}                                  // stop listening
+    if(SING.armed){                                                        // armed but the song wasn't recognized:
+        const sec=(SING.voicedMs||0)/1000;                                   // if there was real voice, spin by how long it lasted
+        if(sec>=1.5&&canSpinNow()){SING.armed=false;singUI();const power=Math.max(.2,Math.min(1,.2+Math.min(.6,sec/12)));
+            playWhoosh(power);spinFromInput(power,'sing',{singSec:Math.round(sec),skill:sec>=10?'song':null});
+            setTimeout(()=>{if(MIC.on&&spinMode()==='sing')micStop()},300);return}
+        singArm(false);return}                                               // nothing sung → just stop listening
     if(!canSpinNow())return;
     if(!MIC.on){const ok=await micStart();if(!ok)return}
     singArm(true);
@@ -1882,11 +1939,12 @@ async function singButton(){
         if(spinMode()!=='sing'||!MIC.on){if(on)stop(false);if(SING.armed)singArm(false);return}
         if(!on){
             if(SING.armed&&(!canSpinNow()||performance.now()-SING.armedAt>25000)){singArm(false);return}   // turn passed / nobody sang
+            if(SING.armed&&(SING.voicedMs||0)>=1500&&!SING.shownDone){SING.shownDone=true;singUI()}
             if(SING.armed&&MIC.singing&&canSpinNow()){on=true;SING.on=true;singUI();CIRCLE.singing=true;start=performance.now();phase=0;last=t;loudSum=0;n=0;
                 if(window._idleTurn)window._idleTurn(false);resetDreidel();face=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shown=face;
                 art.style.transition='none';
                 document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='🎤';
-                document.getElementById('powerLabel').textContent='🎶 ממשיכים לשיר!';document.getElementById('powerFill').classList.add('hot');
+                document.getElementById('powerLabel').textContent=G2('🎶 המשך לשיר!','🎶 המשיכי לשיר!');document.getElementById('powerFill').classList.add('hot');
                 document.querySelector('.dreidel-controls').classList.remove('can-spin')}
             return;
         }
@@ -1897,11 +1955,12 @@ async function singButton(){
         if(singingNow){loudSum+=MIC.loud;n++}
         const sec=(MIC.lastVoiced-start)/1000;
         document.getElementById('powerFill').style.width=Math.min(100,sec*10).toFixed(0)+'%';
-        if(sec>=10)document.getElementById('powerLabel').textContent='🎤 שיר שלם! עוד קצת... ועצרו';
+        if(sec>=10)document.getElementById('powerLabel').textContent=G2('🎤 שיר שלם! עוד קצת... ועצור','🎤 שיר שלם! עוד קצת... ועצרי');
         if(performance.now()-MIC.lastVoiced>900)stop(true);                // the song ended → let it fly
     }
     function stop(launch){
-        on=false;SING.on=false;SING.armed=false;singUI();CIRCLE.singing=false;document.getElementById('powerFill').classList.remove('hot');art.style.transform='';if(!launch)d3Settle();
+        on=false;SING.on=false;SING.armed=false;singUI();CIRCLE.singing=false;
+        if(MIC.on&&spinMode()==='sing')setTimeout(()=>{if(!SING.armed&&!SING.on)micStop()},300);   // done singing → the microphone is closeddocument.getElementById('powerFill').classList.remove('hot');art.style.transform='';if(!launch)d3Settle();
         if(!launch||!canSpinNow()){resetSpinUI();return}
         const sec=Math.max(0,(MIC.lastVoiced-start)/1000),loud=n?loudSum/n:0;
         if(sec<1.2){resetSpinUI();refreshSpinUI();return}                    // hardly sang — no spin
@@ -1953,7 +2012,7 @@ function showTrivia(item,order,who,mine){
     TRIVIA.open=true;refreshSpinUI();
     const q=String(item.q),ans=item.ans.map(String),lvl=[1,2,3].includes(item.lvl)?item.lvl:2,qi=item;
     order=(Array.isArray(order)?order:[]).filter(i=>i>=0&&i<ans.length);if(order.length!==ans.length)order=ans.map((_,i)=>i);
-    document.getElementById('triviaWho').innerHTML=esc(mine?`שאלת חנוכה ל${who}! תשובה נכונה = מטבעות בונוס 🎁`:`שאלת חנוכה ל${who} — מחכים לתשובה...`)+`<span class="trivia-lvl">${LEVELS[lvl]}</span>`;
+    document.getElementById('triviaWho').innerHTML=esc(mine?`שאלת חנוכה ל${who}! תשובה נכונה = מטבעות בונוס 🎁`:`שאלת חנוכה ל${who} — כולם מחכים לתשובה...`)+`<span class="trivia-lvl">${LEVELS[lvl]}</span>`;
     document.getElementById('triviaQ').textContent=q;
     document.getElementById('triviaMsg').textContent='';
     const box=document.getElementById('triviaA');
@@ -2699,7 +2758,7 @@ let HE_VOICE=null;
 if(window.speechSynthesis){findVoices();speechSynthesis.onvoiceschanged=findVoices}
 // {n} = the player's name (Hebrew only), {L} = פה / שין
 const NARR_PHRASES={
-    he:{'ג':['יששש! הכל ל{n}!','וואו! כל הקופה! איזה כיף!','הכל שלך! הידד!','{n} לוקח את כל הקופה!'],
+    he:{'ג':['יששש! הכל ל{n}!','וואו! כל הקופה! איזה כיף!','הכל שלך! הידד!','{n} {takes} את כל הקופה!'],
         'ה':['חצי בשבילך! יופי!','יופי טופי, חצי קופה!','חצי קופה! הידד!','חצי! לא רע בכלל!'],
         'נ':['אוף, כלום הפעם','כלום! לא נורא, ממשיכים!','נו, באמת... כלום','כלום! התור עובר'],
         'פ':['אוי! משלמים לקופה!','אופס, אחד לקופה','אוי ואבוי, צריך לשלם!','משלמים! לא נורא, בפעם הבאה']},
@@ -2750,7 +2809,7 @@ function narrate(letter,name,force){
     const set=NARR_PHRASES[lang];
     const list=(shin&&set['ש'])?set['ש']:set[letter];   // the lines no longer name the letter
     const p=pick(list||NARR_PHRASES.he[letter]||['']);
-    speakIn(lang,p.replace('{n}',lang==='he'?(name||''):'').replace('{L}',shin?'שין':'פה'));
+    speakIn(lang,p.replace('{n}',lang==='he'?(name||''):'').replace('{takes}',isFemaleName(name)?'לוקחת':'לוקח').replace('{L}',shin?'שין':'פה'));
 }
 function testNarrator(){unlockAudio();narrate(pick(['ג','ה','נ','פ']),'')}
 // listen to each language: one button per language this device can speak; each click = the next letter
@@ -2819,7 +2878,7 @@ let _unlocked=false;
 function unlockAudio(){
     if(_unlocked)return;_unlocked=true;
     getAudioCtx();preloadSfx();
-    setTimeout(()=>{const m=spinMode();if((m==='clap'||m==='sing')&&!MIC.on)micStart().then(refreshSpinUI)},0);
+    setTimeout(()=>{const m=spinMode();if(m==='clap'&&!MIC.on)micStart().then(refreshSpinUI)},0);   // sing opens the mic with its own button
     try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function'&&IS_TOUCH)DeviceMotionEvent.requestPermission().catch(()=>{})}catch(e){}
 }
 document.addEventListener('pointerdown',unlockAudio,{passive:true});
@@ -2871,7 +2930,7 @@ function payToPot(p,amt,showChange){
 }
 // Every alive player antes (a family in shared scoring pays once per member)
 function anteAll(){G.players.forEach(pl=>{if(pl.alive)payToPot(pl,G.ante,false)})}
-function eliminate(){G.players.forEach(pl=>{if(pl.alive&&pl.amount<=0){pl.alive=false;pl.amount=0;addLog(`💀 ${pl.name} יצא!`)}})}
+function eliminate(){G.players.forEach(pl=>{if(pl.alive&&pl.amount<=0){pl.alive=false;pl.amount=0;addLog(`💀 ${pl.name} ${isFemaleName(pl.name)?'יצאה':'יצא'}!`)}})}
 function updateFamScores(){
     if(G.scoringMode==='both'&&G.familyScores){
         G.families.forEach(f=>{G.familyScores[f.id]=G.players.filter(pl=>pl.family===f.id&&pl.alive).reduce((s,pl)=>s+pl.amount,0)});
@@ -2908,7 +2967,7 @@ function applyLetter(l,ex){
         case'נ':p.change='—';addLog(`${p.name} ← נ׳ — כלום.`);break;
         case'ג':{
             const w=G.pot;G.pot=0;adjust(p,w,true);took=w;
-            addLog(`${p.name} ← ג׳ — לקח ${w}! 🎉`);
+            addLog(`${p.name} ← ג׳ — ${isFemaleName(p.name)?'לקחה':'לקח'} ${w}! 🎉`);
             anteAll();addLog(`כולם שמו ${G.ante} בקופה.`);break;
         }
         case'ה':{
@@ -2917,7 +2976,7 @@ function applyLetter(l,ex){
         }
         case'פ':{
             paid=payToPot(p,G.ante,true);
-            addLog(`${p.name} ← {P}׳ — שילם ${paid}.`);break; // {P} → פ or ש, per device
+            addLog(`${p.name} ← {P}׳ — ${isFemaleName(p.name)?'שילמה':'שילם'} ${paid}.`);break; // {P} → פ or ש, per device
         }
     }
 
@@ -2932,7 +2991,7 @@ function applyLetter(l,ex){
         if(l==='ג'&&took)giveBonus(p,took,'✨ נס גדול! גימל כפול —');
         else if(l==='ה'&&took)giveBonus(p,took,'✨ נס גדול! חצי כפול —');
         else if(l==='נ')giveBonus(p,G.ante,'✨ נס גדול! נון שווה מטבעות —');
-        else if(l==='פ'&&paid){G.pot-=paid;adjust(p,paid,false);addLog(`✨ נס גדול! ${p.name} לא משלם הפעם`)}
+        else if(l==='פ'&&paid){G.pot-=paid;adjust(p,paid,false);addLog(`✨ נס גדול! ${p.name} לא ${isFemaleName(p.name)?'משלמת':'משלם'} הפעם`)}
     }
     // ── streaks ──
     G.streaks=G.streaks||{};
@@ -3042,18 +3101,19 @@ function showWinner(){
         document.getElementById('winIcon').textContent='⏰';
         document.getElementById('winSub').textContent=names.length>1?'הזמן נגמר — חולקים את הניצחון':'הזמן נגמר — הכי הרבה מטבעות!';
     }else{
-        winText=(G.scoringMode==='family'&&alive[0]?.family)?'🎉 משפחת '+(G.families.find(f=>f.id===alive[0].family)?.name||'?')+' ניצחה!':'🎉 '+alive[0].name+' ניצח!';
+        winText=(G.scoringMode==='family'&&alive[0]?.family)?'🎉 משפחת '+(G.families.find(f=>f.id===alive[0].family)?.name||'?')+' ניצחה!':'🎉 '+alive[0].name+(isFemaleName(alive[0].name)?' ניצחה!':' ניצח!');
         document.getElementById('winIcon').textContent='🏆';
-        document.getElementById('winSub').textContent='ניצח את המשחק!';
+        document.getElementById('winSub').textContent=(G.scoringMode==='family'&&alive[0]?.family)?'ניצחו את המשחק!':isFemaleName(alive[0]?.name)?'ניצחה את המשחק!':'ניצח את המשחק!';
     }
     // 🏅 titles — everyone gets a moment
     const st=G.stats||{},titles=[];
+    const TITLE_F={gimel:'👑 מלכת הגימל',maxPower:'💪 המסובבת החזקה',sing:'🎤 הזמרת של הערב',bonus:'🎁 ציידת הבונוסים',nun:'😅 אלופת הנון',pe:'💸 התורמת הנדיבה'};
     // spread the titles: each goes to the best among those with the fewest titles so far
     const got={};
     const best=k=>{let b=null,bk=null;G.players.forEach(p=>{const v=(st[p.id]||{})[k]||0;if(v<=0)return;const key=[-(got[p.id]||0),v];
         if(!b||key[0]>bk[0]||(key[0]===bk[0]&&key[1]>bk[1])){b=p;bk=key}});return b};
     [['gimel','👑 מלך הגימל'],['maxPower','💪 המסובב החזק'],['sing','🎤 הזמר של הערב'],['bonus','🎁 צייד הבונוסים'],['nun','😅 אלוף הנון'],['pe','💸 התורם הנדיב']]
-        .forEach(([k,label])=>{const p=best(k);if(p){got[p.id]=(got[p.id]||0)+1;titles.push(`${label} — ${esc(p.name)}`)}});
+        .forEach(([k,label])=>{const p=best(k);if(p){got[p.id]=(got[p.id]||0)+1;titles.push(`${isFemaleName(p.name)?(TITLE_F[k]||label):label} — ${esc(p.name)}`)}});
     document.getElementById('winTitles').innerHTML=titles.map(t=>`<div>${t}</div>`).join('');
     const can=canRematch();
     document.getElementById('rematchBtn').classList.toggle('hidden',!can);
