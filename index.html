@@ -494,8 +494,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                 </div>
                 <div class="waiting-text hidden" id="waitingMsg">ממתין לתור...</div>
                 <div class="key-hint">
-                    <span class="hint-desk">🌀 סובבו את העכבר במעגלים סביב הסביבון — ועזבו! · או גררו אותו הצידה · או 3 לחיצות · או החזיקו ושחררו בשיא · או <kbd>רווח</kbd></span>
-                    <span class="hint-touch">🌀 סובבו באצבע במעגלים על הסביבון — ועזבו! · או החליקו אותו · או 3 לחיצות · או החזיקו ושחררו · או נערו 📳</span>
+                    <span class="hint-desk">✊ תפסו את הסביבון בעכבר, סובבו במעגלים — ועזבו! · או משכו אותו הצידה · או 3 לחיצות על "סובב" · או החזיקו ושחררו בשיא · או <kbd>רווח</kbd></span>
+                    <span class="hint-touch">✊ שימו אצבע על הסביבון, סובבו במעגלים — ועזבו! · או החליקו אותו · או 3 לחיצות · או החזיקו ושחררו · או נערו 📳</span>
                 </div>
             </div>
             <div class="players-area" id="playersArea"></div>
@@ -559,7 +559,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v34';
+const APP_VERSION='v35';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1253,122 +1253,124 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressAt){e.preventDefault();pressEnd()}}});
 
-// ── Grab the dreidel and flick it sideways (mouse or finger). Speed = power ──
-(function wireFlick(){
-    const art=document.getElementById('dreidelSvg');let drag=null;
-    art.addEventListener('pointerdown',e=>{
-        if(!canSpinNow()||charging)return;
-        e.preventDefault();
-        try{art.setPointerCapture(e.pointerId)}catch(_){}
+// ── Grab the dreidel: press on it and move the mouse/finger in circles — the dreidel turns WITH your hand
+//    (one circle = one full turn). Let go and it keeps spinning from the momentum.
+//    A quick sideways pull without circling = a "flick". Circling without pressing also works (touchpad). ──
+const CIRCLE={engaged:false,grabbing:false,justLaunched:false};
+(function wireGrab(){
+    const art=document.getElementById('dreidelSvg'),ring=document.getElementById('spinRing'),box=art.parentElement;
+    const TURN=Math.PI*2,QUARTER=Math.PI/2;
+    let lastA=null,acc=0,samples=[],lastMove=0,flickPts=[],x0=0,faceAtGrab=0,shownFace=-1,hover=false,raf=0,peak=0;
+    // centre measured on the (never-rotated) scale box — the dreidel may still be lying tilted from the last fall
+    function center(){const r=box.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height*.56,r.height]}
+    function omega(win){const now=performance.now();let sum=0;for(const [t,d] of samples)if(now-t<=win)sum+=d;return sum/(win/1000)}
+    function clear(){lastA=null;acc=0;samples=[];peak=0;shownFace=-1;ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
+    // draw the dreidel at rotation `acc` (radians): each quarter turn brings the next face to the front
+    function drawRotation(){
+        const ph=acc/QUARTER, idx=Math.floor(ph+.5), q=ph-Math.floor(ph);
+        const f=((faceAtGrab+idx)%4+4)%4;
+        if(f!==shownFace){if(shownFace>=0)playSfx(pick(SFX.tick),{vol:.18,rate:1+Math.min(.4,Math.abs(omega(200))/60)});shownFace=f;setFace(FACE_ORDER[f],false)}
+        art.style.transform=`scaleX(${Math.max(.05,Math.abs(Math.cos(Math.PI*q))).toFixed(3)})`;
+        ring.style.setProperty('--a',((acc*180/Math.PI)%360).toFixed(0)+'deg');
+        const p=Math.min(1,Math.abs(omega(250))/22);
+        document.getElementById('powerFill').style.width=Math.round(p*100)+'%';
+        chargeTone(p>.05,p);
+    }
+    function track(e){
+        const [cx,cy]=center(),dx=e.clientX-cx,dy=e.clientY-cy;
+        if(Math.hypot(dx,dy)<14)return;                  // right on the centre — the angle is just noise
+        const a=Math.atan2(dy,dx),now=performance.now();
+        if(lastA!==null){
+            let d=a-lastA;if(d>Math.PI)d-=TURN;if(d<-Math.PI)d+=TURN;
+            if(Math.abs(d)<1.6){acc+=d;samples.push([now,d]);while(samples.length&&now-samples[0][0]>500)samples.shift()}
+        }
+        lastA=a;lastMove=now;
+    }
+    function startTurning(){
+        resetDreidel();                                   // stand it up if it is still lying from the last spin
+        faceAtGrab=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shownFace=faceAtGrab;
         clearTimeout(spinClickTimer);spinClicks=0;spinClickTimes=[];
-        drag={x0:e.clientX,pts:[[e.clientX,performance.now()]]};
+        document.getElementById('powerMeter').classList.remove('hidden');
+        document.getElementById('powerClicks').textContent='🌀';
+        document.getElementById('powerLabel').textContent='סובבו... ועזבו!';
+        document.getElementById('powerFill').classList.add('hot');
+        art.style.transition='none';ring.classList.add('show','wound');
+    }
+    function finishTurning(){chargeTone(false);document.getElementById('powerFill').classList.remove('hot');ring.classList.remove('show','wound')}
+    function launch(w){
+        CIRCLE.engaged=false;CIRCLE.justLaunched=true;setTimeout(()=>CIRCLE.justLaunched=false,400);
+        cancelAnimationFrame(raf);finishTurning();art.style.transform='';
+        const power=Math.max(.12,Math.min(1,(w-3)/16));  // 1 turn/s ≈ .2 · 2 turns/s ≈ .6 · 3 turns/s = full
+        clear();playWhoosh(power);spinFromInput(power,'circle');
+    }
+    function settleBack(){ // let go too slowly — it just stops where it is
+        cancelAnimationFrame(raf);finishTurning();CIRCLE.engaged=false;
+        art.style.transition='transform .25s ease-out';art.style.transform='';
+        if(shownFace>=0)setFace(FACE_ORDER[shownFace],false);
+        clear();
+        floatText(art,'סובבו מהר יותר! 🌀','minus');
+        setTimeout(()=>resetSpinUI(),300);
+    }
+
+    // ── GRAB: press on the dreidel ──
+    art.addEventListener('pointerdown',e=>{
+        if(!canSpinNow()||charging||e.button>0)return;
+        e.preventDefault();try{art.setPointerCapture(e.pointerId)}catch(_){}
+        clear();CIRCLE.grabbing=true;CIRCLE.engaged=false;
+        x0=e.clientX;flickPts=[[e.clientX,performance.now()]];
         art.classList.add('grabbing');art.style.transition='none';
+        track(e);
     });
     art.addEventListener('pointermove',e=>{
-        if(!drag||CIRCLE.engaged)return;
-        const now=performance.now();drag.pts.push([e.clientX,now]);
-        while(drag.pts.length>2&&now-drag.pts[0][1]>140)drag.pts.shift();
-        const dx=e.clientX-drag.x0;
-        art.style.transform=`rotate(${Math.max(-28,Math.min(28,dx*.22)).toFixed(1)}deg)`;
+        if(!CIRCLE.grabbing)return;
+        track(e);
+        const now=performance.now();flickPts.push([e.clientX,now]);while(flickPts.length>2&&now-flickPts[0][1]>140)flickPts.shift();
+        if(!CIRCLE.engaged&&Math.abs(acc)>QUARTER*.6){CIRCLE.engaged=true;startTurning()}  // started turning it
+        if(CIRCLE.engaged)drawRotation();
+        else art.style.transform=`rotate(${Math.max(-28,Math.min(28,(e.clientX-x0)*.22)).toFixed(1)}deg)`; // tilt while pulling
     });
-    const end=e=>{
-        if(!drag)return;
-        const d=drag;drag=null;art.classList.remove('grabbing');
-        if(CIRCLE.engaged||CIRCLE.justLaunched){return}             // that was a circular wind-up, not a flick
-        const now=performance.now();d.pts.push([e.clientX,now]);
-        const first=d.pts[0],last=d.pts[d.pts.length-1],dt=Math.max(1,last[1]-first[1]);
-        const speed=Math.abs(last[0]-first[0])/dt;           // px per ms over the last ~140ms
-        const total=Math.abs(e.clientX-d.x0);
-        if(total<25||speed<0.25||!canSpinNow()){             // too gentle — snap back
+    const release=e=>{
+        if(!CIRCLE.grabbing)return;
+        CIRCLE.grabbing=false;art.classList.remove('grabbing');
+        if(CIRCLE.engaged){
+            const w=Math.abs(omega(160));                   // how fast the hand was turning when it let go
+            if(w>3)launch(w);else settleBack();
+            return;
+        }
+        // no circling — maybe a sideways flick
+        const now=performance.now();flickPts.push([e.clientX,now]);
+        const f=flickPts[0],l=flickPts[flickPts.length-1],speed=Math.abs(l[0]-f[0])/Math.max(1,l[1]-f[1]),total=Math.abs(e.clientX-x0);
+        clear();
+        if(total<25||speed<0.25||!canSpinNow()){
             art.style.transition='transform .35s cubic-bezier(.3,1.6,.5,1)';art.style.transform='';
             if(total>=25)floatText(art,'מהר יותר! 💨','minus');
             return;
         }
         const power=Math.max(.1,Math.min(1,(speed-0.2)/1.5));
-        playWhoosh(power);
-        spinFromInput(power,'flick');
+        playWhoosh(power);spinFromInput(power,'flick');
     };
-    art.addEventListener('pointerup',end);art.addEventListener('pointercancel',end);
-})();
+    art.addEventListener('pointerup',release);art.addEventListener('pointercancel',release);
 
-// ── Wind it up: move the mouse (or a finger, or the touchpad) in circles around the dreidel,
-//    then stop — it keeps spinning from the momentum. No click needed for a mouse/touchpad. ──
-const CIRCLE={engaged:false,justLaunched:false};
-(function wireCircle(){
-    const art=document.getElementById('dreidelSvg'),ring=document.getElementById('spinRing');
-    const TURN=Math.PI*2, NEED=TURN*1.0;      // one full circle before it "catches"
-    let lastA=null,acc=0,samples=[],lastMove=0,phase=0,lastFrame=0,face=0,raf=0,peak=0,lastPress=false;
-    // measured on the (never-rotated) scale box — the dreidel itself may still be lying tilted from the last fall
-    const box=art.parentElement;
-    function center(){const r=box.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height*.56,r.height]}
-    function reset(){lastA=null;acc=0;samples=[];peak=0;ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
-    function omega(win){ // rad/s over the last `win` ms (signed)
-        const now=performance.now();let sum=0;for(const [t,d] of samples)if(now-t<=win)sum+=d;return sum/(win/1000)}
+    // ── No press (mouse hover / touchpad): circling around it also winds it up; stop to let go ──
     document.addEventListener('pointermove',e=>{
-        if(e.pointerType==='touch'&&!e.buttons&&!e.pressure)return;          // fingers only count while touching
-        if(!canSpinNow()||charging){if(!CIRCLE.engaged)reset();return}
-        const [cx,cy,h]=center(),dx=e.clientX-cx,dy=e.clientY-cy,dist=Math.hypot(dx,dy);
-        const R=Math.max(170,h*.95);
-        if(dist>R){if(CIRCLE.engaged)launch();else reset();return}
-        if(dist<18){return}                                                   // too close to the centre — angle is noise
-        const a=Math.atan2(dy,dx),now=performance.now();
-        if(lastA!==null){
-            let d=a-lastA;if(d>Math.PI)d-=TURN;if(d<-Math.PI)d+=TURN;
-            if(Math.abs(d)<1.4){
-                if(acc!==0&&Math.sign(d)!==Math.sign(acc))acc*=.6;              // changed direction — lose some wind
-                acc+=d;samples.push([now,d]);while(samples.length&&now-samples[0][0]>500)samples.shift();
-            }
+        if(CIRCLE.grabbing||e.pointerType==='touch')return;
+        if(!canSpinNow()||charging){if(hover){hover=false;if(CIRCLE.engaged)settleBack();else clear()}return}
+        const [cx,cy,h]=center(),dist=Math.hypot(e.clientX-cx,e.clientY-cy),R=Math.max(170,h*.95);
+        if(dist>R){if(hover){hover=false;if(CIRCLE.engaged)launchOrSettle();else clear()}return}
+        hover=true;track(e);
+        if(!CIRCLE.engaged){
+            const prog=Math.min(1,Math.abs(acc)/TURN);
+            ring.classList.toggle('show',prog>.15);ring.style.setProperty('--p',prog.toFixed(3));
+            if(Math.abs(acc)>=TURN){CIRCLE.engaged=true;acc=0;startTurning();raf=requestAnimationFrame(hoverTick)}  // a full circle — now it follows
         }
-        lastA=a;lastMove=now;
-        if(Math.abs(acc)>Math.PI)peak=Math.max(peak,Math.abs(omega(300)));   // fastest winding so far
-        const prog=Math.min(1,Math.abs(acc)/NEED);
-        if(prog>.15)ring.classList.add('show');
-        ring.style.setProperty('--p',prog.toFixed(3));
-        if(!CIRCLE.engaged&&Math.abs(acc)>=NEED)engage();
     },{passive:true});
-    function engage(){
-        CIRCLE.engaged=true;ring.classList.add('wound');
-        resetDreidel();                                   // stand it up if it is still lying from the last spin
-        clearTimeout(spinClickTimer);spinClicks=0;spinClickTimes=[];
-        document.getElementById('powerMeter').classList.remove('hidden');
-        document.getElementById('powerClicks').textContent='🌀';
-        document.getElementById('powerLabel').textContent='עוד... ועזבו!';
-        document.getElementById('powerFill').classList.add('hot');
-        art.style.transition='none';
-        lastFrame=performance.now();phase=0;face=FACE_ORDER.indexOf(CURRENT_FACE||'נ');if(face<0)face=0;
-        raf=requestAnimationFrame(tick);
+    function launchOrSettle(){const w=Math.max(peak,Math.abs(omega(300)));if(w>3)launch(w);else settleBack()}
+    function hoverTick(){
+        if(!CIRCLE.engaged||CIRCLE.grabbing)return;
+        drawRotation();peak=Math.max(peak*.99,Math.abs(omega(250)));
+        if(performance.now()-lastMove>140||Math.abs(omega(180))<2.5){launchOrSettle();return}  // the hand stopped → let go
+        raf=requestAnimationFrame(hoverTick);
     }
-    function tick(t){
-        if(!CIRCLE.engaged)return;
-        const dt=Math.min(50,t-lastFrame)/1000;lastFrame=t;
-        const w=Math.abs(omega(300));peak=Math.max(peak*.99,w);
-        // live spin: faces turn with the hand
-        phase+=w*dt*0.55;
-        while(phase>=1){phase-=1;face=(face+1)%4;setFace(FACE_ORDER[face],false);playSfx(pick(SFX.tick),{vol:.15,rate:1+Math.min(.4,w/60)})}
-        art.style.transform=`scaleX(${Math.max(.05,Math.abs(Math.cos(Math.PI*phase))).toFixed(3)})`;
-        ring.style.setProperty('--a',(((acc*180/Math.PI)%360)).toFixed(0)+'deg');
-        const p=Math.min(1,w/26);
-        document.getElementById('powerFill').style.width=Math.round(p*100)+'%';
-        chargeTone(true,p);
-        // stopped circling? (no movement, or hardly any turning in the last 180ms) → let go
-        const idle=performance.now()-lastMove>140, slow=Math.abs(omega(180))<2.5;
-        if(idle||slow){launch();return}
-        raf=requestAnimationFrame(tick);
-    }
-    function launch(){
-        if(!CIRCLE.engaged)return;
-        CIRCLE.engaged=false;cancelAnimationFrame(raf);chargeTone(false);
-        CIRCLE.justLaunched=true;setTimeout(()=>CIRCLE.justLaunched=false,400);
-        document.getElementById('powerFill').classList.remove('hot');
-        art.style.transform='';
-        const power=Math.max(.12,Math.min(1,(peak-3)/19));        // 1 turn/s ≈ .17 · 2 turns/s ≈ .5 · 3.5 turns/s = full
-        reset();
-        playWhoosh(power);
-        spinFromInput(power,'circle');
-    }
-    // a finger lifted mid-wind = let go
-    document.addEventListener('pointerup',()=>{if(CIRCLE.engaged)launch();else if(!drag_in_progress())reset()});
-    function drag_in_progress(){return false}
 })();
 
 // ── Shake the phone (touch devices) ──
