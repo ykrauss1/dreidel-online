@@ -196,6 +196,8 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 @keyframes up{0%{transform:rotate(0)}100%{transform:rotate(0)}}
 .result-line{font-size:.85rem;font-weight:600;min-height:22px;text-align:center;white-space:nowrap;margin-top:6px;margin-bottom:4px}
 .result-line{transition:opacity .6s}.result-line.fade{opacity:0}
+.sing-friend{position:absolute;left:50%;top:38%;width:64px;height:auto;pointer-events:none;opacity:0;transition:opacity .4s;filter:drop-shadow(0 6px 6px rgba(0,0,0,.45))}
+.sing-friend.in{opacity:1}
 .nudge-bubble{position:absolute;left:50%;top:-8px;transform:translate(-50%,-100%) scale(.6);opacity:0;pointer-events:none;z-index:30;white-space:nowrap;background:linear-gradient(180deg,#ffd966,#e0a92a);color:#1a1300;font-family:'Secular One',sans-serif;font-size:1.15rem;padding:8px 18px;border-radius:22px;box-shadow:0 6px 24px rgba(0,0,0,.5);transition:opacity .3s,transform .3s cubic-bezier(.3,1.6,.5,1)}
 .nudge-bubble.show{opacity:1;transform:translate(-50%,-100%) scale(1);animation:nudgeWiggle .5s .3s 2}
 @keyframes nudgeWiggle{25%{transform:translate(-50%,-100%) rotate(-4deg)}75%{transform:translate(-50%,-100%) rotate(4deg)}}
@@ -340,7 +342,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 /* Modal */
 .editor-wrap{position:fixed;inset:0;z-index:1100;background:#0b0e1f}.editor-wrap iframe{width:100%;height:100%;border:0;display:block}
 .settings-panel{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}.settings-panel::-webkit-scrollbar{width:8px}.settings-panel::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
-.sp-sec{border-bottom:1px solid var(--border);padding:8px 0}.sp-sec:last-child{border-bottom:none}
+.sp-sec{border-bottom:1px solid var(--border);padding:8px 0}
+.sp-admin>summary::before{content:'🔒 ';font-size:.7rem}.admin-open .sp-admin>summary::before{content:'🔓 '}
+.sp-admin .admin-body{display:none}.admin-open .sp-admin .admin-body{display:block}
+.admin-lock{font-size:.75rem;line-height:1.6;background:var(--bg-input);border:1px solid var(--border-l);border-radius:10px;padding:8px;margin:6px 0}
+.admin-lock input{width:90px;background:var(--bg-card);color:var(--text);border:1px solid var(--border-l);border-radius:6px;padding:3px 6px;margin:0 4px;letter-spacing:3px;text-align:center}
+.admin-state{font-size:.7rem;font-weight:400;color:var(--text-dim);margin-inline-start:6px;cursor:pointer}.sp-sec:last-child{border-bottom:none}
 .sp-sec>summary{cursor:pointer;color:var(--gold);font-weight:700;font-size:.8rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
 .sp-sec>summary::-webkit-details-marker{display:none}.sp-sec>summary::after{content:'◂';color:var(--text-dim);transition:transform .2s}.sp-sec[open]>summary::after{transform:rotate(-90deg)}
 .sp-sec[open]>summary{margin-bottom:8px}
@@ -663,12 +670,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <button onclick="tuneClose()" title="סגור">✕</button>
 </div>
 <div class="settings-panel hidden" id="settingsPanel">
-  <h4>⚙️ הגדרות <button onclick="closeSettings()" aria-label="סגור" title="סגור (Esc)">✕</button></h4>
+  <div class="admin-lock hidden" id="adminLock"></div>
+  <h4>⚙️ הגדרות <span class="admin-state" id="adminState"></span><button onclick="closeSettings()" aria-label="סגור" title="סגור (Esc)">✕</button></h4>
   <details class="sp-sec" open><summary>🔊 צלילים וקריין</summary>
   <label class="sound-toggle"><input type="checkbox" id="soundOn" checked> 🔊 צלילים</label>
   <label class="sound-toggle"><input type="checkbox" id="narratorOn" checked> 🗣️ קריין ילד (מכריז את התוצאה)</label>
   <div class="settings-row"><select id="narratorLang" class="input" style="padding:5px 8px;font-size:.8rem;flex:1"><option value="mix">🌍 עברית, ולפעמים אנגלית, צרפתית, רוסית, יידיש, אמהרית</option><option value="he">עברית בלבד</option></select><button class="btn btn-sm btn-outline" type="button" onclick="testNarrator()" title="להשמיע דוגמה">🔈</button></div>
-  <label class="sound-toggle"><input type="checkbox" id="clapBoostOn" checked> 👏 מחיאות כפיים מאריכות את הסיבוב (כשהמיקרופון פעיל)</label>
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
   <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
   </details>
@@ -676,7 +683,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <div style="font-size:.65rem;color:var(--text-dim);margin:4px 0">כל לחיצה על ⏺ מוסיפה הקלטה (עד 5 שניות). אפשר כמה הקלטות לכל תוצאה — הקריין יבחר ביניהן. נשמר במכשיר הזה.</div>
     <div id="myRecRows"></div>
   </details>
-  <details class="sp-sec"><summary>⏰ תזכורת לשחקן שמתמהמה</summary>
+  <details class="sp-sec sp-admin"><summary>⏰ תזכורת לשחקן שמתמהמה</summary><div class="admin-body">
   <label class="sound-toggle"><input type="checkbox" id="nudgeOn" checked> להזכיר לשחקן שתורו הגיע</label>
   <div class="settings-row nudge-nums"><label>מופיעה אחרי <input type="number" id="nudgeAfter" min="5" max="300" value="15"> שנ׳</label>
     <label>מוצגת <input type="number" id="nudgeShow" min="2" max="30" value="5"> שנ׳</label>
@@ -684,21 +691,22 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <div style="font-size:.65rem;color:var(--text-dim);margin:6px 0 3px">ההודעות — שורה לכל הודעה. <b>{שם}</b> = שם השחקן. <b>[אתה|את]</b> = לבן | לבת.</div>
   <textarea id="nudgeLines" class="nudge-lines" rows="5" dir="rtl"></textarea>
   <button type="button" class="btn btn-sm btn-outline" style="margin-top:4px" onclick="document.getElementById('nudgeLines').value=NUDGE_DEFAULT;saveSettings()">↺ ברירת המחדל</button>
-  </details>
-  <details class="sp-sec"><summary>❓ שאלות חנוכה</summary>
+  </div></details>
+  <details class="sp-sec sp-admin"><summary>❓ שאלות חנוכה</summary><div class="admin-body">
   <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
   <button class="btn btn-outline btn-sm" type="button" style="width:100%;margin-top:6px" onclick="openTriviaEditor()">✏️ צפייה ועריכה של השאלות</button>
-  </details>
+  </div></details>
   <details class="sp-sec"><summary>🎨 צבעי פאות הסביבון</summary>
   <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun"   value="#3a3a7a" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אפור-כחול</span></div>
   <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1e6040" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">ירוק</span></div>
   <div class="settings-row"><label>ה (חצי)</label><input type="color" id="colHeh"   value="#2a5abf" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">כחול</span></div>
   <div class="settings-row"><label id="colPehLabel">פ (לשלם)</label><input type="color" id="colPeh"  value="#a02020" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אדום</span></div>
   </details>
-  <details class="sp-sec"><summary>⏱ זמן סיבוב</summary>
+  <details class="sp-sec sp-admin"><summary>⏱ זמן סיבוב ומחיאות כפיים</summary><div class="admin-body">
   <div class="settings-row"><label>מינ׳</label><input type="range" id="spinMin" min="0.5" max="3" step="0.5" value="1.5" oninput="document.getElementById('spinMinVal').textContent=this.value+'s'"><span class="val-label" id="spinMinVal">1.5s</span></div>
   <div class="settings-row"><label>מקס׳</label><input type="range" id="spinMax" min="2"   max="10" step="0.5" value="5"   oninput="document.getElementById('spinMaxVal').textContent=this.value+'s'"><span class="val-label" id="spinMaxVal">5s</span></div>
-  </details>
+    <label class="sound-toggle"><input type="checkbox" id="clapBoostOn" checked> 👏 מחיאות כפיים מאריכות את הסיבוב (כשהמיקרופון פעיל)</label>
+  </div></details>
   <details class="sp-sec"><summary>✡️ האות הרביעית (פ / ש)</summary>
   <div class="settings-row"><select id="fourthLetter" class="input" style="padding:5px 8px;font-size:.8rem" onchange="applyFourthLetter()"><option value="פ">פ — נס גדול היה פה (ארץ ישראל)</option><option value="ש">ש — נס גדול היה שם (חוץ לארץ)</option></select></div>
   </details>
@@ -719,7 +727,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v59';
+const APP_VERSION='v60';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -953,6 +961,7 @@ function joinChannel(onReady){
         if(!spinning)playNextRemoteSpin();
     });
     // State change without a spin (a skipped turn)
+    channel.on('broadcast',{event:'rules'},({payload})=>{if(payload&&payload.from!==MY_ID&&payload.rules){G.rules=payload.rules;adminUI()}});
     channel.on('broadcast',{event:'state_update'},({payload})=>{
         if(payload.from===MY_ID||REJOINING)return;
         LAST_STATE=payload.state;
@@ -1102,6 +1111,15 @@ setInterval(timerTick,1000);
 // ═══════════ SETTINGS PERSISTENCE ═══════════
 const SETTINGS_KEY='dreidel_settings';
 const SETTING_IDS=['colNun','colGimel','colHeh','colPeh','spinMin','spinMax','soundOn','fourthLetter','narratorOn','narratorLang','triviaOn','nudgeOn','nudgeAfter','nudgeShow','nudgeTimes','nudgeLines','clapBoostOn','localStartAmt','onlineStartAmt','localTime','onlineTime','localNumPlayers','hostName','joinName','hostFamilyName','joinFamilyName'];
+const RULE_IDS=['spinMin','spinMax','triviaOn','clapBoostOn','nudgeOn','nudgeAfter','nudgeShow','nudgeTimes','nudgeLines'];
+function currentRules(){const o={};RULE_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});return o}
+function isRemoteGuest(){return MODE==='online'&&!IS_HOST}
+// a game rule: online guests use the host's rules; everybody else uses this device's settings
+function ruleVal(id){
+    if(isRemoteGuest()&&G.rules&&id in G.rules)return G.rules[id];
+    const el=document.getElementById(id);if(!el)return undefined;return el.type==='checkbox'?el.checked:el.value;
+}
+function pushRules(){if(MODE==='online'&&IS_HOST&&channel){G.rules=currentRules();try{channel.send({type:'broadcast',event:'rules',payload:{rules:G.rules,from:MY_ID}})}catch(e){}}}
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -1109,6 +1127,7 @@ function saveSettings(){
     o.localPersonas=[...document.querySelectorAll('#localNames .player-name-row')].map(r=>readPersona(r));
     o.hostPersona=readPersona(document.getElementById('hostName').parentElement);o.joinPersona=readPersona(document.getElementById('joinName').parentElement);
     lsSet(SETTINGS_KEY,JSON.stringify(o));
+    pushRules();
 }
 function loadSettings(){
     let o=null;try{o=JSON.parse(lsGet(SETTINGS_KEY)||'null')}catch(e){}
@@ -1160,6 +1179,7 @@ function renderLobby(){
 
 function startOnlineGame(){
     if(G.players.length<2){uiAlert('צריך לפחות 2 שחקנים');return}
+    G.rules=currentRules();                                               // the host's rules travel with the game
 
     // Order players based on turnOrder setting
     if(G.families&&G.families.length>0){
@@ -1654,11 +1674,11 @@ const NUDGE={key:'',since:0,count:0,FIRST:15000,EVERY:20000,MAX:3,SHOW:5000};
 // editable in the settings: one line each, {שם} = the player's name, [אתה|את] = boy | girl
 const NUDGE_DEFAULT='נו {שם}, תורך!\n{שם}, כולם מחכים רק לך!\n{שם}, הסביבון מחכה לך!\n{שם}, תורך לסובב!\nהלו {שם}, [אתה|את] איתנו? תורך!';
 function nudgeCfg(){
-    const num=(id,d,lo,hi)=>{const v=parseFloat(document.getElementById(id)?.value);return isFinite(v)?Math.max(lo,Math.min(hi,v)):d};
-    NUDGE.on=document.getElementById('nudgeOn')?.checked!==false;
+    const num=(id,d,lo,hi)=>{const v=parseFloat(ruleVal(id));return isFinite(v)?Math.max(lo,Math.min(hi,v)):d};
+    NUDGE.on=ruleVal('nudgeOn')!==false;
     NUDGE.FIRST=num('nudgeAfter',15,5,300)*1000;NUDGE.SHOW=num('nudgeShow',5,2,30)*1000;NUDGE.MAX=Math.round(num('nudgeTimes',3,1,10));
     NUDGE.EVERY=Math.max(NUDGE.SHOW+3000,NUDGE.FIRST);
-    const t=(document.getElementById('nudgeLines')?.value||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    const t=(ruleVal('nudgeLines')||'').split('\n').map(x=>x.trim()).filter(Boolean);
     return t.length?t:NUDGE_DEFAULT.split('\n');
 }
 setTimeout(()=>{const nl=document.getElementById('nudgeLines');if(nl&&!nl.value.trim())nl.value=NUDGE_DEFAULT},60);
@@ -1865,7 +1885,8 @@ function micLoop(){
     for(let i=0;i<b.length;i++){const v=b[i];sum+=v*v;const a=v<0?-v:v;if(a>peak)peak=a;if(i&&(b[i-1]<0)!==(v<0))zc++}
     const rms=Math.sqrt(sum/b.length),zcr=zc/b.length,now=performance.now();
     // background level: follows quiet moments quickly, loud ones slowly
-    MIC.noise=rms<MIC.noise?MIC.noise*.9+rms*.1:MIC.noise*.997+rms*.003;
+    // background-noise floor: falls quickly, rises slowly — and never learns from a pitched voice (or a long song would become 'noise')
+    if(rms<MIC.noise)MIC.noise=MIC.noise*.9+rms*.1;else if(!(MIC.clarity>.55&&MIC.f0>80))MIC.noise=MIC.noise*.998+rms*.002;
     document.getElementById('micLevel').style.setProperty('--lv',Math.min(100,rms*400).toFixed(0)+'%');
     // ── clap: a sudden, noisy (high zero-crossing) burst well above the background that dies away fast ──
     const strict=now<SFX_BUSY_UNTIL?1.8:1;
@@ -1894,7 +1915,7 @@ function micLoop(){
 }
 function onClap(){
     const badge=document.getElementById('micBadge');badge.classList.add('clap');setTimeout(()=>badge.classList.remove('clap'),150);
-    if(window._spinCtl){if(document.getElementById('clapBoostOn').checked)boostSpin(false);return}   // spinning → keep it going
+    if(window._spinCtl){if(ruleVal('clapBoostOn'))boostSpin(false);return}   // spinning → keep it going
     if(spinMode()==='clap'&&canSpinNow())handleSpinClick('clap');
 }
 // a clap (here or in another home) adds momentum to the dreidel that is spinning now
@@ -1929,6 +1950,52 @@ async function singButton(){
     if(!MIC.on){const ok=await micStart();if(!ok)return}
     singArm(true);
 }
+// ── 🎉 the singing party: the longer they sing, the wilder it gets ──
+// 3 s colours · 6 s jumps · 10 s friends start dancing around it · 14 s somersaults · 18 s it spins on its handle
+const PARTY={friends:[],lastFlip:0,flipT0:0,flipKind:'',milestones:{}};
+function partyFriend(i){
+    const wrap=document.querySelector('.dreidel-wrap');if(!wrap)return null;
+    const im=document.createElement('img');im.src='dreidel.webp';im.className='sing-friend';im.alt='';
+    im.onerror=()=>{im.onerror=null;im.src='dreidel.png'};
+    wrap.appendChild(im);requestAnimationFrame(()=>im.classList.add('in'));return im;
+}
+function partyEnd(){
+    PARTY.friends.forEach(f=>{f.classList.remove('in');setTimeout(()=>f.remove(),450)});PARTY.friends=[];
+    PARTY.lastFlip=0;PARTY.flipKind='';PARTY.milestones={};
+    const art=document.getElementById('dreidelSvg');if(art){art.style.filter='';art.style.transform='';art.style.transformOrigin=''}
+}
+function partyFrame(el,t,loud){
+    const art=document.getElementById('dreidelSvg');if(!art)return;
+    const say=(k,txt)=>{if(PARTY.milestones[k])return;PARTY.milestones[k]=1;const pl=document.getElementById('powerLabel');if(pl)pl.textContent=txt;
+        if(k==='s10'||k==='s20'){try{confettiRain()}catch(e){}}};
+    // colours
+    let filter='';
+    if(el>=3){const h=(t/12)%360;filter=`hue-rotate(${h.toFixed(0)}deg) saturate(${(1.3+.3*Math.sin(t/300)).toFixed(2)}) brightness(${(1.05+.08*Math.sin(t/180)).toFixed(2)})`;say('s3','🌈 '+G2('המשך לשיר!','המשיכי לשיר!'))}
+    art.style.filter=filter?`drop-shadow(0 10px 14px rgba(0,0,0,.5)) ${filter}`:'';
+    // jumps (to the beat of the singing)
+    let ty=0,sq=1,rot=0;
+    if(el>=6){const b=Math.abs(Math.sin(t/260));ty=-b*(18+Math.min(30,loud*400));sq=b<.15?1.08:1;say('s6','🦘 '+G2('הוא קופץ! עוד!','הוא קופץ! עוד!'))}
+    // somersaults and spinning on the handle
+    const now=performance.now();
+    if(el>=14&&!PARTY.flipKind&&now-PARTY.lastFlip>5000){PARTY.flipKind=el>=18&&Math.random()<.5?'handle':'flip';PARTY.flipT0=now;PARTY.lastFlip=now;
+        playSfx(pick(SFX.sweep||SFX.click),{vol:.4});say('s14','🤸 '+'סלטה!')}
+    if(PARTY.flipKind==='flip'){const k=Math.min(1,(now-PARTY.flipT0)/800);rot=360*(1-Math.pow(1-k,2));ty-=Math.sin(k*Math.PI)*60;if(k>=1)PARTY.flipKind=''}
+    else if(PARTY.flipKind==='handle'){const k=(now-PARTY.flipT0)/3000;               // upside down, spinning on the handle, then back
+        rot=k<.15?180*(k/.15):k<.85?180:180+180*((k-.85)/.15);ty-=k<.15||k>.85?Math.sin(Math.min(1,k<.15?k/.15:(k-.85)/.15)*Math.PI)*40:20;
+        if(k>=1)PARTY.flipKind='';if(k>.15&&k<.2)say('s18','🙃 '+'מסתובב על הידית!')}
+    art.style.transformOrigin=rot?'50% 52%':'';                      // somersaults turn around its middle, not its tip
+    art.style.transform=(ty||rot||sq!==1)?`translateY(${ty.toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scaleY(${(1/sq).toFixed(3)}) scaleX(${sq.toFixed(3)})`:'';
+    // friends dancing around it
+    const want=el<10?0:Math.min(4,1+Math.floor((el-10)/4));
+    while(PARTY.friends.length<want){const f=partyFriend(PARTY.friends.length);if(!f)break;PARTY.friends.push(f);if(PARTY.friends.length===1)say('s10','🎉 '+'חברים הצטרפו לריקוד!')}
+    if(el>=20)say('s20','🏆 '+'איזו שירה! עוד!');
+    const n=PARTY.friends.length;
+    PARTY.friends.forEach((f,i)=>{
+        const a=t/1100+i*2*Math.PI/n,x=Math.cos(a)*190,y=Math.sin(a)*38-Math.abs(Math.sin(t/240+i))*26,depth=(Math.sin(a)+1)/2;
+        f.style.transform=`translate(calc(-50% + ${x.toFixed(1)}px), ${y.toFixed(1)}px) scale(${(.75+depth*.35).toFixed(3)}) scaleX(${Math.cos(t/90+i*1.7).toFixed(3)})`;
+        f.style.zIndex=depth>.5?6:1;f.style.filter=filter||'';
+    });
+}
 (function wireSing(){
     const art=document.getElementById('dreidelSvg');let on=false,start=0,phase=0,last=0,face=0,shown=-1,loudSum=0,n=0;
     function draw(){const th=d3Rest(FACE_ORDER[face])+phase*90,f=FACE_ORDER.indexOf(d3FrontLetter(th));
@@ -1952,15 +2019,16 @@ async function singButton(){
         const singingNow=performance.now()-MIC.lastVoiced<250;
         const sp=singingNow?(.8+Math.min(5,MIC.loud*60)):Math.max(0,.8-(performance.now()-MIC.lastVoiced)/900);
         phase+=sp*dt;draw();
+        partyFrame((performance.now()-start)/1000,t,MIC.loud);
         if(singingNow){loudSum+=MIC.loud;n++}
         const sec=(MIC.lastVoiced-start)/1000;
         document.getElementById('powerFill').style.width=Math.min(100,sec*10).toFixed(0)+'%';
-        if(sec>=10)document.getElementById('powerLabel').textContent=G2('🎤 שיר שלם! עוד קצת... ועצור','🎤 שיר שלם! עוד קצת... ועצרי');
         if(performance.now()-MIC.lastVoiced>900)stop(true);                // the song ended → let it fly
     }
     function stop(launch){
         on=false;SING.on=false;SING.armed=false;singUI();CIRCLE.singing=false;
-        if(MIC.on&&spinMode()==='sing')setTimeout(()=>{if(!SING.armed&&!SING.on)micStop()},300);   // done singing → the microphone is closeddocument.getElementById('powerFill').classList.remove('hot');art.style.transform='';if(!launch)d3Settle();
+        if(MIC.on&&spinMode()==='sing')setTimeout(()=>{if(!SING.armed&&!SING.on)micStop()},300);   // done singing → the microphone is closed
+        partyEnd();document.getElementById('powerFill').classList.remove('hot');art.style.transform='';art.style.filter='';if(!launch)d3Settle();
         if(!launch||!canSpinNow()){resetSpinUI();return}
         const sec=Math.max(0,(MIC.lastVoiced-start)/1000),loud=n?loudSum/n:0;
         if(sec<1.2){resetSpinUI();refreshSpinUI();return}                    // hardly sang — no spin
@@ -1987,14 +2055,17 @@ function askTriviaNow(){
     if(TRIVIA.open||!canSpinNow()||G.over)return;
     const tn=(G.round||1)*1000+(G.turnNo||0);
     if(TRIVIA.askedTurn===tn)return;
-    unlockAudio();maybeAskTrivia(true);
+    unlockAudio();
+    const t0=performance.now();(function w(){if(narrBusy()&&performance.now()-t0<5000)return setTimeout(w,200);maybeAskTrivia(true)})();
 }
 function maybeAskTrivia(force){
     if(TRIVIA.open)return;
-    if(!force&&!document.getElementById('triviaOn').checked)return;
+    if(!force&&!ruleVal('triviaOn'))return;
     const tn=(G.round||1)*1000+(G.turnNo||0);
     if(force){if(TRIVIA.askedTurn===tn)return}
-    else{if(tn===TRIVIA.lastTurn||TRIVIA.askedTurn===tn)return;TRIVIA.lastTurn=tn;
+    else{if(tn===TRIVIA.lastTurn||TRIVIA.askedTurn===tn)return;
+        if(narrBusy())return;                                                  // let the narrator finish first (asked again in ½ s)
+        TRIVIA.lastTurn=tn;
         if((G.turnNo||0)<3||Math.random()>.2)return}                      // about one turn in five, not at the very start
     TRIVIA.askedTurn=tn;
     const lvl=playerLevel(G.players[G.currentTurn]);
@@ -2094,8 +2165,8 @@ function resetSpinUI(){
 
 // Spin duration from settings (safe even if min > max)
 function getSpinDur(power){
-    const a=parseFloat(document.getElementById('spinMin')?.value||1.5);
-    const b=parseFloat(document.getElementById('spinMax')?.value||4);
+    const a=parseFloat(ruleVal('spinMin')||1.5);
+    const b=parseFloat(ruleVal('spinMax')||5);
     const lo=Math.min(a,b), hi=Math.max(a,b);
     return Math.round((lo+power*(hi-lo))*1000);
 }
@@ -2262,7 +2333,7 @@ function showSpinAnimation(fl, opts, cb){
         requestAnimationFrame(fstep);
     }
     function reveal(){
-        svg.classList.add('settled');
+        svg.classList.add('settled');LAST_REVEAL=performance.now();
         const e=d3Els();if(e)e.faces.forEach((f,j)=>f.classList.toggle('win',FACE_ORDER[j]===fl));
         rl.textContent=ldesc(fl); rl.className='result-line r-'+fl;
         {const txt=rl.textContent;clearTimeout(window._rlT);window._rlT=setTimeout(()=>{if(rl.textContent===txt)rl.classList.add('fade')},4500)}
@@ -2773,6 +2844,8 @@ const NARR_PHRASES={
     am:{'ג':['ሁሉም ያንተ ነው!','እልል! ሁሉም ያንተ ነው!'],'ה':['ግማሹ ያንተ ነው!','ግማሽ! ጥሩ ነው!'],
         'נ':['ምንም!','ምንም! ችግር የለም!'],'פ':['ውይ! ክፈል!','ውይ! መክፈል አለብህ!']}
 };
+let NARR_BUSY_UNTIL=0,LAST_REVEAL=0;
+function narrBusy(){return (window.speechSynthesis&&speechSynthesis.speaking)||performance.now()<NARR_BUSY_UNTIL||performance.now()-LAST_REVEAL<2600}
 function narrOn(){return document.getElementById('narratorOn')?.checked&&document.getElementById('soundOn')?.checked}
 function speakIn(lang,text){
     const nv=NARR_VOICE[lang];if(!nv||!text)return false;
@@ -2805,7 +2878,7 @@ function narrate(letter,name,force){
     _narrLast=lang;
     const shin=letter==='פ'&&shinMode();
     if(lang==='mine'){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();myRecPlay(recL);return}
-    if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
+    if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();NARR_BUSY_UNTIL=performance.now()+2800;playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
     const set=NARR_PHRASES[lang];
     const list=(shin&&set['ש'])?set['ש']:set[letter];   // the lines no longer name the letter
     const p=pick(list||NARR_PHRASES.he[letter]||['']);
@@ -2827,20 +2900,30 @@ async function myRecLoad(){
 function myRecBuf(x){
     if(MYREC.bufs[x.id])return MYREC.bufs[x.id];
     const ctx=getAudioCtx();if(!ctx)return Promise.resolve(null);
-    return MYREC.bufs[x.id]=x.blob.arrayBuffer().then(ab=>new Promise(r=>ctx.decodeAudioData(ab,r,()=>r(null)))).catch(()=>null);
+    return MYREC.bufs[x.id]=x.blob.arrayBuffer().then(ab=>new Promise(r=>ctx.decodeAudioData(ab,r,()=>r(null)))).then(b=>{
+        if(!b)return null;
+        // trim the silence at both ends and bring it to a full, clear level (like the other voices)
+        const d=b.getChannelData(0);let pk=0;for(let i=0;i<d.length;i++)pk=Math.max(pk,Math.abs(d[i]));if(pk<1e-4)return b;
+        const th=pk*.06,pad=Math.round(b.sampleRate*.04);let a=0,z=d.length-1;while(a<z&&Math.abs(d[a])<th)a++;while(z>a&&Math.abs(d[z])<th)z--;
+        a=Math.max(0,a-pad);z=Math.min(d.length-1,z+pad*3);
+        const out=ctx.createBuffer(1,z-a+1,b.sampleRate),o=out.getChannelData(0),g=.92/pk;
+        for(let i=0;i<o.length;i++)o[i]=d[a+i]*g;
+        return out}).catch(()=>null);
 }
 function myRecPlay(letter,id){
     const pool=MYREC.list.filter(x=>id?x.id===id:x.letter===letter);if(!pool.length)return;
     const x=pick(pool),ctx=getAudioCtx();if(!ctx)return;
-    myRecBuf(x).then(buf=>{if(!buf)return;const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=buf;g.gain.value=1.4;s.connect(g);g.connect(ctx.destination);s.start()});
+    NARR_BUSY_UNTIL=performance.now()+3000;
+    myRecBuf(x).then(buf=>{if(!buf)return;const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=buf;g.gain.value=1;s.connect(g);g.connect(ctx.destination);s.start();NARR_BUSY_UNTIL=performance.now()+buf.duration*1000+200});
 }
 async function myRecToggle(letter){
     unlockAudio();
     if(MYREC.rec){const same=MYREC.letter===letter;try{MYREC.rec.stop()}catch(e){}if(same)return}
     if(!navigator.mediaDevices||!window.MediaRecorder){uiAlert('הדפדפן הזה לא תומך בהקלטה.');return}
-    let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}
+    let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:true,channelCount:1}})}
     catch(e){uiAlert('אין גישה למיקרופון. צריך לאשר את המיקרופון בדפדפן ולנסות שוב.');return}
-    const chunks=[],rec=new MediaRecorder(stream);MYREC.rec=rec;MYREC.letter=letter;renderMyRec();
+    let rec;try{rec=new MediaRecorder(stream,{audioBitsPerSecond:128000})}catch(e){rec=new MediaRecorder(stream)}
+    const chunks=[];MYREC.rec=rec;MYREC.letter=letter;renderMyRec();
     rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
     rec.onstop=async()=>{
         clearTimeout(MYREC.timer);stream.getTracks().forEach(t=>t.stop());MYREC.rec=null;MYREC.letter=null;
@@ -2886,7 +2969,41 @@ document.addEventListener('keydown',unlockAudio,{passive:true});
 document.getElementById('soundOn').addEventListener('change',()=>{if(document.getElementById('soundOn').checked){_sfxPreloaded=false;preloadSfx()}});
 
 // ══════ SETTINGS ══════
-function toggleSettings(){ renderInstallHelp(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
+function toggleSettings(){ renderInstallHelp(); adminUI(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
+// ── manager settings: game rules open with a code on this device; online guests can't change them at all ──
+const ADMIN_KEY='dreidel_admin';
+function ssGet(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
+function ssSet(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}
+async function adminHash(pin){
+    const txt='dreidel:'+pin;
+    try{if(crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}}catch(e){}
+    let h=5381;for(let i=0;i<txt.length;i++)h=((h<<5)+h+txt.charCodeAt(i))|0;return 'd'+(h>>>0).toString(16);
+}
+function adminOpen(){return !isRemoteGuest()&&ssGet(ADMIN_KEY+'_ok')==='1'}
+function adminUI(){
+    const sp=document.getElementById('settingsPanel');if(!sp)return;
+    sp.classList.toggle('admin-open',adminOpen());
+    const st=document.getElementById('adminState');
+    if(st){st.textContent=isRemoteGuest()?'· אורח':adminOpen()?'· 🔓 מנהל (נעילה)':'· 🔒 נעול';st.onclick=adminOpen()?()=>{ssSet(ADMIN_KEY+'_ok','');adminUI()}:null}
+}
+function adminPrompt(sec){
+    const lk=document.getElementById('adminLock');
+    if(isRemoteGuest()){lk.innerHTML='🌐 במשחק אונליין חוקי המשחק נקבעים אצל המארח — כאן אי אפשר לשנות אותם.';}
+    else{
+        const has=!!lsGet(ADMIN_KEY);
+        lk.innerHTML=has?'🔐 ההגדרות האלה למנהל בלבד.<br>קוד מנהל:<input type="password" inputmode="numeric" id="adminPin" autocomplete="off"><button type="button" class="btn btn-sm btn-gold" id="adminGo">פתח</button>'
+            :'🔐 כאן נמצאים חוקי המשחק. כדי שרק אתה תוכל לשנות אותם, בחר קוד מנהל (לפחות 4 ספרות):<input type="password" inputmode="numeric" id="adminPin" autocomplete="off"><button type="button" class="btn btn-sm btn-gold" id="adminGo">שמור</button>';
+        const go=async()=>{const v=document.getElementById('adminPin').value.trim();
+            if(!has){if(v.length<4){uiAlert('הקוד צריך להיות לפחות 4 ספרות.');return}lsSet(ADMIN_KEY,await adminHash(v));ssSet(ADMIN_KEY+'_ok','1');lk.classList.add('hidden');adminUI();return}
+            if(await adminHash(v)===lsGet(ADMIN_KEY)){ssSet(ADMIN_KEY+'_ok','1');lk.classList.add('hidden');adminUI()}
+            else{document.getElementById('adminPin').value='';document.getElementById('adminPin').placeholder='לא נכון';}};
+        setTimeout(()=>{document.getElementById('adminGo').onclick=go;const i=document.getElementById('adminPin');i.onkeydown=e=>{if(e.key==='Enter')go()};i.focus()},0);
+    }
+    sec.querySelector('summary').after(lk);lk.classList.remove('hidden');
+}
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.classList||!d.classList.contains('sp-admin'))return;
+    if(d.open&&!adminOpen())adminPrompt(d);else if(!d.open){const lk=document.getElementById('adminLock');if(lk&&d.contains(lk))lk.classList.add('hidden')}},true);
+setTimeout(adminUI,0);
 function closeSettings(){ document.getElementById('settingsPanel').classList.add('hidden'); }
 // the questions editor opens inside the game (same page that also works on its own)
 function openTriviaEditor(){
