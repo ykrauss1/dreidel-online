@@ -727,7 +727,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v60';
+const APP_VERSION='v61';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -991,6 +991,11 @@ function joinChannel(onReady){
     });
 
     channel.on('broadcast',{event:'spin_boost'},({payload})=>{if(payload.from!==MY_ID)boostSpin(true)});
+    channel.on('broadcast',{event:'party'},({payload})=>psRemote(payload));
+    channel.on('broadcast',{event:'party_clap'},({payload})=>{if(payload.from===MY_ID||!PS.on||!PS.owner)return;
+        if(CP.on)clapPartyClap(true);else partyBeat();
+        if(FX_ON){const art=document.getElementById('dreidelSvg');const [x,y]=centerOf(art);const f=document.createElement('div');f.className='fx-react';f.textContent='👏';document.body.appendChild(f);
+            const dx=(Math.random()-.5)*200;f.animate([{transform:`translate(${x+dx}px,${y+60}px) translate(-50%,-50%) scale(.6)`,opacity:1},{transform:`translate(${x+dx}px,${y-80}px) translate(-50%,-50%) scale(1.2)`,opacity:0}],{duration:900,easing:'ease-out'}).onfinish=()=>f.remove()}});
     channel.on('broadcast',{event:'react'},({payload})=>{if(payload.from!==MY_ID)showReaction(payload.e,payload.from)});
     channel.on('broadcast',{event:'trivia_show'},({payload})=>{if(payload.from!==MY_ID&&!REJOINING&&payload.item&&Array.isArray(payload.item.ans)){TRIVIA.used.push(payload.item.q);showTrivia(payload.item,payload.order,payload.who,false)}});
     channel.on('broadcast',{event:'trivia_answer'},({payload})=>{if(payload.from!==MY_ID&&TRIVIA.open)answerTrivia(payload.i,0,0,true)});
@@ -1621,7 +1626,7 @@ const PROMPTS={
     taps:()=>G2('👆 לחץ 3 פעמים מהר על "סובב!"','👆 לחצי 3 פעמים מהר על "סובב!"')+(IS_TOUCH?'':' (או רווח)'),
     hold:()=>G2('🎯 החזק את "סובב!" — ושחרר בשיא','🎯 החזיקי את "סובב!" — ושחררי בשיא'),
     shake:()=>G2('📳 נער את הטלפון!','📳 נערי את הטלפון!'),
-    clap:()=>MIC.on?G2('👏 מחא כפיים 3 פעמים מהר!','👏 מחאי כפיים 3 פעמים מהר!'):'👏 לחיצה כאן מפעילה את המיקרופון',
+    clap:()=>MIC.on?G2('👏 מחא כפיים — כל עוד מוחאים הוא מסתובב!','👏 מחאי כפיים — כל עוד מוחאים הוא מסתובב!'):'👏 לחיצה כאן מפעילה את המיקרופון',
     sing:()=>!MIC.on?G2('🎤 לחץ "התחל לשיר!" — והמיקרופון יופעל','🎤 לחצי "התחילי לשיר!" — והמיקרופון יופעל')
         :SING.on?G2('🎶 המשך לשיר... כשתפסיק — הוא יסתובב לבד!','🎶 המשיכי לשיר... כשתפסיקי — הוא יסתובב לבד!')
         :SING.armed?G2('🎶 שיר בקול: "סביבון סוב סוב סוב"! (רק שירה נחשבת, לא דיבור)','🎶 שירי בקול: "סביבון סוב סוב סוב"! (רק שירה נחשבת, לא דיבור)')
@@ -1903,7 +1908,8 @@ function micLoop(){
         if(!MIC.voiceStart)MIC.voiceStart=now;MIC.lastVoiced=now;MIC.loud=MIC.loud*.9+rms*.1;
         const st=12*Math.log2(MIC.f0);
         if(MIC.noteSt&&Math.abs(st-MIC.noteSt)<1.2){MIC.noteHold+=dtm;MIC.noteSt=MIC.noteSt*.85+st*.15}   // a real voice wobbles (vibrato)
-        else{MIC.noteSt=st;MIC.noteHold=0;MIC.noteCounted=false}
+        else{if(now-(MIC.lastOnset||0)>180){MIC.lastOnset=now;MIC.onsets=(MIC.onsets||0)+1}   // a new note = a beat
+            MIC.noteSt=st;MIC.noteHold=0;MIC.noteCounted=false}
         if(MIC.noteHold>=170&&!MIC.noteCounted){MIC.noteCounted=true;MIC.notes.push(now)}
         if(SING.armed||SING.on)SING.voicedMs=(SING.voicedMs||0)+dtm;
     }else{MIC.noteHold=0;MIC.noteSt=0;MIC.noteCounted=false;if(MIC.voiceStart&&now-MIC.lastVoiced>380)MIC.voiceStart=0}
@@ -1916,7 +1922,12 @@ function micLoop(){
 function onClap(){
     const badge=document.getElementById('micBadge');badge.classList.add('clap');setTimeout(()=>badge.classList.remove('clap'),150);
     if(window._spinCtl){if(ruleVal('clapBoostOn'))boostSpin(false);return}   // spinning → keep it going
-    if(spinMode()==='clap'&&canSpinNow())handleSpinClick('clap');
+    if(PS.on&&!PS.owner){                                                    // another home's party → our clap joins in
+        if(MODE==='online'&&channel)try{channel.send({type:'broadcast',event:'party_clap',payload:{from:MY_ID}})}catch(e){}
+        PARTY.beatT=performance.now();return}
+    if(CP.on){clapPartyClap(false);return}
+    if(PS.on&&PS.owner&&PS.kind==='sing'){partyBeat();return}               // clapping along with the singing
+    if(spinMode()==='clap'&&canSpinNow())clapPartyClap(false);
 }
 // a clap (here or in another home) adds momentum to the dreidel that is spinning now
 function boostSpin(remote){
@@ -1927,6 +1938,46 @@ function boostSpin(remote){
     playSfx(pick(SFX.tick),{vol:.45,rate:1.6});
     if(!remote&&MODE==='online'&&channel)channel.send({type:'broadcast',event:'spin_boost',payload:{from:MY_ID}});
 }
+
+// ── 👏 clap party: two claps start it, every clap pushes it (and it hops); claps from the other homes count too.
+// When nobody claps for ~2 s it flies on and falls as usual.
+const CP={on:false,claps:[],start:0,sp:0,last:0,lastClap:0,n:0};
+function clapPartyClap(fromOtherHome){
+    const now=performance.now();
+    if(!CP.on){
+        if(fromOtherHome||!canSpinNow())return;
+        CP.claps=CP.claps.filter(x=>now-x<1500);CP.claps.push(now);
+        const pl=document.getElementById('powerLabel');
+        if(CP.claps.length<2){document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='👏';if(pl)pl.textContent='עוד מחיאה!';return}
+        CP.on=true;CP.start=now;CP.lastClap=now;CP.n=2;CP.sp=2.2;CP.last=0;CIRCLE.singing=true;
+        psBegin('clap',true);partyBeat();
+        document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='👏';
+        if(pl)pl.textContent=G2('👏 המשך למחוא כפיים!','👏 המשיכי למחוא כפיים!');document.getElementById('powerFill').classList.add('hot');
+        document.querySelector('.dreidel-controls').classList.remove('can-spin');return;
+    }
+    CP.lastClap=now;CP.n++;CP.sp=Math.min(6.5,CP.sp+(fromOtherHome?.7:1.1));partyBeat();
+}
+function clapPartyStop(launch){
+    if(!CP.on)return;CP.on=false;CIRCLE.singing=false;psEnd();CP.claps=[];
+    const art=document.getElementById('dreidelSvg');document.getElementById('powerFill').classList.remove('hot');art.style.transform='';art.style.filter='';
+    const sec=(CP.lastClap-CP.start)/1000;
+    if(!launch||!canSpinNow()||CP.n<3){d3Settle();resetSpinUI();refreshSpinUI();return}
+    const power=Math.max(.25,Math.min(1,.25+Math.min(.45,sec/14)+Math.min(.3,CP.n/40)));
+    playWhoosh(power);spinFromInput(power,'clap',{});
+}
+(function clapLoop(){
+    function loop(t){requestAnimationFrame(loop);
+        if(!CP.on){CP.last=t;return}
+        if(spinMode()!=='clap'||!MIC.on){clapPartyStop(false);return}
+        const dt=CP.last?Math.min(60,t-CP.last)/1000:0;CP.last=t;
+        CP.sp*=Math.pow(.6,dt);
+        const el=(performance.now()-CP.start)/1000;
+        psStep(t,dt,Math.max(.35,CP.sp),el,.03);
+        document.getElementById('powerFill').style.width=Math.min(100,el*8).toFixed(0)+'%';
+        if(performance.now()-CP.lastClap>1900)clapPartyStop(true);             // the clapping stopped → let it fly
+    }
+    requestAnimationFrame(loop);
+})();
 
 // ── 🎤 sing mode: the dreidel turns as long as you sing; stop → it flies on. A whole song (10s+) = bonus ──
 const SING={armed:false,armedAt:0,on:false};
@@ -1952,7 +2003,51 @@ async function singButton(){
 }
 // ── 🎉 the singing party: the longer they sing, the wilder it gets ──
 // 3 s colours · 6 s jumps · 10 s friends start dancing around it · 14 s somersaults · 18 s it spins on its handle
-const PARTY={friends:[],lastFlip:0,flipT0:0,flipKind:'',milestones:{}};
+const PARTY={friends:[],lastFlip:0,flipT0:0,flipKind:'',milestones:{},beatT:-1e9,hue:0,kind:'sing'};
+// a beat (a new note in the song / a clap): a jump and a jump in colour, right on the rhythm
+function partyBeat(){PARTY.beatT=performance.now();PARTY.hue+=40;if(PS.on&&PS.owner)PS.beats++}
+// ── one party, seen in every home: the home whose turn it is drives it and sends its state ~7× a second ──
+const PS={on:false,owner:false,kind:'',start:0,phase:0,face:0,shown:-1,beats:0,lastSend:0,msgAt:0,rEl:0,rSp:0,rPh:0,last:0};
+function psBegin(kind,owner,face){
+    PS.on=true;PS.owner=owner;PS.kind=kind;PARTY.kind=kind;PS.start=performance.now();PS.phase=0;PS.beats=0;PS.last=0;PS.lastSend=0;
+    if(window._idleTurn)window._idleTurn(false);resetDreidel();
+    PS.face=face!=null?face:Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));PS.shown=PS.face;
+    const art=document.getElementById('dreidelSvg');if(art)art.style.transition='none';
+}
+function psStep(t,dt,sp,el,loud){
+    PS.phase+=sp*dt;
+    const th=d3Rest(FACE_ORDER[PS.face])+PS.phase*90,f=FACE_ORDER.indexOf(d3FrontLetter(th));
+    if(f!==PS.shown){if(PS.shown>=0)playSfx(pick(SFX.tick),{vol:.15});PS.shown=f;CURRENT_FACE=FACE_ORDER[f]}
+    d3Pose({theta:th,tilt:2});
+    partyFrame(el,t,loud);
+    if(PS.owner&&MODE==='online'&&channel&&performance.now()-PS.lastSend>140){PS.lastSend=performance.now();
+        try{channel.send({type:'broadcast',event:'party',payload:{from:MY_ID,on:1,k:PS.kind,el:+el.toFixed(2),sp:+sp.toFixed(2),ph:+PS.phase.toFixed(2),face:PS.face,beats:PS.beats}})}catch(e){}}
+}
+function psEnd(){
+    if(!PS.on)return;PS.on=false;partyEnd();
+    if(!PS.owner&&PS.oldWait!=null){const w=document.getElementById('waitingMsg');if(w)w.textContent=PS.oldWait;PS.oldWait=null}
+    if(PS.owner&&MODE==='online'&&channel){try{channel.send({type:'broadcast',event:'party',payload:{from:MY_ID,on:0}})}catch(e){}}
+}
+// another home's party, played here
+function psRemote(p){
+    if(!p||p.from===MY_ID)return;
+    if(!p.on){if(PS.on&&!PS.owner)psEnd();return}
+    if(!PS.on){psBegin(p.k,false,p.face);const w=document.getElementById('waitingMsg');
+        if(w){PS.oldWait=w.textContent;w.textContent=p.k==='clap'?'👏 מוחאים כפיים — הצטרפו! כל מחיאה שלכם דוחפת אותו':'🎶 שרים — שירו יחד ומחאו כפיים בקצב!'}}
+    PS.msgAt=performance.now();PS.rEl=p.el;PS.rSp=p.sp;PS.rPh=p.ph;
+    if(p.beats>PS.beats){PS.beats=p.beats;PARTY.beatT=performance.now();PARTY.hue+=40}
+}
+(function remoteLoop(){
+    function loop(t){requestAnimationFrame(loop);
+        if(!PS.on||PS.owner){PS.last=t;return}
+        const dt=PS.last?Math.min(60,t-PS.last)/1000:0;PS.last=t;
+        const since=(performance.now()-PS.msgAt)/1000;
+        if(since>2.5){psEnd();return}                                         // the other home went quiet
+        PS.phase+=(PS.rPh+PS.rSp*since-PS.phase)*.12;                         // follow the owner's phase smoothly
+        psStep(t,dt,PS.rSp,PS.rEl+since,.02);
+    }
+    requestAnimationFrame(loop);
+})();
 function partyFriend(i){
     const wrap=document.querySelector('.dreidel-wrap');if(!wrap)return null;
     const im=document.createElement('img');im.src='dreidel.webp';im.className='sing-friend';im.alt='';
@@ -1960,6 +2055,7 @@ function partyFriend(i){
     wrap.appendChild(im);requestAnimationFrame(()=>im.classList.add('in'));return im;
 }
 function partyEnd(){
+    PARTY.beatT=-1e9;
     PARTY.friends.forEach(f=>{f.classList.remove('in');setTimeout(()=>f.remove(),450)});PARTY.friends=[];
     PARTY.lastFlip=0;PARTY.flipKind='';PARTY.milestones={};
     const art=document.getElementById('dreidelSvg');if(art){art.style.filter='';art.style.transform='';art.style.transformOrigin=''}
@@ -1970,11 +2066,15 @@ function partyFrame(el,t,loud){
         if(k==='s10'||k==='s20'){try{confettiRain()}catch(e){}}};
     // colours
     let filter='';
-    if(el>=3){const h=(t/12)%360;filter=`hue-rotate(${h.toFixed(0)}deg) saturate(${(1.3+.3*Math.sin(t/300)).toFixed(2)}) brightness(${(1.05+.08*Math.sin(t/180)).toFixed(2)})`;say('s3','🌈 '+G2('המשך לשיר!','המשיכי לשיר!'))}
+    if(el>=3||PARTY.kind==='clap'){const h=(t/12+PARTY.hue)%360;filter=`hue-rotate(${h.toFixed(0)}deg) saturate(${(1.3+.3*Math.sin(t/300)).toFixed(2)}) brightness(${(1.05+.08*Math.sin(t/180)).toFixed(2)})`;say('s3','🌈 '+G2('המשך לשיר!','המשיכי לשיר!'))}
     art.style.filter=filter?`drop-shadow(0 10px 14px rgba(0,0,0,.5)) ${filter}`:'';
     // jumps (to the beat of the singing)
     let ty=0,sq=1,rot=0;
-    if(el>=6){const b=Math.abs(Math.sin(t/260));ty=-b*(18+Math.min(30,loud*400));sq=b<.15?1.08:1;say('s6','🦘 '+G2('הוא קופץ! עוד!','הוא קופץ! עוד!'))}
+    if(el>=6||PARTY.kind==='clap'){
+        const k=(performance.now()-PARTY.beatT)/300;                         // a hop on every beat
+        if(k>=0&&k<1){ty=-Math.sin(k*Math.PI)*(22+Math.min(28,loud*400));sq=k<.12||k>.9?1.07:1}
+        else if(performance.now()-PARTY.beatT>1500&&el>=6){const b=Math.abs(Math.sin(t/260));ty=-b*14}   // no beat heard → a gentle bounce
+        if(el>=6)say('s6','🦘 '+'הוא קופץ בקצב!')}
     // somersaults and spinning on the handle
     const now=performance.now();
     if(el>=14&&!PARTY.flipKind&&now-PARTY.lastFlip>5000){PARTY.flipKind=el>=18&&Math.random()<.5?'handle':'flip';PARTY.flipT0=now;PARTY.lastFlip=now;
@@ -1997,7 +2097,7 @@ function partyFrame(el,t,loud){
     });
 }
 (function wireSing(){
-    const art=document.getElementById('dreidelSvg');let on=false,start=0,phase=0,last=0,face=0,shown=-1,loudSum=0,n=0;
+    const art=document.getElementById('dreidelSvg');let on=false,start=0,phase=0,last=0,face=0,shown=-1,loudSum=0,n=0,seenOnsets=0;
     function draw(){const th=d3Rest(FACE_ORDER[face])+phase*90,f=FACE_ORDER.indexOf(d3FrontLetter(th));
         if(f!==shown){if(shown>=0)playSfx(pick(SFX.tick),{vol:.15});shown=f;CURRENT_FACE=FACE_ORDER[f]}
         d3Pose({theta:th,tilt:2})}
@@ -2008,8 +2108,7 @@ function partyFrame(el,t,loud){
             if(SING.armed&&(!canSpinNow()||performance.now()-SING.armedAt>25000)){singArm(false);return}   // turn passed / nobody sang
             if(SING.armed&&(SING.voicedMs||0)>=1500&&!SING.shownDone){SING.shownDone=true;singUI()}
             if(SING.armed&&MIC.singing&&canSpinNow()){on=true;SING.on=true;singUI();CIRCLE.singing=true;start=performance.now();phase=0;last=t;loudSum=0;n=0;
-                if(window._idleTurn)window._idleTurn(false);resetDreidel();face=Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));shown=face;
-                art.style.transition='none';
+                psBegin('sing',true);seenOnsets=MIC.onsets||0;
                 document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='🎤';
                 document.getElementById('powerLabel').textContent=G2('🎶 המשך לשיר!','🎶 המשיכי לשיר!');document.getElementById('powerFill').classList.add('hot');
                 document.querySelector('.dreidel-controls').classList.remove('can-spin')}
@@ -2018,8 +2117,8 @@ function partyFrame(el,t,loud){
         const dt=Math.min(60,t-last)/1000;last=t;
         const singingNow=performance.now()-MIC.lastVoiced<250;
         const sp=singingNow?(.8+Math.min(5,MIC.loud*60)):Math.max(0,.8-(performance.now()-MIC.lastVoiced)/900);
-        phase+=sp*dt;draw();
-        partyFrame((performance.now()-start)/1000,t,MIC.loud);
+        if((MIC.onsets||0)>seenOnsets){seenOnsets=MIC.onsets;if(singingNow)partyBeat()}   // a new note → hop
+        psStep(t,dt,sp,(performance.now()-start)/1000,MIC.loud);
         if(singingNow){loudSum+=MIC.loud;n++}
         const sec=(MIC.lastVoiced-start)/1000;
         document.getElementById('powerFill').style.width=Math.min(100,sec*10).toFixed(0)+'%';
@@ -2028,7 +2127,7 @@ function partyFrame(el,t,loud){
     function stop(launch){
         on=false;SING.on=false;SING.armed=false;singUI();CIRCLE.singing=false;
         if(MIC.on&&spinMode()==='sing')setTimeout(()=>{if(!SING.armed&&!SING.on)micStop()},300);   // done singing → the microphone is closed
-        partyEnd();document.getElementById('powerFill').classList.remove('hot');art.style.transform='';art.style.filter='';if(!launch)d3Settle();
+        psEnd();document.getElementById('powerFill').classList.remove('hot');art.style.transform='';art.style.filter='';if(!launch)d3Settle();
         if(!launch||!canSpinNow()){resetSpinUI();return}
         const sec=Math.max(0,(MIC.lastVoiced-start)/1000),loud=n?loudSum/n:0;
         if(sec<1.2){resetSpinUI();refreshSpinUI();return}                    // hardly sang — no spin
@@ -2205,6 +2304,7 @@ function doSpin(){
 }
 
 function playNextRemoteSpin(){
+    if(PS.on&&!PS.owner)psEnd();
     const p=spinQueue.shift();if(!p)return;
     if(p.kind==='state'){
         G=p.state;
