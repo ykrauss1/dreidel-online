@@ -727,7 +727,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v61';
+const APP_VERSION='v62';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -2978,7 +2978,7 @@ function narrate(letter,name,force){
     _narrLast=lang;
     const shin=letter==='פ'&&shinMode();
     if(lang==='mine'){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();myRecPlay(recL);return}
-    if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();NARR_BUSY_UNTIL=performance.now()+2800;playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
+    if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();NARR_BUSY_UNTIL=performance.now()+4600;playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
     const set=NARR_PHRASES[lang];
     const list=(shin&&set['ש'])?set['ש']:set[letter];   // the lines no longer name the letter
     const p=pick(list||NARR_PHRASES.he[letter]||['']);
