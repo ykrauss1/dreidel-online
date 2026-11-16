@@ -10,9 +10,42 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v65';
+const CACHE = 'dreidel-v66';
 const FALLBACK = './index.html';
-const STATIC = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './dreidel.webp', './dreidel.png', './d3-face.webp', './d3-face.png', './d3-tip.webp', './d3-tip.png', './d3-handle.webp', './d3-handle.png', './bg-table.webp', './bg-table.jpg', './bg-table-portrait.webp', './bg-table-portrait.jpg', './coin.webp', './coin.png', './pile.webp', './pile.png', './trivia.json', './trivia-editor.html'];
+// Each picture is listed once, as .webp. The .png / .jpg twins exist only for a browser that cannot
+// show webp; precaching both made every install download the pictures twice (about 1.2 MB extra).
+// A browser that does need a twin still gets it from the network and it is kept from then on.
+const STATIC = [
+  './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
+  './dreidel.webp', './d3-face.webp', './d3-tip.webp', './d3-handle.webp', './bg-table.webp',
+  './bg-table-portrait.webp', './coin.webp', './pile.webp', './trivia.json',
+  './trivia-editor.html'
+];
+
+// The recorded sounds (about 1 MB). They used to be kept only after each one had been played once, so a
+// local game opened with no connection was silent. When a sound is added to sounds/, add it here too;
+// one left out still works online and is kept after its first play.
+const SOUNDS = [
+  './sounds/click0.mp3', './sounds/click1.mp3', './sounds/click2.mp3', './sounds/click3.mp3',
+  './sounds/click4.mp3', './sounds/coins0.mp3', './sounds/coins1.mp3', './sounds/fall0.mp3',
+  './sounds/fall1.mp3', './sounds/fall2.mp3', './sounds/fall3.mp3', './sounds/fall4.mp3',
+  './sounds/gimel0.mp3', './sounds/gimel1.mp3', './sounds/gimel2.mp3', './sounds/gimel3.mp3',
+  './sounds/gimel4.mp3', './sounds/he0.mp3', './sounds/he1.mp3', './sounds/he2.mp3',
+  './sounds/he3.mp3', './sounds/he4.mp3', './sounds/he5.mp3', './sounds/he6.mp3',
+  './sounds/he7.mp3', './sounds/he8.mp3', './sounds/nun0.mp3', './sounds/nun1.mp3',
+  './sounds/nun2.mp3', './sounds/nun3.mp3', './sounds/nun4.mp3', './sounds/nun5.mp3',
+  './sounds/nun6.mp3', './sounds/nun7.mp3', './sounds/out0.mp3', './sounds/out1.mp3',
+  './sounds/out2.mp3', './sounds/pe0.mp3', './sounds/pe1.mp3', './sounds/pe2.mp3',
+  './sounds/pe3.mp3', './sounds/pe4.mp3', './sounds/pe5.mp3', './sounds/pe6.mp3',
+  './sounds/pe7.mp3', './sounds/pe8.mp3', './sounds/sweep0.mp3', './sounds/sweep1.mp3',
+  './sounds/tick0.mp3', './sounds/tick1.mp3', './sounds/tick2.mp3', './sounds/win0.mp3',
+  './sounds/yi_gimel1_bobe.mp3', './sounds/yi_gimel1_zeyde.mp3', './sounds/yi_gimel2_bobe.mp3',
+  './sounds/yi_gimel2_zeyde.mp3', './sounds/yi_he1_bobe.mp3', './sounds/yi_he1_zeyde.mp3',
+  './sounds/yi_he2_bobe.mp3', './sounds/yi_he2_zeyde.mp3', './sounds/yi_nun1_bobe.mp3',
+  './sounds/yi_nun1_zeyde.mp3', './sounds/yi_nun2_bobe.mp3', './sounds/yi_nun2_zeyde.mp3',
+  './sounds/yi_pay1_bobe.mp3', './sounds/yi_pay1_zeyde.mp3', './sounds/yi_pay2_bobe.mp3',
+  './sounds/yi_pay2_zeyde.mp3'
+];
 
 // Third-party static assets that are safe to keep (fonts + the supabase-js library)
 const CACHEABLE_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];
@@ -22,7 +55,7 @@ self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(CACHE).then(function (c) {
       // one by one — a single missing file must not cancel the rest
-      return Promise.all(STATIC.map(function (u) { return c.add(u).catch(function () {}); }));
+      return Promise.all(STATIC.concat(SOUNDS).map(function (u) { return c.add(u).catch(function () {}); }));
     })
   );
 });
@@ -56,17 +89,26 @@ self.addEventListener('fetch', function (e) {
 
   // Page navigations: network first, cached page as fallback
   if (req.mode === 'navigate') {
+    // Only the game itself may be stored as the offline copy. Every page opened used to be stored
+    // under index.html, so after a visit to the trivia editor, a game opened with no connection
+    // showed the editor instead.
+    const scopePath = new URL(self.registration.scope).pathname;
+    const isGame = url.origin === self.location.origin &&
+        (url.pathname === scopePath || url.pathname === scopePath + 'index.html');
     e.respondWith(
       fetch(req)
         .then(function (res) {
-          if (res && res.ok) {
+          if (isGame && res && res.ok) {
             const copy = res.clone();
             caches.open(CACHE).then(function (c) { c.put(FALLBACK, copy); }).catch(function () {});
           }
           return res;
         })
         .catch(function () {
-          return caches.match(FALLBACK).then(function (hit) {
+          // the page that was asked for if we hold it (the trivia editor is precached), else the game
+          return caches.match(req, { ignoreSearch: true }).then(function (own) {
+            return own || caches.match(FALLBACK);
+          }).then(function (hit) {
             return hit || new Response('<h1 dir="rtl">אין חיבור</h1>', { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
           });
         })
@@ -74,13 +116,15 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // The questions: always try the network first, so a newly uploaded trivia.json shows at once
+  // The questions: always try the network first, so a newly uploaded trivia.json shows at once.
+  // (put() and match() each carried a stray './trivia-editor.html' argument here; both threw, so the
+  // kept copy was never refreshed and, with no connection, the questions did not load at all.)
   if (url.origin === self.location.origin && /trivia\.json$/.test(url.pathname)) {
     e.respondWith(
       fetch(req).then(function (res) {
-        if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(function (c) { c.put('./trivia.json', './trivia-editor.html', copy); }).catch(function () {}); }
+        if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(function (c) { c.put('./trivia.json', copy); }).catch(function () {}); }
         return res;
-      }).catch(function () { return caches.match('./trivia.json', './trivia-editor.html'); })
+      }).catch(function () { return caches.match('./trivia.json'); })
     );
     return;
   }

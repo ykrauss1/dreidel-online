@@ -736,7 +736,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v65';
+const APP_VERSION='v66';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -766,7 +766,8 @@ function readPersona(row){
     const b=row&&row.querySelector('.av-btn'),s=row&&row.querySelector('.lvl-sel');
     return{avatar:b?safeAvatar(b.textContent):safeAvatar(),level:s?safeLevel(s.value):2};
 }
-function av(p){return p&&p.avatar?p.avatar+' ':''}
+// escaped like the names: the game state arrives whole from another device
+function av(p){return p&&p.avatar?esc(p.avatar)+' ':''}
 
 // ── our own message / question window (never the browser's alert/confirm) ──
 window.UI_ALERTS=[];
