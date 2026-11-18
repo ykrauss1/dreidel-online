@@ -737,7 +737,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v70';
+const APP_VERSION='v71';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1326,7 +1326,7 @@ function resetRound(){
 
     G.pot=G.ante*G.players.length;
     G.currentTurn=(G.firstTurn||0)%G.players.length;
-    G.over=false;G.endedByTime=false;G.winners=null;
+    G.over=false;G.endedByTime=false;G.winners=null;G.spinsDone=0;
     G.endsAt=G.timeLimitMin?Date.now()+G.timeLimitMin*60000:null;
     // 🕎 Hanukkah night bonus: tonight's candle count, to every player
     const night=hanukkahNight();
@@ -3238,6 +3238,7 @@ function statsOf(p){G.stats=G.stats||{};return G.stats[p.id]=G.stats[p.id]||{spi
 function applyLetter(l,ex){
     ex=ex||{};
     const p=G.players[G.currentTurn];G.players.forEach(pl=>pl.change='');
+    G.spinsDone=(G.spinsDone||0)+1;   // (every home counts the same spins)
     let took=0,paid=0;
 
     switch(l){
@@ -3647,10 +3648,13 @@ document.addEventListener('visibilitychange',()=>{
 // 🏁 end the game now, in order: whoever has the most coins wins, exactly as when the time runs out.
 // Online only the host can do it, and every home ends it the same moment.
 function finishVisible(){const b=document.getElementById('finishBtn');if(!b)return;
-    b.classList.toggle('hidden',G.over||!G.players.length||(MODE==='online'&&(!IS_HOST||!G.started)));b.disabled=spinning}
+    b.classList.toggle('hidden',G.over||!G.players.length||!canFinish()||(MODE==='online'&&(!IS_HOST||!G.started)));b.disabled=spinning}
+// there is something to sum up only after at least two spins (otherwise everybody is still level and "everybody wins")
+function canFinish(){return (G.spinsDone||0)>=2}
 setInterval(finishVisible,700);
 function confirmFinishNow(){
     if(G.over||spinning)return;
+    if(!canFinish()){uiAlert('אפשר לסיים אחרי ששני שחקנים לפחות סובבו.');return}
     uiConfirm('לסיים את המשחק עכשיו? מי שיש לו הכי הרבה מטבעות — מנצח.','🏁 כן, לסיים').then(y=>{if(!y||G.over)return;
         if(MODE==='online'&&channel){try{channel.send({type:'broadcast',event:'finish_now',payload:{from:MY_ID}})}catch(e){}}
         finishNow();
