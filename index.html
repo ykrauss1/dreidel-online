@@ -443,9 +443,56 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .dreidel-controls[data-mode="sing"].can-spin .sing-btn,.dreidel-controls[data-mode="sing"].sing-live .sing-btn{display:inline-flex}
 .sing-btn.armed{background:linear-gradient(180deg,#ff8a8a,#d94848)!important;color:#fff!important;animation:singPulse 1s infinite}
 @keyframes singPulse{50%{box-shadow:0 0 0 10px rgba(255,100,100,.15)}}
-.dreidel-controls[data-mode="circle"] .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn,.dreidel-controls[data-mode="clap"] .spin-btn,.dreidel-controls[data-mode="sing"] .spin-btn:not(.sing-btn){display:none}
+.dreidel-controls[data-mode="circle"] .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="wheel"] .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn,.dreidel-controls[data-mode="clap"] .spin-btn,.dreidel-controls[data-mode="sing"] .spin-btn:not(.sing-btn){display:none}
 .spin-prompt.mic-off{cursor:pointer;text-decoration:underline dotted}
 @media(min-width:1000px){.spin-modes button{font-size:.95rem;padding:7px 16px}.spin-prompt{font-size:1.35rem}}
+@media(hover:none) and (pointer:coarse){.spin-modes .desk-only{display:none}}
+.spin-modes button.m-off{display:none!important}
+.mode-checks{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+/* 🎮 mini-games */
+.mg{position:fixed;inset:0;z-index:950;background:rgba(5,8,20,.74);display:none;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.mg.show{display:flex}
+.mg-box{width:min(94vw,900px);height:min(84vh,620px);background:linear-gradient(180deg,#141a3a,#0d1128);border:2px solid var(--gold);border-radius:18px;display:flex;flex-direction:column;padding:12px 16px;box-shadow:0 12px 50px rgba(0,0,0,.6)}
+.mg-head{display:flex;align-items:center;gap:12px;font-size:1.25rem;color:var(--gold);font-weight:700}
+.mg-title{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mg-score{font-family:'Secular One',sans-serif;font-size:1.6rem;min-width:60px;text-align:center}
+.mg-x{background:none;border:1px solid var(--border-l);color:var(--text-dim);border-radius:10px;padding:4px 11px;cursor:pointer;font-size:1rem}
+.mg-bar{height:8px;background:rgba(255,255,255,.08);border-radius:5px;margin:8px 0;overflow:hidden}
+.mg-bar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a3a,#f5c842);transform-origin:right center}
+.mg-area{flex:1;position:relative;border-radius:12px;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;background:radial-gradient(ellipse at 50% 60%,rgba(245,200,66,.07),transparent 70%)}
+.mg-foot{min-height:30px;text-align:center;color:var(--text);font-size:1.1rem;padding-top:6px}
+.mg-big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Secular One',sans-serif;font-size:clamp(1.6rem,5vw,3rem);color:var(--gold);text-shadow:0 3px 14px rgba(0,0,0,.6);pointer-events:none;padding:0 20px;z-index:5;animation:mgPop .35s ease-out}
+.mg-ready{color:#fff}
+@keyframes mgPop{from{transform:scale(.6);opacity:0}}
+.mg-coin{position:absolute;cursor:pointer;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));animation:mgIn .2s ease-out;transition:transform .25s,opacity .25s}
+.mg-coin:hover{transform:scale(1.08)}.mg-coin.hit{transform:scale(1.6) translateY(-20px);opacity:0}.mg-coin.gone{transform:scale(.3);opacity:0}
+@keyframes mgIn{from{transform:scale(.2);opacity:0}}
+.mg-half{position:absolute;top:0;bottom:0;width:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:1.4rem;color:var(--text-dim);border:2px dashed var(--border-l);border-radius:12px;transition:background .08s}
+.mg-half span{font-size:3rem}.mg-l{left:0}.mg-r{right:0}.mg-half.on{background:rgba(245,200,66,.25);color:var(--gold)}
+.mg-count{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:'Secular One',sans-serif;font-size:5rem;color:var(--gold);pointer-events:none;text-shadow:0 4px 20px rgba(0,0,0,.6)}
+.mg-drum{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-size:min(28vh,170px);cursor:pointer;transition:transform .08s}
+.mg-drum.beat{animation:mgBeat .3s ease-out}.mg-drum.hit{transform:translate(-50%,-50%) scale(.9)}
+@keyframes mgBeat{0%{transform:translate(-50%,-50%) scale(1.18)}100%{transform:translate(-50%,-50%) scale(1)}}
+.mg-beats{position:absolute;left:0;right:0;bottom:16%;display:flex;justify-content:center;gap:14px}
+.mg-beats i{width:22px;height:22px;border-radius:50%;border:2px solid var(--border-l);background:rgba(255,255,255,.05)}
+.mg-beats i.now{border-color:var(--gold)}.mg-beats i.ok{background:#c99a2a}.mg-beats i.good{background:#4cd07a;border-color:#4cd07a}
+.mg-words{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-size:2rem;color:#fff;font-weight:700}
+.mg-menorah{position:absolute;left:6%;right:6%;bottom:22%;top:8%;display:flex;align-items:flex-end;justify-content:space-between;direction:ltr}
+.mg-base{position:absolute;left:5%;right:5%;bottom:16%;height:6%;background:linear-gradient(180deg,#e8c25a,#9b7420);border-radius:6px}
+.mg-candle{position:relative;width:8%;height:62%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer}
+.mg-candle.shamash{height:80%}
+.mg-candle .wax{width:60%;flex:1;background:linear-gradient(90deg,#e9eefc,#fff,#c9d2ee);border-radius:4px 4px 2px 2px;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
+.mg-candle .fl{width:44%;height:16%;min-height:22px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;background:radial-gradient(ellipse at 50% 70%,#fff6b0,#ffb020 55%,#ff6a00 80%,transparent 82%);opacity:0;transform:scale(.3);transition:all .25s;filter:drop-shadow(0 0 12px #ffb020)}
+.mg-candle.lit .fl{opacity:1;transform:scale(1);animation:mgFlick .25s infinite alternate}
+@keyframes mgFlick{to{transform:scale(1.06,.94) rotate(2deg)}}
+.mg-candle.next .wax{box-shadow:0 0 0 4px var(--gold),0 0 26px 6px rgba(245,200,66,.75);animation:mgNext .7s infinite alternate}
+@keyframes mgNext{to{box-shadow:0 0 0 4px #fff3b0,0 0 34px 12px rgba(245,200,66,.95)}}
+.mg-candle .num{position:absolute;top:-2.6em;font-size:1rem;color:var(--gold);font-weight:700;white-space:nowrap}
+.mg-candle.wrong{animation:mgNo .3s}
+@keyframes mgNo{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.mg-candle:hover .wax{filter:brightness(1.08)}
+#mgCv{position:absolute;inset:0;cursor:crosshair}
+.mg-done{position:absolute;bottom:10px;left:10px;z-index:3;padding:8px 18px}
 .dreidel-art.grabbing{cursor:grabbing}
 .dreidel-art.charging{animation:chargeWiggle .12s infinite alternate}
 @keyframes chargeWiggle{from{transform:rotate(calc(var(--cv,0)*-4deg))}to{transform:rotate(calc(var(--cv,0)*4deg))}}
@@ -617,12 +664,18 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                 <div class="result-line" id="resultLine"></div>
                 <div class="spin-modes" id="spinModes" role="group" aria-label="איך לסובב">
                     <button data-m="circle"><span class="m-desk">🌀 סיבוב בעכבר</span><span class="m-touch">🌀 סיבוב באצבע</span></button>
+                    <button data-m="wheel" class="desk-only">🖱️ גלגלת</button>
                     <button data-m="flick">✊ זריקה</button>
                     <button data-m="taps">👆 3 לחיצות</button>
                     <button data-m="hold">🎯 החזק ושחרר</button>
                     <button data-m="clap">👏 מחיאות כפיים</button>
                     <button data-m="sing">🎤 שירה</button>
                     <button data-m="shake" class="touch-only">📳 נענוע</button>
+                    <button data-m="letter">✍️ ציור אות</button>
+                    <button data-m="drum">🥁 תיפוף</button>
+                    <button data-m="race">⚡ מירוץ לחצנים</button>
+                    <button data-m="coins">🪙 תפיסת מטבעות</button>
+                    <button data-m="candles">🕯️ הדלקת נרות</button>
                     <button type="button" class="ask-btn" id="askBtn" onclick="askTriviaNow()" title="שאלת חנוכה לשחקן שבתור — עכשיו">❓ שאלה עכשיו</button>
                 </div>
                 <div class="spin-prompt" id="spinPrompt"></div>
@@ -713,6 +766,10 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <label class="sound-toggle"><input type="checkbox" id="triviaOn" checked> ❓ שאלות חנוכה מדי פעם (תשובה נכונה = בונוס)</label>
   <button class="btn btn-outline btn-sm" type="button" style="width:100%;margin-top:6px" onclick="openTriviaEditor()">✏️ צפייה ועריכה של השאלות</button>
   </div></details>
+  <details class="sp-sec"><summary>🎮 דרכי סיבוב שיוצגו</summary>
+  <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:6px">סמנו אילו כפתורים יופיעו מתחת לסביבון (במכשיר הזה)</div>
+  <div id="modeChecks" class="mode-checks"></div>
+  </details>
   <details class="sp-sec"><summary>🎨 צבעי פאות הסביבון</summary>
   <div class="settings-row"><label>נ (כלום)</label><input type="color" id="colNun"   value="#3a3a7a" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">אפור-כחול</span></div>
   <div class="settings-row"><label>ג (הכל)</label><input type="color" id="colGimel" value="#1e6040" oninput="syncFaceColor()"><span style="font-size:.7rem;color:var(--text-dim)">ירוק</span></div>
@@ -744,7 +801,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v72';
+const APP_VERSION='v73';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1585,7 +1642,7 @@ function G2(m,f,p){return (p?isFemaleName(p.name||p):curFemale())?f:m}   // G2('
 function canSpinNow(){
     const b=document.getElementById('spinBtn');
     return !spinning&&!G.over&&!TRIVIA.open&&!document.getElementById('gameScreen').classList.contains('hidden')
-        &&!b.classList.contains('hidden')&&!b.disabled&&!document.getElementById('winModal').classList.contains('show');
+        &&!b.classList.contains('hidden')&&!b.disabled&&!document.getElementById('winModal').classList.contains('show')&&!(typeof MG!=='undefined'&&MG.open);
 }
 let NEXT_EXTRA=null;            // extras for the next spin: power, skill bonus, singing seconds
 const GOLDEN_CHANCE=1/18;
@@ -1595,7 +1652,7 @@ function spinFromInput(power,how,extra){
     NEXT_EXTRA=Object.assign({power:spinPower},extra||{});
     if(how==='hold'&&spinPower>0.93)NEXT_EXTRA.skill='bull';
     const pm=document.getElementById('powerMeter');pm.classList.remove('hidden');
-    document.getElementById('powerClicks').textContent={taps:'● ● ●',hold:'🎯',flick:'👋',circle:'🌀',shake:'📳',clap:'👏👏👏',sing:'🎤'}[how]||'';
+    document.getElementById('powerClicks').textContent={taps:'● ● ●',hold:'🎯',flick:'👋',circle:'🌀',shake:'📳',clap:'👏👏👏',sing:'🎤',wheel:'🖱️',letter:'✍️',drum:'🥁',race:'⚡',coins:'🪙',candles:'🕯️'}[how]||'';
     document.getElementById('powerFill').style.width=Math.round(spinPower*100)+'%';
     const bull=how==='hold'&&spinPower>0.93;
     document.getElementById('powerLabel').textContent=bull?'🎯 בול בשיא!':spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':'😴 עייף...';
@@ -1611,6 +1668,9 @@ function spinFromInput(power,how,extra){
             :how==='shake'?`📳 ${n} ${g('נער','ניערה')} את הטלפון!`
             :how==='clap'?`👏 ${n} ${g('מחא','מחאה')} כפיים — והסביבון הסתובב!`
             :how==='sing'?`🎤 ${n} ${g('שר','שרה')} — והסביבון הסתובב!`
+            :extra&&extra.mgText?`${n}: ${extra.mgText}`
+            :how==='wheel'&&spinPower>0.7?`🖱️ ${n} ${g('גלגל','גלגלה')} את הגלגלת כמו טורבו!`
+            :how==='wheel'?`🖱️ ${n} ${g('גלגל','גלגלה')} את הסביבון`
             :spinPower>0.85?`💪 ${n} ${g('סיבב','סיבבה')} בכוח עצום!`
             :spinPower>0.65?`⚡ ${n} ${g('סיבב','סיבבה')} בחוזקה`
             :spinPower>0.4 ?`👌 ${n} ${g('סיבב','סיבבה')} בינוני`
@@ -1618,7 +1678,7 @@ function spinFromInput(power,how,extra){
             :`😴 ${n} בקושי ${g('הזיז','הזיזה')} את הסביבון`;
         addLog(msg);
     }
-    setTimeout(()=>doSpin(),how==='flick'||how==='circle'?0:180);
+    setTimeout(()=>doSpin(),how==='flick'||how==='circle'||how==='wheel'?0:180);
 }
 
 // ── Hold & release: hold the button / space, a meter swings 0→100→0, release at the top ──
@@ -1626,6 +1686,7 @@ const HOLD_MS=220, CHARGE_PERIOD=1100;
 let pressAt=0,holdTimer=null,charging=false,chargeT0=0,chargeVal=0,chargeRAF=0;
 function pressStart(){
     if(!canSpinNow()||pressAt)return;
+    if(MG_MODES.includes(spinMode())){playClickSound();mgStart(spinMode());return}
     pressAt=performance.now();clearTimeout(holdTimer);
     holdTimer=setTimeout(startCharge,HOLD_MS);
 }
@@ -1686,8 +1747,8 @@ document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressA
 //   taps   — 3 quick taps on "סובב" (or space)
 //   hold   — hold "סובב" (or space), a meter swings, release at the top
 //   shake  — shake the phone
-const SPIN_MODES=['circle','flick','taps','hold','shake','clap','sing'];
-function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
+const SPIN_MODES=['circle','wheel','flick','taps','hold','clap','sing','shake','letter','drum','race','coins','candles'];
+function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH||m==='wheel'&&IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
 const PROMPTS={
     circle:()=>IS_TOUCH?G2('🌀 שים אצבע על הסביבון וסובב במעגלים... ועזוב!','🌀 שימי אצבע על הסביבון וסובבי במעגלים... ועזבי!')
                        :G2('🌀 סובב את העכבר במעגלים... ועצור!','🌀 סובבי את העכבר במעגלים... ועצרי!'),
@@ -1695,6 +1756,12 @@ const PROMPTS={
     taps:()=>G2('👆 לחץ 3 פעמים מהר על "סובב!"','👆 לחצי 3 פעמים מהר על "סובב!"')+(IS_TOUCH?'':' (או רווח)'),
     hold:()=>G2('🎯 החזק את "סובב!" — ושחרר בשיא','🎯 החזיקי את "סובב!" — ושחררי בשיא'),
     shake:()=>G2('📳 נער את הטלפון!','📳 נערי את הטלפון!'),
+    wheel:()=>G2('🖱️ גלגל את גלגלת העכבר מהר... ועצור!','🖱️ גלגלי את גלגלת העכבר מהר... ועצרי!'),
+    letter:()=>G2('✍️ לחץ "התחל!" וצייר את האות שתופיע','✍️ לחצי "התחילי!" וציירי את האות שתופיע'),
+    drum:()=>G2('🥁 לחץ "התחל!" ותופף בקצב','🥁 לחצי "התחילי!" ותופפי בקצב'),
+    race:()=>G2('⚡ לחץ "התחל!" — ואז שמאלי, ימני, שמאלי, ימני… מהר!','⚡ לחצי "התחילי!" — ואז שמאלי, ימני, שמאלי, ימני… מהר!'),
+    coins:()=>G2('🪙 לחץ "התחל!" ותפוס כמה שיותר מטבעות','🪙 לחצי "התחילי!" ותפסי כמה שיותר מטבעות'),
+    candles:()=>G2('🕯️ לחץ "התחל!" והדלק את הנרות מהר','🕯️ לחצי "התחילי!" והדליקי את הנרות מהר'),
     clap:()=>MIC.on?G2('👏 מחא כפיים — כל עוד מוחאים הוא מסתובב!','👏 מחאי כפיים — כל עוד מוחאים הוא מסתובב!'):'👏 לחיצה כאן מפעילה את המיקרופון',
     sing:()=>!MIC.on?G2('🎤 לחץ "התחל לשיר!" — והמיקרופון יופעל','🎤 לחצי "התחילי לשיר!" — והמיקרופון יופעל')
         :SING.on?G2('🎶 המשך לשיר... כשתפסיק — הוא יסתובב לבד!','🎶 המשיכי לשיר... כשתפסיקי — הוא יסתובב לבד!')
@@ -1713,7 +1780,9 @@ function refreshSpinUI(){
     if(can)maybeAskTrivia();
     const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick'||m==='circle'&&IS_TOUCH);
     if(can&&D3.fallen&&!D3.standing&&performance.now()-(D3.fallenAt||0)>1800)d3StandUp();   // ready for the next player
-    if(window._idleTurn)window._idleTurn(can&&m==='circle');
+    if(window._idleTurn)window._idleTurn(can&&(m==='circle'||m==='wheel'));
+    if(MG_MODES.includes(m)&&!charging&&!spinClicks)document.getElementById('spinBtn').textContent=G2('🎮 התחל!','🎮 התחילי!');
+    else if(document.getElementById('spinBtn').textContent.startsWith('🎮'))document.getElementById('spinBtn').textContent='סובב!';
     const ab=document.getElementById('askBtn');
     if(ab){const tn=(G.round||1)*1000+(G.turnNo||0);ab.disabled=!can||TRIVIA.open||TRIVIA.askedTurn===tn;ab.title=TRIVIA.askedTurn===tn?'כבר הייתה שאלה בתור הזה':'שאלת חנוכה לשחקן שבתור — עכשיו'}
     const key=[m,can,innerWidth,innerHeight,document.getElementById('gameScreen').classList.contains('hidden')].join('|');
@@ -1743,6 +1812,221 @@ document.getElementById('spinModes').addEventListener('click',e=>{
     if(b.dataset.m==='shake'){try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')DeviceMotionEvent.requestPermission().catch(()=>{})}catch(_){}}
 });
 setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal closes, …)
+// ═══════════ 🎮 mouse mini-games — the score is the strength of the spin ═══════════
+// Made for a big family round one big screen: everything is done with the mouse (or a finger), passed from hand to hand.
+var MG_MODES=['letter','drum','race','coins','candles'];
+var MG={open:false,mode:'',timers:[],raf:0};
+const MG_TITLES={letter:'✍️ ציור אות',drum:'🥁 תיפוף בקצב',race:'⚡ מירוץ לחצנים',coins:'🪙 תפיסת מטבעות',candles:'🕯️ הדלקת נרות'};
+function mgEl(id){return document.getElementById(id)}
+function mgLater(f,ms){const t=setTimeout(f,ms);MG.timers.push(t);return t}
+function mgClear(){MG.timers.forEach(clearTimeout);MG.timers=[];cancelAnimationFrame(MG.raf);if(MG.off)MG.off();MG.off=null}
+function mgBuild(){
+    let o=mgEl('mg');if(o)return o;
+    o=document.createElement('div');o.id='mg';o.className='mg';o.innerHTML=`<div class="mg-box"><div class="mg-head"><span class="mg-title" id="mgTitle"></span><span class="mg-score" id="mgScore"></span><button type="button" class="mg-x" id="mgX" title="ביטול">✕</button></div>
+      <div class="mg-bar"><i id="mgBar"></i></div><div class="mg-area" id="mgArea"></div><div class="mg-foot" id="mgFoot"></div></div>`;
+    document.body.appendChild(o);
+    mgEl('mgX').onclick=()=>mgCancel();
+    o.addEventListener('contextmenu',e=>e.preventDefault());
+    return o;
+}
+function mgBar(frac){const b=mgEl('mgBar');if(b)b.style.transform=`scaleX(${Math.max(0,Math.min(1,frac)).toFixed(3)})`}
+function mgStart(mode){
+    if(MG.open||!canSpinNow())return;
+    const o=mgBuild();MG.open=true;MG.mode=mode;mgClear();
+    mgEl('mgTitle').textContent=MG_TITLES[mode]+' — '+(G.players[G.currentTurn]?.name||'');
+    mgEl('mgScore').textContent='';mgEl('mgFoot').textContent='';mgBar(1);
+    const area=mgEl('mgArea');area.innerHTML='';area.className='mg-area mga-'+mode;
+    o.classList.add('show');refreshSpinUI();
+    ({letter:mgLetter,drum:mgDrum,race:mgRace,coins:mgCoins,candles:mgCandles})[mode](area);
+}
+function mgCancel(){if(!MG.open)return;mgClear();MG.open=false;mgEl('mg').classList.remove('show');resetSpinUI();refreshSpinUI()}
+// the game ended: show how it went for a moment, then the dreidel flies with that strength
+function mgFinish(power,text){
+    if(!MG.open||MG.done)return;MG.done=true;mgClear();
+    const area=mgEl('mgArea'),big=document.createElement('div');big.className='mg-big';big.textContent=text;area.appendChild(big);
+    playSfx(pick(power>.6?SFX.gimel:SFX.he),{vol:.5});
+    const mode=MG.mode;
+    setTimeout(()=>{MG.open=false;MG.done=false;mgEl('mg').classList.remove('show');
+        if(G.over||spinning)return;playWhoosh(power);spinFromInput(power,mode,{mgText:text})},1300);
+}
+// "ready… go!" then the game
+function mgCountIn(area,text,go){
+    const c=document.createElement('div');c.className='mg-big mg-ready';c.textContent=text;area.appendChild(c);
+    mgLater(()=>{c.textContent=G2('מוכן?','מוכנה?')},900);
+    mgLater(()=>{c.textContent='צא!';playSfx(pick(SFX.tick),{vol:.5,rate:1.3})},1700);
+    mgLater(()=>{c.remove();go()},2200);
+}
+// a timed game: calls tick(fraction) every frame, end() when the time is up
+function mgTimed(ms,tick,end){
+    const t0=performance.now();
+    const loop=()=>{const f=(performance.now()-t0)/ms;mgBar(1-f);if(tick)tick(f);if(f>=1){end();return}MG.raf=requestAnimationFrame(loop)};loop();
+}
+
+// ── 🪙 catch the coins: chocolate coins pop up for a moment — click as many as you can in 6 seconds ──
+function mgCoins(area){
+    let caught=0;const W=area.clientWidth,H=area.clientHeight,DUR=6000;
+    mgEl('mgFoot').textContent=G2('לחץ על כמה שיותר מטבעות!','לחצי על כמה שיותר מטבעות!');
+    mgCountIn(area,'🪙 תפיסת מטבעות',()=>{
+        mgEl('mgScore').textContent='🪙 0';
+        const spawn=()=>{
+            if(MG.done)return;
+            const c=document.createElement('img');c.src='coin.webp';c.className='mg-coin';c.draggable=false;
+            const s=Math.round(Math.min(W,H)*.15+20);c.style.width=c.style.height=s+'px';
+            c.style.left=Math.round(10+Math.random()*(W-s-20))+'px';c.style.top=Math.round(10+Math.random()*(H-s-20))+'px';
+            c.addEventListener('pointerdown',e=>{e.preventDefault();if(c.dataset.hit)return;c.dataset.hit=1;caught++;playCoinSound();
+                mgEl('mgScore').textContent='🪙 '+caught;c.classList.add('hit');setTimeout(()=>c.remove(),300)});
+            area.appendChild(c);setTimeout(()=>{if(!c.dataset.hit){c.classList.add('gone');setTimeout(()=>c.remove(),250)}},1150);
+            mgLater(spawn,330+Math.random()*120);
+        };spawn();
+        mgTimed(DUR,null,()=>mgFinish(Math.max(.15,Math.min(1,caught/12)),`🪙 ${caught} מטבעות!`));
+    });
+}
+
+// ── ⚡ button race: left button, right button, left, right… as fast as you can for 4 seconds ──
+function mgRace(area){
+    let n=0,last=-1,started=false;const DUR=4000;
+    area.innerHTML=`<div class="mg-half mg-l" id="mgL"><b>שמאלי</b><span>🖱️</span></div><div class="mg-half mg-r" id="mgR"><b>ימני</b><span>🖱️</span></div><div class="mg-count" id="mgCount">0</div>`;
+    mgEl('mgFoot').textContent=IS_TOUCH?G2('הקש לסירוגין: צד שמאל, צד ימין, שמאל, ימין… מהר!','הקישי לסירוגין: צד שמאל, צד ימין, שמאל, ימין… מהר!')
+        :G2('לחץ לסירוגין: לחצן שמאלי, לחצן ימני, שמאלי, ימני… מהר! (הזמן מתחיל בלחיצה הראשונה)','לחצי לסירוגין: לחצן שמאלי, לחצן ימני, שמאלי, ימני… מהר! (הזמן מתחיל בלחיצה הראשונה)');
+    const hit=side=>{
+        if(MG.done)return;
+        if(!started){started=true;mgTimed(DUR,null,()=>mgFinish(Math.max(.15,Math.min(1,n/26)),`⚡ ${n} לחיצות!`))}
+        mgEl(side?'mgR':'mgL').classList.add('on');setTimeout(()=>mgEl(side?'mgR':'mgL')?.classList.remove('on'),90);
+        if(side===last)return;                       // the same button twice does not count
+        last=side;n++;mgEl('mgCount').textContent=n;playSfx(pick(SFX.click),{vol:.35,rate:1+Math.min(.6,n/40)});
+    };
+    const down=e=>{e.preventDefault();
+        if(e.pointerType==='mouse'){if(e.button===0)hit(0);else if(e.button===2)hit(1)}
+        else{const r=area.getBoundingClientRect();hit(e.clientX>r.left+r.width/2?1:0)}};
+    area.addEventListener('pointerdown',down);MG.off=()=>area.removeEventListener('pointerdown',down);
+}
+
+// ── 🥁 drum to the beat: 4 counting beats, then click on each of the next 8 beats ──
+function mgDrum(area){
+    const BEAT=600,N=8,COUNT=4;let t0=0,hits=new Array(N).fill(0),extra=0;
+    area.innerHTML=`<div class="mg-drum" id="mgDrum">🥁</div><div class="mg-beats" id="mgBeats">${'<i></i>'.repeat(N)}</div><div class="mg-words" id="mgWords"></div>`;
+    mgEl('mgFoot').textContent=G2('ספור עם התוף 1-2-3-4, ואז לחץ (או רווח) בדיוק על כל פעמה','ספרי עם התוף 1-2-3-4, ואז לחצי (או רווח) בדיוק על כל פעמה');
+    const words=['סְבִי','בוֹן','סוֹב','סוֹב','סוֹב','חֲנֻכָּה','חַג','טוֹב'];
+    const beatAt=i=>t0+(COUNT+i)*BEAT;
+    const pulse=(i,count)=>{const d=mgEl('mgDrum');if(!d)return;d.classList.remove('beat');void d.offsetWidth;d.classList.add('beat');
+        playSfx(pick(SFX.tick),{vol:count?.45:.6,rate:count?1.5:1});
+        if(count)mgEl('mgWords').textContent=String(i+1);else{mgEl('mgWords').textContent=words[i];mgEl('mgBeats').children[i].classList.add('now')}};
+    const tap=e=>{
+        if(e&&e.type==='pointerdown'){e.preventDefault()}
+        if(MG.done||!t0)return;
+        const now=performance.now();let best=-1,bd=1e9;
+        for(let i=0;i<N;i++){const d=Math.abs(now-beatAt(i));if(d<bd){bd=d;best=i}}
+        const d=mgEl('mgDrum');d.classList.add('hit');setTimeout(()=>d&&d.classList.remove('hit'),120);
+        if(bd>300||hits[best]){extra++;return}
+        hits[best]=Math.max(.05,1-bd/300);const dot=mgEl('mgBeats').children[best];dot.classList.add(hits[best]>.6?'good':'ok');
+        mgEl('mgScore').textContent='🥁 '+hits.filter(x=>x>.5).length+'/'+N;
+    };
+    const key=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();if(!e.repeat)tap()}};
+    area.addEventListener('pointerdown',tap);document.addEventListener('keydown',key,true);
+    MG.off=()=>{area.removeEventListener('pointerdown',tap);document.removeEventListener('keydown',key,true)};
+    mgLater(()=>{
+        t0=performance.now();
+        for(let i=0;i<COUNT;i++)mgLater(()=>pulse(i,true),i*BEAT);
+        for(let i=0;i<N;i++)mgLater(()=>pulse(i,false),(COUNT+i)*BEAT);
+        mgTimed((COUNT+N)*BEAT+350,null,()=>{
+            const good=hits.filter(x=>x>.5).length,sc=hits.reduce((a,b)=>a+b,0)/N-extra*.04;
+            mgFinish(Math.max(.15,Math.min(1,sc*1.15)),good>=7?`🥁 ${good} מתוך ${N} — מתופף אמיתי!`:`🥁 ${good} מתוך ${N} בקצב`)});
+    },500);
+}
+
+// ── 🕯️ light the candles: first the shamash, then the candles from the left (the newest first), as fast as you can ──
+function mgCandles(area){
+    const ORDER=['s',0,1,2,3,4,5,6,7];let k=0,t0=0;const LIMIT=12000;
+    // candles 0..7 drawn from left to right, the shamash in the middle and higher
+    let html='<div class="mg-menorah">';
+    for(let i=0;i<8;i++){if(i===4)html+=`<div class="mg-candle shamash" data-c="s"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`;
+        html+=`<div class="mg-candle" data-c="${i}"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`}
+    html+='</div><div class="mg-base"></div>';area.innerHTML=html;
+    mgEl('mgFoot').textContent=G2('הדלק: קודם את השמש (באמצע), ואז מהנר השמאלי ימינה — הנר הבא מהבהב','הדליקי: קודם את השמש (באמצע), ואז מהנר השמאלי ימינה — הנר הבא מהבהב');
+    const mark=()=>{area.querySelectorAll('.mg-candle').forEach(c=>c.classList.remove('next'));
+        const nx=area.querySelector(`.mg-candle[data-c="${ORDER[k]}"]`);if(nx){nx.classList.add('next');nx.querySelector('.num').textContent=k===0?'שמש':k}};
+    mark();
+    const down=e=>{
+        const c=e.target.closest('.mg-candle');if(!c||MG.done)return;e.preventDefault();
+        if(!t0){t0=performance.now();mgTimed(LIMIT,null,()=>mgFinish(Math.max(.15,k/9*.55),`🕯️ ${k-1>0?k-1:0} נרות דלקו`))}
+        if(c.dataset.c!==String(ORDER[k])){c.classList.remove('wrong');void c.offsetWidth;c.classList.add('wrong');return}
+        c.classList.add('lit');c.classList.remove('next');c.querySelector('.num').textContent='';playSfx(pick(SFX.tick),{vol:.4,rate:1+k*.06});k++;
+        mgEl('mgScore').textContent='🕯️ '+Math.max(0,k-1)+'/8';
+        if(k>=ORDER.length){const sec=(performance.now()-t0)/1000;mgFinish(Math.max(.3,Math.min(1,1.25-sec/10)),`🕎 כל הנרות דולקים! (${sec.toFixed(1)} שניות)`);return}
+        mark();
+    };
+    area.addEventListener('pointerdown',down);MG.off=()=>area.removeEventListener('pointerdown',down);
+}
+
+// ── ✍️ draw the letter: a big dotted letter — go over it with the mouse held down. Accurate and complete = strong spin ──
+function mgLetter(area){
+    const L=pick(['נ','ג','ה',dispLetter('פ')]);
+    const W=area.clientWidth,H=area.clientHeight,dpr=Math.min(2,devicePixelRatio||1);
+    area.innerHTML=`<canvas id="mgCv"></canvas><button type="button" class="btn btn-primary mg-done" id="mgDone">✓ ${G2('סיימתי','סיימתי')}</button>`;
+    const cv=mgEl('mgCv');cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
+    const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+    const fs=Math.round(Math.min(H*.85,W*.6));const font=`${fs}px 'Secular One', sans-serif`;
+    // the letter as a mask (where its ink is), measured on a coarse grid
+    const m=document.createElement('canvas');m.width=W;m.height=H;const mc=m.getContext('2d');
+    mc.font=font;mc.textAlign='center';mc.textBaseline='middle';mc.fillStyle='#000';mc.fillText(L,W/2,H/2+fs*.04);
+    const md=mc.getImageData(0,0,W,H).data,STEP=6,ink=[];
+    for(let y=0;y<H;y+=STEP)for(let x=0;x<W;x+=STEP)if(md[(y*W+x)*4+3]>128)ink.push([x,y]);
+    const isInk=(x,y,r)=>{for(let dy=-r;dy<=r;dy+=4)for(let dx=-r;dx<=r;dx+=4){const xx=Math.round(x+dx),yy=Math.round(y+dy);if(xx>=0&&yy>=0&&xx<W&&yy<H&&md[(yy*W+xx)*4+3]>128)return true}return false};
+    const guide=()=>{ctx.clearRect(0,0,W,H);ctx.font=font;ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillStyle='rgba(245,200,66,.13)';ctx.fillText(L,W/2,H/2+fs*.04);
+        ctx.setLineDash([10,9]);ctx.lineWidth=3;ctx.strokeStyle='rgba(245,200,66,.75)';ctx.strokeText(L,W/2,H/2+fs*.04);ctx.setLineDash([])};
+    guide();
+    mgEl('mgFoot').textContent=G2(`צייר את האות ${L} — לחץ והחזק את העכבר ועבור על הקווים`,`ציירי את האות ${L} — לחצי והחזיקי את העכבר ועברי על הקווים`);
+    const pts=[];let down=false,t0=0,lastP=null;const covered=new Set();const BR=22;
+    const add=(x,y)=>{
+        pts.push([x,y]);
+        for(let i=0;i<ink.length;i++){if(covered.has(i))continue;const [ix,iy]=ink[i];if((ix-x)*(ix-x)+(iy-y)*(iy-y)<BR*BR)covered.add(i)}
+        mgEl('mgScore').textContent=Math.round(100*covered.size/Math.max(1,ink.length))+'%';
+    };
+    const pos=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]};
+    cv.addEventListener('pointerdown',e=>{if(MG.done)return;e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(_){}down=true;
+        if(!t0){t0=performance.now();mgTimed(15000,null,finish)}
+        lastP=pos(e);add(...lastP)});
+    cv.addEventListener('pointermove',e=>{if(!down||MG.done)return;const p=pos(e);
+        const d=Math.hypot(p[0]-lastP[0],p[1]-lastP[1]),n=Math.ceil(d/5);
+        for(let i=1;i<=n;i++)add(lastP[0]+(p[0]-lastP[0])*i/n,lastP[1]+(p[1]-lastP[1])*i/n);
+        ctx.strokeStyle='#ffd34d';ctx.lineWidth=12;ctx.lineCap='round';ctx.lineJoin='round';ctx.shadowColor='rgba(255,200,60,.7)';ctx.shadowBlur=10;
+        ctx.beginPath();ctx.moveTo(...lastP);ctx.lineTo(...p);ctx.stroke();ctx.shadowBlur=0;lastP=p;
+        if(covered.size/Math.max(1,ink.length)>.9)finish()});
+    const up=()=>{down=false};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+    function finish(){
+        if(MG.done)return;
+        const cov=covered.size/Math.max(1,ink.length);
+        const inside=pts.length?pts.filter(([x,y])=>isInk(x,y,14)).length/pts.length:0;   // scribbling all over does not count
+        const sec=t0?(performance.now()-t0)/1000:15;
+        const acc=Math.min(1,cov/.75)*Math.pow(Math.min(1,inside/.85),1.5);
+        const score=acc*(sec<6?1.1:sec<10?1:.9);
+        const pct=Math.round(100*acc);
+        mgFinish(Math.max(.15,Math.min(1,score)),pct>=85?`✍️ ${L} מושלמת! ${pct}%`:pct>=55?`✍️ ${L} יפה! ${pct}%`:`✍️ ${pct}% — ${G2('נסה','נסי')} בפעם הבאה לעבור על כל האות`);
+    }
+    mgEl('mgDone').onclick=()=>finish();
+}
+
+// ── which ways to spin are shown (per device, in the settings) ──
+const MODE_NAMES={circle:'🌀 סיבוב בעכבר / באצבע',wheel:'🖱️ גלגלת העכבר',flick:'✊ זריקה',taps:'👆 3 לחיצות',hold:'🎯 החזק ושחרר',clap:'👏 מחיאות כפיים',sing:'🎤 שירה',shake:'📳 נענוע (טלפון)',
+    letter:'✍️ ציור אות',drum:'🥁 תיפוף בקצב',race:'⚡ מירוץ לחצנים',coins:'🪙 תפיסת מטבעות',candles:'🕯️ הדלקת נרות'};
+function modesOff(){try{return JSON.parse(lsGet('dreidel_modes_off')||'[]')}catch(e){return []}}
+function applyModeVisibility(){
+    const off=modesOff();
+    document.querySelectorAll('#spinModes button[data-m]').forEach(b=>b.classList.toggle('m-off',off.includes(b.dataset.m)));
+    if(off.includes(spinMode())){const first=SPIN_MODES.find(m=>!off.includes(m)&&(m!=='shake'||IS_TOUCH)&&(m!=='wheel'||!IS_TOUCH));if(first){lsSet('dreidel_spinmode',first);resetSpinUI()}}
+    const box=mgEl('modeChecks');if(!box)return;
+    if(!box.children.length){
+        box.innerHTML=SPIN_MODES.map(m=>`<label class="sound-toggle"><input type="checkbox" data-mm="${m}"> ${MODE_NAMES[m]}</label>`).join('');
+        box.addEventListener('change',e=>{const i=e.target.closest('input[data-mm]');if(!i)return;
+            let o=modesOff();if(i.checked)o=o.filter(x=>x!==i.dataset.mm);else o.push(i.dataset.mm);
+            if(SPIN_MODES.every(m=>o.includes(m))){i.checked=true;return}             // at least one way must stay
+            lsSet('dreidel_modes_off',JSON.stringify(o));applyModeVisibility();refreshSpinUI()});
+    }
+    box.querySelectorAll('input[data-mm]').forEach(i=>i.checked=!off.includes(i.dataset.mm));
+}
+applyModeVisibility();
+
 // ── "נו, משה! תורך!": if the player whose turn it is takes too long, a friendly nudge with their name ──
 const NUDGE={key:'',since:0,count:0,FIRST:15000,EVERY:20000,MAX:3,SHOW:5000};
 // editable in the settings: one line each, {שם} = the player's name, [אתה|את] = boy | girl
@@ -1858,7 +2142,7 @@ setInterval(nudgeTick,1000);
         const p=Math.min(1,w/22);document.getElementById('powerFill').style.width=Math.round(p*100)+'%';chargeTone(p>.05,p);
         ring.style.setProperty('--a',((acc*180/Math.PI)%360).toFixed(0)+'deg');
         const idle=performance.now()-lastMove;
-        if(idle>150){                                     // the hand stopped
+        if(idle>(spinMode()==='wheel'?320:150)){   // (wheel notches come further apart than mouse moves)                                     // the hand stopped
             const turned=true;                                                // a whole circle was already needed to grab it
             if(recent>MIN_W&&turned&&!CIRCLE.grabbing){launch(recent);return} // it was turning fast → let it fly
             if(recent<=MIN_W&&Math.abs(acc)>QUARTER)document.getElementById('powerLabel').textContent=G2('מהר יותר... ועצור!','מהר יותר... ועצרי!');
@@ -1866,6 +2150,18 @@ setInterval(nudgeTick,1000);
         }
         raf=requestAnimationFrame(tick);
     }
+
+    // ── 🖱️ wheel mode: rolling the mouse wheel turns the dreidel; stop rolling → it flies ──
+    document.addEventListener('wheel',e=>{
+        if(spinMode()!=='wheel')return;
+        if(e.target&&e.target.closest&&e.target.closest('.settings-panel,.modal-bg,.mg,.log-entries,.sidebar-panel'))return;
+        if(!canSpinNow()||charging)return;
+        e.preventDefault();
+        let dy=e.deltaY||e.deltaX;if(e.deltaMode===1)dy*=40;else if(e.deltaMode===2)dy*=400;
+        const d=Math.sign(dy)*Math.min(Math.abs(dy),240)/100*.9;if(!d)return;   // one notch ≈ .9 rad
+        if(!CIRCLE.engaged)engage();
+        const now=performance.now();acc+=d;samples.push([now,d]);while(samples.length&&now-samples[0][0]>500)samples.shift();lastMove=now;
+    },{passive:false});
 
     // ── mouse (no click): in circle mode, circling anywhere turns it ──
     document.addEventListener('pointermove',e=>{
