@@ -493,7 +493,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <h2 class="section-title">משחק מקומי</h2>
     <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
     <div class="form-row"><label>סכום התחלתי:</label><input type="number" id="localStartAmt" class="input" value="100" min="10" step="10"></div>
-    <div class="form-row"><label>זמן משחק:</label><select id="localTime" class="input"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option></select></div>
+    <div class="form-row"><label>זמן משחק:</label><select id="localTime" class="input" onchange="timeSelChange(this)"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option><option value="other">אחר…</option></select></div>
     <hr class="divider"><button type="button" class="btn btn-outline last-players hidden" id="lastPlayersBtn" onclick="useLastPlayers()"></button><div id="localNames"></div>
     <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="startLocalGame()">🎲 התחל!</button>
 </div>
@@ -544,7 +544,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                 </div>
             </div>
             <div class="form-row" style="margin-top:12px"><label>סכום התחלתי:</label><input type="number" id="onlineStartAmt" class="input" value="100" min="10" step="10"></div>
-            <div class="form-row"><label>זמן משחק:</label><select id="onlineTime" class="input"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option></select></div>
+            <div class="form-row"><label>זמן משחק:</label><select id="onlineTime" class="input" onchange="timeSelChange(this)"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option><option value="other">אחר…</option></select></div>
             <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="createRoom()">צור חדר</button>
         </div>
 
@@ -737,7 +737,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v69';
+const APP_VERSION='v70';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1151,6 +1151,31 @@ function ruleVal(id){
     const el=document.getElementById(id);if(!el)return undefined;return el.type==='checkbox'?el.checked:el.value;
 }
 function pushRules(){if(MODE==='online'&&IS_HOST&&channel){G.rules=currentRules();try{channel.send({type:'broadcast',event:'rules',payload:{rules:G.rules,from:MY_ID}})}catch(e){}}}
+// ── game time: the list + "אחר…" → any number of minutes (1–300); the custom time becomes an option of its own ──
+function timeLabel(m){m=+m;if(m===1)return 'דקה אחת';if(m<60)return m+' דקות';
+    const h=Math.floor(m/60),r=m%60,hs=h===1?'שעה':h===2?'שעתיים':h+' שעות';
+    return r===0?hs:r===30?hs+' וחצי':r===15?hs+' ורבע':hs+' ו-'+r+' דקות'}
+function ensureTimeOption(sel,m){
+    m=String(parseInt(m));if(!(+m>0)||[...sel.options].some(o=>o.value===m))return;
+    const o=document.createElement('option');o.value=m;o.textContent=timeLabel(m);o.dataset.custom='1';
+    const after=[...sel.options].filter(x=>x.value!=='other'&&x.value!=='0').find(x=>+x.value>+m);   // keep the list in order
+    sel.insertBefore(o,after||sel.querySelector('option[value="other"]'));
+}
+function timeSelChange(sel){
+    if(sel.value!=='other'){sel.dataset.prev=sel.value;return}
+    const back=sel.dataset.prev||'30';sel.value=back;               // until a time is chosen, stay on the previous one
+    let row=sel.parentElement.nextElementSibling;
+    if(!row||!row.classList.contains('time-other')){
+        row=document.createElement('div');row.className='form-row time-other';
+        row.innerHTML=`<label>כמה דקות?</label><div style="display:flex;gap:8px;flex:1"><input type="number" class="input" min="1" max="300" step="1" inputmode="numeric" placeholder="למשל 25" style="flex:1"><button type="button" class="btn btn-primary" style="padding:8px 14px">אישור</button><button type="button" class="btn btn-outline" style="padding:8px 12px">✕</button></div>`;
+        sel.parentElement.after(row);
+        const inp=row.querySelector('input'),[ok,cancel]=row.querySelectorAll('button');
+        const apply=()=>{const m=Math.round(+inp.value);if(!(m>=1&&m<=300)){inp.focus();inp.style.borderColor='#e05050';return}
+            ensureTimeOption(sel,m);sel.value=String(m);sel.dataset.prev=sel.value;row.remove();saveSettings()};
+        ok.onclick=apply;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();apply()}if(e.key==='Escape')row.remove()};cancel.onclick=()=>row.remove();
+    }
+    setTimeout(()=>row.querySelector('input').focus(),30);
+}
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -1164,7 +1189,9 @@ function saveSettings(){
 function loadSettings(){
     let o=null;try{o=JSON.parse(lsGet(SETTINGS_KEY)||'null')}catch(e){}
     if(!o)return;
-    SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(!el||!(id in o))return;if(el.type==='checkbox')el.checked=!!o[id];else el.value=o[id]});
+    ['localTime','onlineTime'].forEach(id=>{if(o[id]&&o[id]!=='other')ensureTimeOption(document.getElementById(id),o[id])});   // a custom time chosen last time
+    SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(!el||!(id in o)||o[id]==='other')return;if(el.type==='checkbox')el.checked=!!o[id];else el.value=o[id]});
+    ['localTime','onlineTime'].forEach(id=>{const el=document.getElementById(id);el.dataset.prev=el.value});
     document.getElementById('spinMinVal').textContent=document.getElementById('spinMin').value+'s';
     document.getElementById('spinMaxVal').textContent=document.getElementById('spinMax').value+'s';
     document.getElementById('colPehLabel').textContent=dispLetter('פ')+' (לשלם)';
