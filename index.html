@@ -308,11 +308,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;width:100%}
 .p-card{background:var(--bg-card);border:2px solid var(--border);border-radius:10px;padding:8px 10px;transition:all .3s;position:relative}
 /* a little coin stack in every card — taller = more coins (compared with the richest player) */
-.p-stack{position:absolute;left:7px;bottom:7px;width:24px;display:flex;flex-direction:column-reverse;align-items:center;pointer-events:none;min-height:8px}
-.p-stack i{display:block;width:22px;height:7px;border-radius:50%;flex:none;margin-top:-3px;
-  background:radial-gradient(ellipse at 40% 30%,#fff6c2 0,#f5c842 38%,#c8951a 75%,#8a6210 100%);box-shadow:0 1px 0 #6e4e0c,inset 0 -1px 0 rgba(0,0,0,.25);transition:opacity .25s}
-.p-stack i:first-child{margin-top:0}
-.p-stack i:nth-child(2n){transform:translateX(1.5px)}.p-stack i:nth-child(3n){transform:translateX(-1.5px)}
+.p-stack{position:absolute;left:6px;bottom:6px;width:32px;pointer-events:none;line-height:0}
+.p-stack img{width:32px;height:auto;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
 .p-card.out .p-stack{display:none}
 .p-card.active{border-color:var(--gold);box-shadow:0 0 14px var(--gold-glow);background:var(--bg-card-alt)}
 .p-card.out{opacity:.3}.p-card.offline{opacity:.55;border-style:dashed}
@@ -736,7 +733,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v67';
+const APP_VERSION='v68';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1355,8 +1352,8 @@ function d3Els(){
     if(D3.els)return D3.els;
     const spin=document.getElementById('d3Spin');if(!spin)return null;
     const faces=[...spin.querySelectorAll('.d3-face')],tips=[...spin.querySelectorAll('.d3-tip')];
-    faces.forEach((f,j)=>f.style.transform=`rotateY(${45-90*j}deg) translateZ(162px)`);
-    tips.forEach((t,j)=>t.style.transform=`rotateY(${45-90*j}deg) translateZ(162px) rotateX(-38.2deg)`);
+    faces.forEach((f,j)=>f.style.transform=`rotateY(${90*j-45}deg) translateZ(162px)`);   // mirrored → turns clockwise
+    tips.forEach((t,j)=>t.style.transform=`rotateY(${90*j-45}deg) translateZ(162px) rotateX(-38.2deg)`);
     return D3.els={spin,tilt:document.getElementById('d3Tilt'),faces,tips,
         fShade:faces.map(f=>f.querySelector('.d3-shade')),fGloss:faces.map(f=>f.querySelector('.d3-gloss')),
         letters:faces.map(f=>f.querySelector('.face-letter')),tints:faces.map(f=>f.querySelector('.face-tint')),
@@ -1370,12 +1367,12 @@ function _lean(v){const p=D3.psi*Math.PI/180;return _rotY(_rotZ(_rotY(v,-p),D3.t
 const _dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 function d3Render(){
     const e=d3Els();if(!e)return;
-    e.spin.style.transform=`rotateY(${D3.theta.toFixed(2)}deg)`;
+    e.spin.style.transform=`rotateY(${(-D3.theta).toFixed(2)}deg)`;   // θ grows → clockwise seen from above, like a real dreidel
     e.tilt.style.transform=`translateX(${D3.drift.toFixed(1)}px) rotateY(${D3.psi.toFixed(1)}deg) rotateZ(${D3.tilt.toFixed(2)}deg) rotateY(${(-D3.psi).toFixed(1)}deg)`;
     const blurLetters=Math.max(.3,Math.min(1,1.3-Math.abs(D3.omega)/1000));    // letters smear when it is fast
     const TIPN=[0,Math.sin(38.2*Math.PI/180),Math.cos(38.2*Math.PI/180)];     // a tip face looks down-and-out
     for(let j=0;j<4;j++){
-        const yaw=(45-90*j+D3.theta)*Math.PI/180;
+        const yaw=(90*j-45-D3.theta)*Math.PI/180;
         const nf=_lean(_rotY([0,0,1],yaw)),nt=_lean(_rotY(TIPN,yaw));
         const lit=Math.max(0,_dot(nf,LIGHT)),litT=Math.max(0,_dot(nt,LIGHT));
         e.fShade[j].style.opacity=(0.6*(1-lit)).toFixed(3);
@@ -2362,7 +2359,7 @@ function showSpinAnimation(fl, opts, cb){
     const P=1.6, rot=(opts&&opts.rot===-1)?-1:1;
     const revPerSec=1.6+power*2.6;                               // how fast it starts (turns per second)
     // the result ends on the face that turns UP when it falls: falling right → the left face, falling left → the right face
-    const fallPsi=fallDir==='fall-left'?180:0, target=d3Rest(fl)-(fallPsi===0?90:0);
+    const fallPsi=fallDir==='fall-left'?180:0, target=d3Rest(fl)+(fallPsi===0?90:-90);   // (the 3D dreidel is mirrored so it turns clockwise; checked: the result face ends up on top)
     let seg=null;
     function newSegment(theta0,psi0,tilt0,T,w0deg){         // w0deg: start speed (deg/s)
         let d=w0deg*T/1000/(P+1);                             // the angle that speed would naturally cover
@@ -2591,7 +2588,7 @@ function playMoneyFx(prev,cur){
     G.players.forEach(p=>{const el=cardEl(p.id)?.querySelector('.p-amt');if(el)el.textContent=prev.amt[p.id]??0});
     const topPrev=stackTop(prev.amt),topCur=Math.max(topPrev,stackTop(cur.amt));
     G.players.forEach(p=>setStack(p.id,prev.amt[p.id]??0,topCur));
-    const stackOf=id=>cardEl(id)?.querySelector('.p-stack i:last-child')||cardEl(id)?.querySelector('.p-stack')||cardEl(id);
+    const stackOf=id=>cardEl(id)?.querySelector('.p-stack')||cardEl(id);
     if(!FX_ON){countTo(potVal,prev.pot,cur.pot);sizePile(cur.pot);G.players.forEach(p=>countTo(cardEl(p.id)?.querySelector('.p-amt'),prev.amt[p.id],cur.amt[p.id]));return}
     // 1) winnings fly out of the pot
     const big=takers.some(([,d])=>d>=Math.max(ante*3,prev.pot*.6));
@@ -3307,9 +3304,9 @@ function renderGameNow(){
     }
 }
 
-const STACK_MAX=10;
+const STACK_MAX=12;
 function stackTop(amts){return Math.max(1,...Object.values(amts||{}).map(Number).filter(x=>x>0),...G.players.filter(p=>p.alive).map(p=>Number(p.amount)||0))}
-function stackCoins(a,top){if(!(a>0))return '';const n=Math.max(1,Math.round(STACK_MAX*a/(top||stackTop())));return '<i></i>'.repeat(Math.min(STACK_MAX,n))}
+function stackCoins(a,top){if(!(a>0))return '';const n=Math.max(1,Math.round(STACK_MAX*a/(top||stackTop())));return `<img src="cstack${Math.min(STACK_MAX,n)}.webp" alt="">`}
 function setStack(id,a,top){const el=cardEl(id)?.querySelector('.p-stack');if(el)el.innerHTML=stackCoins(a,top)}
 function playerCard(p,i){
     const off=MODE==='online'&&G.started&&ONLINE.size>0&&!isOnline(p)&&p.alive;
