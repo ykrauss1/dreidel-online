@@ -48,7 +48,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* glass panels over the table */
 .card,.mode-card,.p-card,.pot-box,.turn-box,.sidebar-panel,.lobby-family,.install-banner{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:12px}
-.fs-btn{position:fixed;top:12px;left:120px;z-index:100}
+
 .hidden{display:none!important}
 
 /* HEADER */
@@ -123,7 +123,8 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 /* ══════════ GAME SCREEN ══════════ */
 .game-layout{display:grid;grid-template-columns:1fr 180px;grid-template-rows:auto 1fr;gap:10px;align-items:start}
 .game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
-.new-game-btn{position:fixed;top:12px;left:12px;z-index:100}
+.game-btns{position:fixed;top:12px;left:12px;z-index:100;display:flex;gap:8px;align-items:center}
+.last-players{width:100%;margin:0 0 10px;font-size:.92rem;padding:8px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pot-box{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--bg-card),var(--bg-card-alt));border:1px solid var(--border);border-radius:var(--r);padding:8px 16px}
 .pot-box .emoji{font-size:1.4rem}.pot-label{font-size:.7rem;color:var(--text-dim)}.pot-val{font-family:'Secular One',sans-serif;font-size:1.3rem;color:var(--gold)}
 .turn-box.urgent strong{color:var(--red)}
@@ -450,7 +451,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     #videoSection{flex:1 1 100%}
     .sidebar-panel{flex:1;min-width:140px}
     .players-grid{grid-template-columns:repeat(3,1fr)}
-    .new-game-btn{top:auto;bottom:24px;left:70px}
+    .game-btns{position:static;order:99;justify-content:center;margin:4px auto 76px;flex-wrap:wrap}   /* phone: under the log, not on top of it */
     .fs-btn{display:none}
 }
 /* narrow / phone layout: no title row above, so the dreidel must not be pulled up past the top of the screen */
@@ -493,7 +494,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
     <div class="form-row"><label>סכום התחלתי:</label><input type="number" id="localStartAmt" class="input" value="100" min="10" step="10"></div>
     <div class="form-row"><label>זמן משחק:</label><select id="localTime" class="input"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option></select></div>
-    <hr class="divider"><div id="localNames"></div>
+    <hr class="divider"><button type="button" class="btn btn-outline last-players hidden" id="lastPlayersBtn" onclick="useLastPlayers()"></button><div id="localNames"></div>
     <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="startLocalGame()">🎲 התחל!</button>
 </div>
 
@@ -583,8 +584,11 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
             <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
             <div class="turn-box hidden" id="nightBox" title="הנר של הלילה"></div>
         </div>
+        <div class="game-btns">
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
+        <button class="btn btn-outline finish-btn" id="finishBtn" onclick="confirmFinishNow()" title="לסיים עכשיו ולראות מי ניצח">🏁 סיים כעת</button>
         <button class="btn btn-outline fs-btn" id="fsBtn" onclick="toggleFullscreen()" title="מסך מלא">⛶ מסך מלא</button>
+        </div>
         <div class="game-main">
             <div class="dreidel-zone">
                 <div class="dreidel-wrap"><div class="dreidel-scale">
@@ -733,7 +737,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v68';
+const APP_VERSION='v69';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -803,6 +807,19 @@ function setOnlineType(t){
 }
 
 // ═══════════ LOCAL ═══════════
+let LAST_PLAYERS=null;
+function lastPlayersUI(){const b=document.getElementById('lastPlayersBtn');if(!b)return;
+    const empty=[...document.querySelectorAll('.local-name')].every(i=>!i.value.trim());
+    b.classList.toggle('hidden',!LAST_PLAYERS||!empty);
+    if(LAST_PLAYERS)b.textContent='↺ השחקנים מהפעם הקודמת: '+LAST_PLAYERS.names.filter(v=>v&&v.trim()).slice(0,4).join(', ')+(LAST_PLAYERS.names.filter(v=>v&&v.trim()).length>4?'…':'')}
+function useLastPlayers(){
+    if(!LAST_PLAYERS)return;const n=Math.max(2,Math.min(8,LAST_PLAYERS.names.length));
+    document.getElementById('localNumPlayers').value=String(n);
+    document.querySelectorAll('.local-name').forEach(i=>i.value='');renderLocalNames();
+    LAST_PLAYERS.names.forEach((v,i)=>{const inp=document.querySelectorAll('.local-name')[i];if(inp)inp.value=v||''});
+    LAST_PLAYERS.personas.forEach((pr,i)=>{const r=document.querySelectorAll('#localNames .player-name-row')[i];if(r&&pr)applyPersona(r,pr)});
+    playClickSound&&playClickSound();lastPlayersUI();
+}
 function renderLocalNames(){
     const n=parseInt(document.getElementById('localNumPlayers').value);const d=document.getElementById('localNames');
     const keep=[...d.querySelectorAll('.player-name-row')].map(r=>({v:r.querySelector('.local-name').value,...readPersona(r)}));
@@ -814,6 +831,7 @@ function renderLocalNames(){
 renderLocalNames();
 
 function startLocalGame(){
+    try{saveSettings()}catch(e){}
     G.startAmt=parseInt(document.getElementById('localStartAmt').value)||100;G.ante=Math.round(G.startAmt*.1);
     G.players=[];G.families=[];G.scoringMode='individual';G.firstTurn=0;G.round=1;
     G.timeLimitMin=parseInt(document.getElementById('localTime').value)||0;
@@ -999,6 +1017,7 @@ function joinChannel(onReady){
 
     channel.on('broadcast',{event:'spin_boost'},({payload})=>{if(payload.from!==MY_ID)boostSpin(true)});
     channel.on('broadcast',{event:'party'},({payload})=>psRemote(payload));
+    channel.on('broadcast',{event:'finish_now'},({payload})=>{if(payload.from!==MY_ID)finishNow()});
     channel.on('broadcast',{event:'party_clap'},({payload})=>{if(payload.from===MY_ID||!PS.on||!PS.owner)return;
         if(CP.on)clapPartyClap(true);else partyBeat();
         if(FX_ON){const art=document.getElementById('dreidelSvg');const [x,y]=centerOf(art);const f=document.createElement('div');f.className='fx-react';f.textContent='👏';document.body.appendChild(f);
@@ -1135,8 +1154,9 @@ function pushRules(){if(MODE==='online'&&IS_HOST&&channel){G.rules=currentRules(
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
-    o.localNames=[...document.querySelectorAll('.local-name')].map(i=>i.value);
-    o.localPersonas=[...document.querySelectorAll('#localNames .player-name-row')].map(r=>readPersona(r));
+    const nm=[...document.querySelectorAll('.local-name')].map(i=>i.value);
+    if(nm.some(v=>v.trim())){o.localNames=nm;o.localPersonas=[...document.querySelectorAll('#localNames .player-name-row')].map(r=>readPersona(r))}
+    else if(LAST_PLAYERS){o.localNames=LAST_PLAYERS.names;o.localPersonas=LAST_PLAYERS.personas}
     o.hostPersona=readPersona(document.getElementById('hostName').parentElement);o.joinPersona=readPersona(document.getElementById('joinName').parentElement);
     lsSet(SETTINGS_KEY,JSON.stringify(o));
     pushRules();
@@ -1149,13 +1169,15 @@ function loadSettings(){
     document.getElementById('spinMaxVal').textContent=document.getElementById('spinMax').value+'s';
     document.getElementById('colPehLabel').textContent=dispLetter('פ')+' (לשלם)';
     renderLocalNames();
-    (o.localNames||[]).forEach((v,i)=>{const inp=document.querySelectorAll('.local-name')[i];if(inp)inp.value=v});
-    (o.localPersonas||[]).forEach((pr,i)=>{const r=document.querySelectorAll('#localNames .player-name-row')[i];if(r)applyPersona(r,pr)});
+    // the names are NOT filled in by themselves any more — a new game starts clean; "the same players as last time" brings them back
+    LAST_PLAYERS=(o.localNames||[]).some(v=>v&&v.trim())?{names:o.localNames,personas:o.localPersonas||[]}:null;
+    document.getElementById('localNumPlayers').value='4';renderLocalNames();lastPlayersUI();
     if(o.hostPersona)applyPersona(document.getElementById('hostName').parentElement,o.hostPersona);
     if(o.joinPersona)applyPersona(document.getElementById('joinName').parentElement,o.joinPersona);
 }
 loadSettings();
 document.getElementById('localNames').addEventListener('change',saveSettings);
+document.getElementById('localNames').addEventListener('input',lastPlayersUI);
 SETTING_IDS.forEach(id=>document.getElementById(id)?.addEventListener('change',saveSettings));
 function advanceTurn(){G.turnNo=(G.turnNo||0)+1;do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive)}
 function skipTurn(cp){
@@ -3243,14 +3265,14 @@ function applyLetter(l,ex){
 }
 
 // Time is up → the spin that just happened was the last one. Richest side wins (ties share the win).
-function endByTime(){
+function endByTime(early){
     const alive=G.players.filter(p=>p.alive);
     const sides={};
     alive.forEach(p=>{const k=famScoring(p)?p.family:p.id;sides[k]=famScoring(p)?p.amount:p.amount});
     const best=Math.max(...Object.values(sides));
     G.winners=Object.keys(sides).filter(k=>sides[k]===best);
     G.over=true;G.endedByTime=true;
-    addLog('⏰ הזמן נגמר!');
+    G.endedEarly=!!early;addLog(early?'🏁 סיימנו את המשחק':'⏰ הזמן נגמר!');
 }
 function isWinner(p){
     if(!G.over||!p.alive)return false;
@@ -3331,8 +3353,9 @@ function showWinner(){
     if(G.endedByTime&&G.winners){
         const names=G.winners.map(sideName);
         winText='🎉 '+names.join(' ו')+(names.length>1?' — תיקו!':'');
-        document.getElementById('winIcon').textContent='⏰';
-        document.getElementById('winSub').textContent=names.length>1?'הזמן נגמר — חולקים את הניצחון':'הזמן נגמר — הכי הרבה מטבעות!';
+        document.getElementById('winIcon').textContent=G.endedEarly?'🏁':'⏰';
+        const why=G.endedEarly?'סיימנו':'הזמן נגמר';
+        document.getElementById('winSub').textContent=names.length>1?why+' — חולקים את הניצחון':why+' — הכי הרבה מטבעות!';
     }else{
         winText=(G.scoringMode==='family'&&alive[0]?.family)?'🎉 משפחת '+(G.families.find(f=>f.id===alive[0].family)?.name||'?')+' ניצחה!':'🎉 '+alive[0].name+(isFemaleName(alive[0].name)?' ניצחה!':' ניצח!');
         document.getElementById('winIcon').textContent='🏆';
@@ -3594,6 +3617,25 @@ document.addEventListener('visibilitychange',()=>{
     if(MODE==='online'&&channel&&G.started&&!G.over&&!REJOINING)startResync(false); // may have missed spins while in background
 });
 
+// 🏁 end the game now, in order: whoever has the most coins wins, exactly as when the time runs out.
+// Online only the host can do it, and every home ends it the same moment.
+function finishVisible(){const b=document.getElementById('finishBtn');if(!b)return;
+    b.classList.toggle('hidden',G.over||!G.players.length||(MODE==='online'&&(!IS_HOST||!G.started)));b.disabled=spinning}
+setInterval(finishVisible,700);
+function confirmFinishNow(){
+    if(G.over||spinning)return;
+    uiConfirm('לסיים את המשחק עכשיו? מי שיש לו הכי הרבה מטבעות — מנצח.','🏁 כן, לסיים').then(y=>{if(!y||G.over)return;
+        if(MODE==='online'&&channel){try{channel.send({type:'broadcast',event:'finish_now',payload:{from:MY_ID}})}catch(e){}}
+        finishNow();
+    });
+}
+function finishNow(){
+    if(G.over)return;
+    if(spinning||window._spinCtl){setTimeout(finishNow,400);return}                 // a spin is on its way → right after it
+    endByTime(true);
+    if(MODE==='online'){LAST_STATE=clone(G);saveSession()}
+    updateFamScores();renderGame();finishVisible();showWinner();
+}
 function confirmNewGame(){(G.over?Promise.resolve(true):uiConfirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?','כן, משחק חדש')).then(y=>{if(y){clearSession();location.reload()}})}
 
 function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen'){keepAwake();showNight()}}
