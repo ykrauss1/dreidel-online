@@ -409,6 +409,13 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     .log-entries{max-height:260px}.log-entry{font-size:.85rem}
     .sidebar-panel h3{font-size:.9rem}
 }
+.players-grid.many{grid-template-columns:repeat(3,1fr)!important;gap:5px}
+.players-grid.many2{grid-template-columns:repeat(4,1fr)!important}
+.players-grid.many .p-card{padding:6px 7px}
+.players-grid.many .p-card .p-name{font-size:.8rem}
+.players-grid.many .p-card .p-amt{font-size:1.2rem;padding-right:2px}
+.players-grid.many .p-stack{left:4px;bottom:4px;width:22px}.players-grid.many .p-stack img{width:22px}
+.players-grid.many2 .p-card .p-name{font-size:.72rem}.players-grid.many2 .p-card .p-amt{font-size:1.05rem}
 @media(min-width:1400px) and (min-height:820px){
     .dreidel-wrap{--k:2}
     .p-card .p-amt{font-size:2rem}
@@ -491,7 +498,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 <!-- LOCAL SETUP -->
 <div id="localSetup" class="setup-panel card hidden">
     <h2 class="section-title">משחק מקומי</h2>
-    <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+    <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="otherSelChange(this,PLAYERS_OTHER)||renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="other">יותר…</option></select></div>
     <div class="form-row"><label>סכום התחלתי:</label><input type="number" id="localStartAmt" class="input" value="100" min="10" step="10"></div>
     <div class="form-row"><label>זמן משחק:</label><select id="localTime" class="input" onchange="timeSelChange(this)"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option><option value="other">אחר…</option></select></div>
     <hr class="divider"><button type="button" class="btn btn-outline last-players hidden" id="lastPlayersBtn" onclick="useLastPlayers()"></button><div id="localNames"></div>
@@ -737,7 +744,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v71';
+const APP_VERSION='v72';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -813,8 +820,8 @@ function lastPlayersUI(){const b=document.getElementById('lastPlayersBtn');if(!b
     b.classList.toggle('hidden',!LAST_PLAYERS||!empty);
     if(LAST_PLAYERS)b.textContent='↺ השחקנים מהפעם הקודמת: '+LAST_PLAYERS.names.filter(v=>v&&v.trim()).slice(0,4).join(', ')+(LAST_PLAYERS.names.filter(v=>v&&v.trim()).length>4?'…':'')}
 function useLastPlayers(){
-    if(!LAST_PLAYERS)return;const n=Math.max(2,Math.min(8,LAST_PLAYERS.names.length));
-    document.getElementById('localNumPlayers').value=String(n);
+    if(!LAST_PLAYERS)return;const n=Math.max(2,Math.min(24,LAST_PLAYERS.names.length));
+    const ns=document.getElementById('localNumPlayers');ensureNumOption(ns,n,PLAYERS_OTHER);ns.value=String(n);ns.dataset.prev=ns.value;
     document.querySelectorAll('.local-name').forEach(i=>i.value='');renderLocalNames();
     LAST_PLAYERS.names.forEach((v,i)=>{const inp=document.querySelectorAll('.local-name')[i];if(inp)inp.value=v||''});
     LAST_PLAYERS.personas.forEach((pr,i)=>{const r=document.querySelectorAll('#localNames .player-name-row')[i];if(r&&pr)applyPersona(r,pr)});
@@ -1155,27 +1162,33 @@ function pushRules(){if(MODE==='online'&&IS_HOST&&channel){G.rules=currentRules(
 function timeLabel(m){m=+m;if(m===1)return 'דקה אחת';if(m<60)return m+' דקות';
     const h=Math.floor(m/60),r=m%60,hs=h===1?'שעה':h===2?'שעתיים':h+' שעות';
     return r===0?hs:r===30?hs+' וחצי':r===15?hs+' ורבע':hs+' ו-'+r+' דקות'}
-function ensureTimeOption(sel,m){
+const TIME_OTHER={ask:'כמה דקות?',min:1,max:300,ph:'למשל 25',label:timeLabel};
+const PLAYERS_OTHER={ask:'כמה שחקנים?',min:2,max:24,ph:'למשל 12',label:n=>String(n),then:()=>renderLocalNames()};
+function ensureNumOption(sel,m,cfg){
     m=String(parseInt(m));if(!(+m>0)||[...sel.options].some(o=>o.value===m))return;
-    const o=document.createElement('option');o.value=m;o.textContent=timeLabel(m);o.dataset.custom='1';
+    const o=document.createElement('option');o.value=m;o.textContent=cfg.label(m);o.dataset.custom='1';
     const after=[...sel.options].filter(x=>x.value!=='other'&&x.value!=='0').find(x=>+x.value>+m);   // keep the list in order
     sel.insertBefore(o,after||sel.querySelector('option[value="other"]'));
 }
-function timeSelChange(sel){
-    if(sel.value!=='other'){sel.dataset.prev=sel.value;return}
-    const back=sel.dataset.prev||'30';sel.value=back;               // until a time is chosen, stay on the previous one
+function ensureTimeOption(sel,m){ensureNumOption(sel,m,TIME_OTHER)}
+// "אחר…/יותר…" in a list → a small row to type any number; the number becomes an option of its own (and is remembered)
+function otherSelChange(sel,cfg){
+    if(sel.value!=='other'){sel.dataset.prev=sel.value;return false}
+    sel.value=sel.dataset.prev||sel.options[0].value;              // until a number is chosen, stay on the previous one
     let row=sel.parentElement.nextElementSibling;
     if(!row||!row.classList.contains('time-other')){
         row=document.createElement('div');row.className='form-row time-other';
-        row.innerHTML=`<label>כמה דקות?</label><div style="display:flex;gap:8px;flex:1"><input type="number" class="input" min="1" max="300" step="1" inputmode="numeric" placeholder="למשל 25" style="flex:1"><button type="button" class="btn btn-primary" style="padding:8px 14px">אישור</button><button type="button" class="btn btn-outline" style="padding:8px 12px">✕</button></div>`;
+        row.innerHTML=`<label>${cfg.ask}</label><div style="display:flex;gap:8px;flex:1"><input type="number" class="input" min="${cfg.min}" max="${cfg.max}" step="1" inputmode="numeric" placeholder="${cfg.ph}" style="flex:1"><button type="button" class="btn btn-primary" style="padding:8px 14px">אישור</button><button type="button" class="btn btn-outline" style="padding:8px 12px">✕</button></div>`;
         sel.parentElement.after(row);
         const inp=row.querySelector('input'),[ok,cancel]=row.querySelectorAll('button');
-        const apply=()=>{const m=Math.round(+inp.value);if(!(m>=1&&m<=300)){inp.focus();inp.style.borderColor='#e05050';return}
-            ensureTimeOption(sel,m);sel.value=String(m);sel.dataset.prev=sel.value;row.remove();saveSettings()};
+        const apply=()=>{const m=Math.round(+inp.value);if(!(m>=cfg.min&&m<=cfg.max)){inp.focus();inp.style.borderColor='#e05050';return}
+            ensureNumOption(sel,m,cfg);sel.value=String(m);sel.dataset.prev=sel.value;row.remove();if(cfg.then)cfg.then();saveSettings()};
         ok.onclick=apply;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();apply()}if(e.key==='Escape')row.remove()};cancel.onclick=()=>row.remove();
     }
     setTimeout(()=>row.querySelector('input').focus(),30);
+    return true;
 }
+function timeSelChange(sel){otherSelChange(sel,TIME_OTHER)}
 function saveSettings(){
     const o={};
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});
@@ -1191,7 +1204,7 @@ function loadSettings(){
     if(!o)return;
     ['localTime','onlineTime'].forEach(id=>{if(o[id]&&o[id]!=='other')ensureTimeOption(document.getElementById(id),o[id])});   // a custom time chosen last time
     SETTING_IDS.forEach(id=>{const el=document.getElementById(id);if(!el||!(id in o)||o[id]==='other')return;if(el.type==='checkbox')el.checked=!!o[id];else el.value=o[id]});
-    ['localTime','onlineTime'].forEach(id=>{const el=document.getElementById(id);el.dataset.prev=el.value});
+    ['localTime','onlineTime','localNumPlayers'].forEach(id=>{const el=document.getElementById(id);el.dataset.prev=el.value});
     document.getElementById('spinMinVal').textContent=document.getElementById('spinMin').value+'s';
     document.getElementById('spinMaxVal').textContent=document.getElementById('spinMax').value+'s';
     document.getElementById('colPehLabel').textContent=dispLetter('פ')+' (לשלם)';
@@ -3344,13 +3357,13 @@ function renderGameNow(){
                 const total=G.scoringMode==='family'?members[0]?.amount:G.familyScores[f.id];
                 famTotal=`<span style="margin-right:auto;font-family:'Secular One';color:var(--gold);font-size:.8rem">סה״כ: ${Number(total)||0}</span>`;
             }
-            html+=`<div class="family-group"><div class="family-group-title"><span class="fam-dot" style="background:${safeColor(f.color)}"></span>משפ׳ ${esc(f.name)} ${famTotal}</div><div class="players-grid">${members.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
+            html+=`<div class="family-group"><div class="family-group-title"><span class="fam-dot" style="background:${safeColor(f.color)}"></span>משפ׳ ${esc(f.name)} ${famTotal}</div><div class="players-grid${manyCls()}">${members.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
         });
         const noFam=G.players.filter(p=>!p.family);
-        if(noFam.length)html+=`<div class="family-group"><div class="players-grid">${noFam.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
+        if(noFam.length)html+=`<div class="family-group"><div class="players-grid${manyCls()}">${noFam.map((p,i)=>playerCard(p,G.players.indexOf(p))).join('')}</div></div>`;
         area.innerHTML=html;
     }else{
-        area.innerHTML=`<div class="players-grid">${G.players.map((p,i)=>playerCard(p,i)).join('')}</div>`;
+        area.innerHTML=`<div class="players-grid${manyCls()}">${G.players.map((p,i)=>playerCard(p,i)).join('')}</div>`;
     }
 }
 
@@ -3368,6 +3381,8 @@ function playerCard(p,i){
     </div>`;
 }
 
+// many players (a big family round one big screen) → smaller cards, more per row, so all fit without scrolling
+function manyCls(){const n=G.players.length;return n>15?' many many2':n>8?' many':''}
 function sideName(k){
     const fam=G.families?.find(f=>f.id===k);
     if(fam&&G.scoringMode==='family')return 'משפחת '+fam.name;
