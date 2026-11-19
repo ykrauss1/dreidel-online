@@ -850,7 +850,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v80';
+const APP_VERSION='v81';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1919,7 +1919,7 @@ function mgBuild(){
 function mgBar(frac){const b=mgEl('mgBar');if(b)b.style.transform=`scaleX(${Math.max(0,Math.min(1,frac)).toFixed(3)})`}
 function mgStart(mode){
     if(MG.open||!canSpinNow())return;
-    const o=mgBuild();MG.open=true;MG.mode=mode;mgClear();
+    const o=mgBuild();mgEl('mgBar').parentElement.style.visibility='';MG.open=true;MG.mode=mode;mgClear();
     mgEl('mgTitle').textContent=MG_TITLES[mode]+' — '+(G.players[G.currentTurn]?.name||'');
     mgEl('mgScore').textContent='';mgEl('mgFoot').textContent='';mgBar(1);
     const area=mgEl('mgArea');area.innerHTML='';area.className='mg-area mga-'+mode;
@@ -2030,7 +2030,9 @@ function mgCandles(area,nightMode){
     const real=nightMode?hanukkahNight():0;
     const N=nightMode?(real||1+Math.floor(Math.random()*8)):8;
     const ORDER=[];for(let i=8-N;i<8;i++)ORDER.push(i);ORDER.push('s');
-    let k=0,t0=0,wrong=0,outs=0;const LIMIT=nightMode?25000:12000;
+    // the riddle has no clock running out: children need time to think (the time only sets the strength); just a far safety limit
+    let k=0,t0=0,wrong=0,outs=0;const LIMIT=nightMode?180000:20000;
+    if(nightMode)mgEl('mgBar').parentElement.style.visibility='hidden';
     // the riddle uses an oil menorah: nine identical cups (the shamash a little higher, on a short leg) — nothing gives away which ones tonight
     let html=`<div class="mg-menorah${nightMode?' oil':''}">`;
     const cup=(c,extra)=>`<div class="mg-candle${extra||''}" data-c="${c}"><span class="fl"></span><span class="wax"><i class="oilv"></i></span>${c==='s'?'<span class="stem"></span>':''}<span class="num"></span></div>`;
@@ -2047,7 +2049,7 @@ function mgCandles(area,nightMode){
         const nx=area.querySelector(`.mg-candle[data-c="${ORDER[k]}"]`);if(nx){nx.classList.add('next');nx.querySelector('.num').textContent=ORDER[k]==='s'?'שמש':(k+1)}};
     mark();
     // 🫒 oil: every lit cup burns down; an empty cup goes out and must be lit again (the shamash only when all of them are burning)
-    const BURN=(3.2+N*.85)*1000,oil={};
+    const BURN=(5+N*1.1)*1000,oil={};
     const burnLoop=()=>{
         if(MG.done)return;const now=performance.now();
         for(const c in oil){const el=area.querySelector(`.mg-candle[data-c="${c}"]`);if(!el||oil[c].out)continue;
