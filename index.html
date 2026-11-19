@@ -298,6 +298,9 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .player-name-row{display:flex;align-items:center;gap:6px}.player-name-row .input{flex:1}
 .family-member-row{display:flex;align-items:center;gap:6px}.family-member-row .input{flex:1}
 .trivia-lvl{display:inline-block;font-size:.75rem;background:var(--bg-input);border-radius:10px;padding:1px 8px;margin-inline-start:6px;color:var(--text-dim)}
+.app-copy{position:fixed;bottom:6px;left:0;right:0;text-align:center;font-size:.68rem;color:var(--text-dim);opacity:.7;z-index:50;pointer-events:none}
+body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home screen only — the game screen stays clean */
+.sp-copy{text-align:center;font-size:.72rem;color:var(--text-dim);padding:10px 0 2px;border-top:1px solid var(--border);margin-top:8px}
 .app-version{position:fixed;bottom:6px;right:10px;font-size:.65rem;color:var(--text-dim);opacity:.6;z-index:50;pointer-events:none;direction:ltr}
 .waiting-text{color:var(--text-dim);font-size:.8rem;margin-top:6px;text-align:center;animation:pulse 1.5s infinite}
 
@@ -727,6 +730,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 </div>
 
 <div class="app-version" id="appVersion"></div>
+<div class="app-copy" id="appCopy">© <span class="copy-year"></span> כל הזכויות שמורות · <span dir="ltr">Yosef Krauss</span></div>
 <button class="mic-badge hidden" id="micBadge" title="המיקרופון פעיל — לחיצה מכבה אותו"><span>🎤</span><i id="micLevel"></i></button>
 <div class="react-bar hidden" id="reactBar"><button>👏</button><button>😂</button><button>😱</button><button>🎉</button><button>❤️</button><button>🔥</button></div>
 <div class="modal-bg" id="triviaModal"><div class="win-modal trivia">
@@ -817,6 +821,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
   <details class="sp-sec"><summary>📲 אפליקציה</summary>
   <div class="install-help" id="installHelp"></div>
   </details>
+  <div class="sp-copy">© <span class="copy-year"></span> כל הזכויות שמורות · <span dir="ltr">Yosef Krauss</span></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -831,8 +836,9 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v77';
+const APP_VERSION='v78';
 document.getElementById('appVersion').textContent=APP_VERSION;
+document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -4076,7 +4082,7 @@ function finishNow(){
 }
 function confirmNewGame(){(G.over?Promise.resolve(true):uiConfirm('לצאת מהמשחק הנוכחי ולהתחיל חדש?','כן, משחק חדש')).then(y=>{if(y){clearSession();location.reload()}})}
 
-function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen'){keepAwake();showNight()}}
+function show(id){document.getElementById(id).classList.remove('hidden');if(id==='gameScreen'){keepAwake();showNight();const c=document.getElementById('appCopy');if(c)c.style.display='none'}}   // (the copyright line only on the home screen; also for browsers without :has)
 function hide(id){document.getElementById(id).classList.add('hidden')}
 function toggle(id,v){document.getElementById(id).classList.toggle('hidden',!v)}
 </script>
