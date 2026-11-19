@@ -850,7 +850,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v81';
+const APP_VERSION='v82';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2173,7 +2173,7 @@ function nudgeTick(){
     const p=G.players[G.currentTurn];
     const key=[G.round||1,G.turnNo||0,G.currentTurn].join('|');
     if(key!==NUDGE.key){NUDGE.key=key;NUDGE.since=Date.now();NUDGE.count=0;hideNudge();return}
-    const waiting=gs&&!gs.classList.contains('hidden')&&G.players.length&&!G.over&&!spinning&&!TRIVIA.open&&!CIRCLE.engaged&&!CIRCLE.singing&&!charging&&p&&p.alive!==false
+    const waiting=gs&&!gs.classList.contains('hidden')&&G.players.length&&!G.over&&!spinning&&!TRIVIA.open&&!CIRCLE.engaged&&!CIRCLE.singing&&!charging&&!MG.open&&!(typeof CP!=='undefined'&&CP.on)&&!(typeof PS!=='undefined'&&PS.on)&&p&&p.alive!==false
         &&!document.querySelector('.modal-bg.show')&&!document.hidden;
     nudgeCfg();
     if(!waiting||!NUDGE.on){NUDGE.since=Date.now();return}          // the clock only runs while really waiting
