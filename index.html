@@ -122,6 +122,12 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 
 /* ══════════ GAME SCREEN ══════════ */
 .game-layout{display:grid;grid-template-columns:1fr 180px;grid-template-rows:auto 1fr;gap:10px;align-items:start}
+.top-side{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(max-width:768px){.top-side{flex-direction:column;align-items:flex-end;gap:5px}.top-side .turn-box{padding:5px 9px;font-size:.85rem}.top-side .mini-candles{display:none!important}}
+.mini-candles{display:inline-flex;gap:3px;align-items:flex-end;vertical-align:middle;margin-inline-start:4px;direction:ltr}
+.mini-candles i{width:4px;height:13px;background:linear-gradient(180deg,#fff,#d9deef);border-radius:1px;position:relative;margin-top:7px}
+.mini-candles i::before{content:'';position:absolute;left:50%;top:-7px;width:5px;height:7px;margin-left:-2.5px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;background:radial-gradient(ellipse at 50% 70%,#fff6b0,#ffb020 60%,#ff6a00);box-shadow:0 0 6px #ffb020}
+.test-tag{font-size:.7rem;color:#9fd3ff;border:1px solid #4a7fb0;border-radius:6px;padding:0 5px;margin-inline-start:4px}
 .game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
 .game-btns{position:fixed;top:12px;left:12px;z-index:100;display:flex;gap:8px;align-items:center}
 .last-players{width:100%;margin:0 0 10px;font-size:.92rem;padding:8px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -661,8 +667,8 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
     <div class="game-layout">
         <div class="game-top">
             <div class="pot-box"><div class="pot-pile-wrap"><img class="pot-pile" id="potCoin" src="pile.webp" alt="" draggable="false" onerror="this.onerror=null;this.src='pile.png'"></div><div><div class="pot-label">קופה</div><div class="pot-val" id="potVal">0</div></div></div>
-            <div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
-            <div class="turn-box hidden" id="nightBox" title="הנר של הלילה"></div>
+            <div class="top-side"><div class="turn-box hidden" id="timerBox" title="זמן שנותר">⏰ <strong id="timerVal">--:--</strong></div>
+            <div class="turn-box hidden" id="nightBox" title="הנר של הלילה"></div></div>
         </div>
         <div class="game-btns">
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
@@ -836,7 +842,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v78';
+const APP_VERSION='v79';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1430,7 +1436,7 @@ function hanukkahNight(d){
 function showNight(){
     const n=hanukkahNight(),b=document.getElementById('nightBox');
     b.classList.toggle('hidden',!n);
-    if(n)b.innerHTML=(ssGet('dreidel_testnight')?'🧪 ':'')+`🕎 נר ${['','ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני'][n]} <span style="letter-spacing:-2px">${'🕯️'.repeat(n)}</span>`;
+    if(n)b.innerHTML=`🕎 נר ${['','ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני'][n]} <span class="mini-candles">${'<i></i>'.repeat(n)}</span>`+(ssGet('dreidel_testnight')?' <small class="test-tag">ניסיון</small>':'');
 }
 // Fresh amounts/pot for a new round with the same players (first game and rematches)
 function resetRound(){
