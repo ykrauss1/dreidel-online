@@ -849,7 +849,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v83';
+const APP_VERSION='v84';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -3107,6 +3107,12 @@ function playMoneyFx(prev,cur){
 
 // ══════ AUDIO ══════
 let _audioCtx=null;
+// the music player plays even when the game's sound effects are turned off (that switch is for the effects, not for songs)
+function getMusicCtx(){
+    if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}
+    if(_audioCtx.state==='suspended')try{_audioCtx.resume()}catch(e){}
+    return _audioCtx;
+}
 function getAudioCtx(){
     if(!document.getElementById('soundOn')?.checked) return null;
     if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}
@@ -3244,7 +3250,7 @@ function _shaker(ctx,t,v,dest){
 }
 // schedule everything between beat a and beat b (ctx time = t0 + (beat-p0)*spb)
 function _tuneSchedule(a,b){
-    const ctx=getAudioCtx(),spb=60/TUNE.bpm,at=x=>TUNE.t0+(x-TUNE.p0)*spb,o=TUNE.out;
+    const ctx=getMusicCtx(),spb=60/TUNE.bpm,at=x=>TUNE.t0+(x-TUNE.p0)*spb,o=TUNE.out;
     MAOZ_TZUR.forEach(([m,beat,len])=>{if(beat>=a&&beat<b){const d=Math.max(.18,len*spb);
         _tnote(ctx,at(beat),_mf(m),d*1.1,[[1,'sine',.55],[2,'sine',.16,.5],[2.76,'sine',.07,.18],[4.07,'sine',.03,.08]],o)}});   // glockenspiel-ish lead
     for(let x=Math.ceil(a*2)/2;x<b;x+=.5){
@@ -3259,7 +3265,7 @@ function _tuneSchedule(a,b){
 }
 function _tuneTick(){
     if(!TUNE.playing)return;
-    const ctx=getAudioCtx(),spb=60/TUNE.bpm,now=(ctx.currentTime-TUNE.t0)/spb+TUNE.p0;
+    const ctx=getMusicCtx(),spb=60/TUNE.bpm,now=(ctx.currentTime-TUNE.t0)/spb+TUNE.p0;
     TUNE.pos=Math.max(TUNE.p0,now);
     const ahead=now+.6/spb;
     if(ahead>TUNE.sched){_tuneSchedule(TUNE.sched,Math.min(ahead,TUNE.len));TUNE.sched=Math.min(ahead,TUNE.len)}
@@ -3324,7 +3330,7 @@ function tunePlay(from){
         document.getElementById('tunePlayer').classList.remove('hidden');
         TUNE.playing=true;a.play().catch(()=>{TUNE.playing=false;tuneUI()});tuneUI();return;
     }
-    const ctx=getAudioCtx();if(!ctx)return;try{ctx.resume&&ctx.resume()}catch(e){}
+    const ctx=getMusicCtx();if(!ctx){uiAlert('הדפדפן הזה לא מאפשר להשמיע מוזיקה.');return}try{ctx.resume&&ctx.resume()}catch(e){}
     tuneHalt();
     if(typeof from==='number')TUNE.pos=Math.max(0,Math.min(TUNE.len-1,from));
     if(TUNE.pos>=TUNE.len-.5)TUNE.pos=0;
