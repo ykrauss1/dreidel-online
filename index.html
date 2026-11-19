@@ -127,6 +127,14 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .mini-candles{display:inline-flex;gap:3px;align-items:flex-end;vertical-align:middle;margin-inline-start:4px;direction:ltr}
 .mini-candles i{width:4px;height:13px;background:linear-gradient(180deg,#fff,#d9deef);border-radius:1px;position:relative;margin-top:7px}
 .mini-candles i::before{content:'';position:absolute;left:50%;top:-7px;width:5px;height:7px;margin-left:-2.5px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;background:radial-gradient(ellipse at 50% 70%,#fff6b0,#ffb020 60%,#ff6a00);box-shadow:0 0 6px #ffb020}
+.ui-prompt-in{margin-top:10px;width:8em;text-align:center;font-size:1.2rem;direction:ltr}
+.pin-wrap{display:inline-flex;align-items:center;gap:4px;margin:0 6px}
+#adminPin{width:5.2em;text-align:center;letter-spacing:.35em;font-size:1.1rem;direction:ltr}
+#adminPin.pin-dots{-webkit-text-security:disc;text-security:disc}
+#adminPin.pin-bad{animation:mgNo .3s;border-color:#e05050}
+.pin-eye{background:none;border:1px solid var(--border-l);border-radius:8px;cursor:pointer;padding:3px 7px;font-size:1rem;color:var(--text)}
+.pin-forgot{font-size:.75rem;color:var(--text-dim);text-decoration:underline;cursor:pointer}
+.pin-note{font-size:.72rem;color:var(--text-dim);margin-top:4px}
 .test-tag{font-size:.7rem;color:#9fd3ff;border:1px solid #4a7fb0;border-radius:6px;padding:0 5px;margin-inline-start:4px}
 .game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
 .game-btns{position:fixed;top:12px;left:12px;z-index:100;display:flex;gap:8px;align-items:center}
@@ -842,7 +850,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v79';
+const APP_VERSION='v80';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -893,6 +901,13 @@ function uiDialog(msg,okText,cancelText){
 }
 function uiAlert(msg){UI_ALERTS.push(msg);return uiDialog(msg,'הבנתי',null)}
 function uiConfirm(msg,okText){return uiDialog(msg,okText||'אישור','ביטול')}
+// a question with a small answer box, in the game's own dialog (no browser prompt)
+function uiPrompt(msg,val){
+    const box=document.createElement('input');box.type='text';box.inputMode='numeric';box.className='input ui-prompt-in';box.value=val||'';box.autocomplete='off';
+    const holder=document.getElementById('uiMsg');
+    const p=uiDialog(msg,'אישור','ביטול');holder.appendChild(document.createElement('br'));holder.appendChild(box);setTimeout(()=>box.focus(),60);
+    return p.then(ok=>ok?box.value:null);
+}
 // one tiny database read when the game opens: Supabase's free plan pauses projects without database
 // activity, and live game messages alone don't count (a GitHub job also reads it every two days)
 function sbKeepAlive(){try{if(typeof fetch!=='function'||!navigator.onLine)return;
@@ -3563,18 +3578,47 @@ function adminUI(){
     const st=document.getElementById('adminState');
     if(st){st.textContent=isRemoteGuest()?'· אורח':adminOpen()?'· 🔓 מנהל (נעילה)':'· 🔒 נעול';st.onclick=adminOpen()?()=>{ssSet(ADMIN_KEY+'_ok','');adminUI()}:null}
 }
+// The manager code: 4 digits, kept on this device only (in the browser's storage) — it is not a secret, it only keeps
+// the game rules away from little hands. The field is a plain text box drawn with dots (so the browser does not pour a
+// saved password into it), with an 👁 to show it; "forgot" asks a sum children of 10 can't do, then shows the code.
+function adminCode(){return lsGet(ADMIN_KEY+'_pin')||''}
+async function adminCheck(v){
+    if(adminCode())return v===adminCode();
+    if(lsGet(ADMIN_KEY)&&await adminHash(v)===lsGet(ADMIN_KEY)){lsSet(ADMIN_KEY+'_pin',v);return true}   // (a code set before this version)
+    return false;
+}
 function adminPrompt(sec){
     const lk=document.getElementById('adminLock');
     if(isRemoteGuest()){lk.innerHTML='🌐 במשחק אונליין חוקי המשחק נקבעים אצל המארח — כאן אי אפשר לשנות אותם.';}
     else{
-        const has=!!lsGet(ADMIN_KEY);
-        lk.innerHTML=has?'🔐 ההגדרות האלה למנהל בלבד.<br>קוד מנהל:<input type="password" inputmode="numeric" id="adminPin" autocomplete="off"><button type="button" class="btn btn-sm btn-gold" id="adminGo">פתח</button>'
-            :'🔐 כאן נמצאים חוקי המשחק. כדי שרק אתה תוכל לשנות אותם, בחר קוד מנהל (לפחות 4 ספרות):<input type="password" inputmode="numeric" id="adminPin" autocomplete="off"><button type="button" class="btn btn-sm btn-gold" id="adminGo">שמור</button>';
-        const go=async()=>{const v=document.getElementById('adminPin').value.trim();
-            if(!has){if(v.length<4){uiAlert('הקוד צריך להיות לפחות 4 ספרות.');return}lsSet(ADMIN_KEY,await adminHash(v));ssSet(ADMIN_KEY+'_ok','1');lk.classList.add('hidden');adminUI();return}
-            if(await adminHash(v)===lsGet(ADMIN_KEY)){ssSet(ADMIN_KEY+'_ok','1');lk.classList.add('hidden');adminUI()}
-            else{document.getElementById('adminPin').value='';document.getElementById('adminPin').placeholder='לא נכון';}};
-        setTimeout(()=>{document.getElementById('adminGo').onclick=go;const i=document.getElementById('adminPin');i.onkeydown=e=>{if(e.key==='Enter')go()};i.focus()},0);
+        const has=!!(adminCode()||lsGet(ADMIN_KEY));
+        const field=`<span class="pin-wrap"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="adminPin" class="pin-dots" autocomplete="off" autocorrect="off" spellcheck="false" name="dreidel-rules-${Date.now()}" placeholder="••••"><button type="button" class="pin-eye" id="pinEye" title="הצג / הסתר">👁</button></span>`;
+        lk.innerHTML=has?`🔐 ההגדרות האלה למנהל בלבד.<br>קוד מנהל (4 ספרות):${field}<button type="button" class="btn btn-sm btn-gold" id="adminGo">פתח</button><br><a href="#" id="pinForgot" class="pin-forgot">שכחתי את הקוד</a>`
+            :`🔐 כאן נמצאים חוקי המשחק. כדי שרק אתה תוכל לשנות אותם, בחר קוד מנהל של 4 ספרות:${field}<button type="button" class="btn btn-sm btn-gold" id="adminGo">שמור</button><div class="pin-note">הקוד נשמר רק במכשיר הזה.</div>`;
+        const ok=()=>{ssSet(ADMIN_KEY+'_ok','1');lk.classList.add('hidden');adminUI()};
+        const go=async()=>{const i=document.getElementById('adminPin'),v=i.value.replace(/\D/g,'');
+            if(v.length!==4){i.placeholder='4 ספרות';i.focus();return}
+            if(!has){lsSet(ADMIN_KEY+'_pin',v);lsSet(ADMIN_KEY,await adminHash(v));ok();return}
+            if(await adminCheck(v))ok();
+            else{i.value='';i.placeholder='לא נכון';i.classList.remove('pin-bad');void i.offsetWidth;i.classList.add('pin-bad')}};
+        setTimeout(()=>{
+            const i=document.getElementById('adminPin');i.value='';
+            i.oninput=()=>{i.value=i.value.replace(/\D/g,'').slice(0,4);if(has&&i.value.length===4)go()};   // 4 digits → opens by itself
+            i.onkeydown=e=>{if(e.key==='Enter')go()};
+            document.getElementById('adminGo').onclick=go;
+            document.getElementById('pinEye').onclick=()=>{i.classList.toggle('pin-dots');i.focus()};
+            const f=document.getElementById('pinForgot');
+            if(f)f.onclick=e=>{e.preventDefault();
+                const a=12+Math.floor(Math.random()*8),b=6+Math.floor(Math.random()*4);
+                uiPrompt(`שאלה למבוגרים 🙂 כמה זה ${a} × ${b}?`,'').then(ans=>{
+                    if(ans==null)return;
+                    if(parseInt(String(ans).replace(/\D/g,''))!==a*b){uiAlert('לא נכון — נסו שוב.');return}
+                    const c=adminCode();
+                    if(c){uiAlert(`קוד המנהל הוא: ${c}`);ok()}
+                    else{lsSet(ADMIN_KEY,'');uiAlert('את הקוד הישן אי אפשר להציג (הוא נשמר בגרסה קודמת בצורה מוצפנת). בחרו עכשיו קוד חדש.');adminPrompt(sec)}
+                })};
+            i.focus();
+        },0);
     }
     sec.querySelector('summary').after(lk);lk.classList.remove('hidden');
 }
