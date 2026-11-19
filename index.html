@@ -272,9 +272,11 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 /* ═══ mic / bonuses / trivia / reactions ═══ */
 .tune-toggle{left:68px}
 .tune-player{position:fixed;bottom:70px;left:18px;z-index:200;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--gold-dim);border-radius:24px;padding:5px 10px;box-shadow:0 6px 24px rgba(0,0,0,.5);direction:ltr;max-width:calc(100vw - 130px)}
-.tune-player button{background:none;border:none;color:var(--text);font-size:1.05rem;cursor:pointer;width:32px;height:32px;border-radius:50%}
+.tune-player button{background:none;border:none;color:var(--text);font-size:1.05rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none}
+.tune-player button svg{display:block}
 .tune-player button:hover{background:var(--bg-input)}
-.tune-player .tp-main{background:var(--gold);color:#1a1300;font-size:1rem}
+.tune-player button.tp-main{background:var(--gold);color:#1a1300;font-size:1rem;width:36px;height:36px}
+.tune-player button.tp-main:hover{background:#ffd75a}
 .tune-player input{width:150px;accent-color:var(--gold)}
 .tune-player .tp-track{direction:rtl;background:var(--bg-input);color:var(--gold);border:1px solid var(--border-l);border-radius:14px;padding:4px 8px;font-family:inherit;font-size:.85rem;max-width:170px}
 .tune-player .tp-time{font-size:.75rem;color:var(--text-dim);min-width:70px;font-variant-numeric:tabular-nums}
@@ -769,16 +771,16 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
 <button class="settings-toggle tune-toggle" onclick="unlockAudio();document.getElementById('tunePlayer').classList.contains('hidden')?tunePlay():tuneToggle()" title="מעוז צור">🎵</button>
 <div class="tune-player hidden" id="tunePlayer" role="region" aria-label="נגן מעוז צור">
   <select id="tuneTrack" class="tp-track" onchange="tuneChoose(this.value)" aria-label="בחירת שיר"><option value="maoz">🕎 מעוז צור</option></select>
-  <button onclick="tuneAddPick()" title="הוספת שיר מהמחשב / מהטלפון">➕</button>
-  <button id="tuneDel" onclick="tuneDelete()" title="הסרת השיר מהרשימה" style="display:none">🗑</button>
+  <button onclick="tuneAddPick()" title="הוספת שיר מהמחשב / מהטלפון"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button>
+  <button id="tuneDel" onclick="tuneDelete()" title="הסרת השיר מהרשימה" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5"/></svg></button>
   <input type="file" id="tuneFile" accept="audio/*" multiple hidden onchange="tuneAddFiles(this.files);this.value=''">
-  <button onclick="tuneSkip(-8)" title="אחורה">⏪</button>
-  <button id="tunePlay" class="tp-main" onclick="tuneToggle()" title="נגן / השהה">▶</button>
-  <button onclick="tuneSkip(8)" title="קדימה">⏩</button>
+  <button onclick="tuneSkip(-8)" title="אחורה"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.5 6v12L3 12zM21 6v12l-8.5-6z"/></svg></button>
+  <button id="tunePlay" class="tp-main" onclick="tuneToggle()" title="נגן / השהה"></button>
+  <button onclick="tuneSkip(8)" title="קדימה"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.5 6v12L21 12zM3 6v12l8.5-6z"/></svg></button>
   <input type="range" id="tuneSeek" min="0" max="80" step="0.5" value="0" aria-label="מיקום בשיר"
      onpointerdown="this._drag=1" onpointerup="this._drag=0" oninput="this._drag=1" onchange="this._drag=0;tuneSeek(+this.value)">
   <span class="tp-time" id="tuneTime">0:00</span>
-  <button onclick="tuneClose()" title="סגור">✕</button>
+  <button onclick="tuneClose()" title="סגור"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
 </div>
 <div class="settings-panel hidden" id="settingsPanel">
   <div class="admin-lock hidden" id="adminLock"></div>
@@ -849,7 +851,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v86';
+const APP_VERSION='v87';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -3349,7 +3351,9 @@ function tuneSkip(beats){if(tuneIsFile()){const a=tuneAud();if(a)tuneSeek(a.curr
 function tuneToggle(){TUNE.playing?tunePause():tunePlay()}
 function tuneClose(){tunePause();TUNE.pos=0;if(SONGS.aud)try{SONGS.aud.currentTime=0}catch(e){}document.getElementById('tunePlayer').classList.add('hidden')}
 function tuneUI(){
-    const pb=document.getElementById('tunePlay');if(pb)pb.textContent=TUNE.playing?'⏸':'▶';
+    const pb=document.getElementById('tunePlay');if(pb){const k=TUNE.playing?'pause':'play';if(pb.dataset.k!==k){pb.dataset.k=k;pb.innerHTML=k==='pause'
+        ?'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>'
+        :'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2z"/></svg>'}}
     const r=document.getElementById('tuneSeek'),tt=document.getElementById('tuneTime'),f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
     if(tuneIsFile()){
         const a=SONGS.aud,d=a&&isFinite(a.duration)?a.duration:0,c=a?a.currentTime:0;
