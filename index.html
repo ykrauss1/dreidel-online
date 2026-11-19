@@ -567,7 +567,6 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
         <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
         <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
     </div>
-    <div style="text-align:center;margin-top:10px"><button class="btn btn-outline btn-sm" id="tuneBtn" onclick="unlockAudio();playMaozTzur()">🎵 שירים</button></div>
     <div class="install-banner" id="rejoinBanner" style="border-color:var(--blue)">
         <span style="font-size:1.4rem">🔄</span>
         <div class="ib-text" id="rejoinText"><b>יש לך משחק פתוח</b></div>
@@ -850,7 +849,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v82';
+const APP_VERSION='v83';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
