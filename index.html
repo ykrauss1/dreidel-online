@@ -491,7 +491,17 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .mg-candle.wrong{animation:mgNo .3s}
 .mg-candle.wrong .wax{background:linear-gradient(90deg,#c0392b,#ff6b5b,#a5281c);box-shadow:0 0 0 3px #ff4d3d,0 0 22px 6px rgba(255,60,40,.7)}
 .mg-candle.lit .wax{background:linear-gradient(90deg,#e9eefc,#fff,#c9d2ee)}
-.mg-candle.empty .wax{flex:none;height:14%;width:70%;background:linear-gradient(180deg,#d9b44e,#8d6a1c);border-radius:3px 3px 8px 8px;box-shadow:none}
+.mg-candle .stem{display:none}
+/* oil menorah (the riddle): little cups (בזיכים); the shamash a bit higher on a short leg */
+.mg-menorah.oil .mg-candle{height:auto}
+.mg-menorah.oil .mg-candle .wax{flex:none;width:100%;max-width:74px;height:clamp(22px,6vh,40px);border-radius:6px 6px 50% 50%/6px 6px 100% 100%;
+  background:linear-gradient(180deg,#f3d77a 0,#d4a838 35%,#8d6a1c 100%);box-shadow:inset 0 5px 0 rgba(60,40,5,.55),0 3px 6px rgba(0,0,0,.4);animation:none}
+.mg-menorah.oil .mg-candle .fl{height:clamp(30px,8vh,56px);width:38%;margin-bottom:-4px}
+.mg-menorah.oil .mg-candle.shamash .stem{display:block;width:16%;height:clamp(26px,7vh,52px);background:linear-gradient(90deg,#8d6a1c,#e8c25a,#8d6a1c)}
+.mg-menorah.oil .mg-candle.lit .wax{background:linear-gradient(180deg,#f3d77a 0,#d4a838 35%,#8d6a1c 100%);box-shadow:inset 0 5px 0 rgba(60,40,5,.55),0 0 0 3px rgba(255,214,90,.9),0 0 30px 12px rgba(255,190,60,.75)}
+.mg-menorah.oil .mg-candle.wrong .wax{background:linear-gradient(180deg,#ff8a7a,#d63a2a 45%,#8e1d12);box-shadow:inset 0 5px 0 rgba(60,5,5,.5),0 0 0 3px #ff4d3d,0 0 24px 8px rgba(255,60,40,.7)}
+.mg-menorah.oil .mg-candle.next .wax{box-shadow:inset 0 5px 0 rgba(60,40,5,.55),0 0 0 4px #fff3b0,0 0 26px 8px rgba(245,200,66,.9)}
+.mg-menorah.oil .mg-candle:hover .wax{filter:brightness(1.15)}
 .mg-night{position:absolute;top:2%;left:0;right:0;text-align:center;font-family:'Secular One',sans-serif;font-size:clamp(1.3rem,3.5vw,2rem);color:var(--gold)}
 @keyframes mgNo{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .mg-candle:hover .wax{filter:brightness(1.08)}
@@ -806,7 +816,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v74';
+const APP_VERSION='v75';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1770,7 +1780,7 @@ const PROMPTS={
     race:()=>G2('⚡ לחץ "התחל!" — ואז שמאלי, ימני, שמאלי, ימני… מהר!','⚡ לחצי "התחילי!" — ואז שמאלי, ימני, שמאלי, ימני… מהר!'),
     coins:()=>G2('🪙 לחץ "התחל!" ותפוס כמה שיותר מטבעות','🪙 לחצי "התחילי!" ותפסי כמה שיותר מטבעות'),
     candles:()=>G2('🕯️ לחץ "התחל!" והדלק את כל הנרות משמאל לימין — והשמש בסוף. מהר = סיבוב חזק','🕯️ לחצי "התחילי!" והדליקי את כל הנרות משמאל לימין — והשמש בסוף. מהר = סיבוב חזק'),
-    nights:()=>G2('🕎 חידה: לחץ "התחל!" והדלק רק את נרות הלילה, בסדר הנכון, והשמש בסוף. נר לא נכון — לא נדלק','🕎 חידה: לחצי "התחילי!" והדליקי רק את נרות הלילה, בסדר הנכון, והשמש בסוף. נר לא נכון — לא נדלק'),
+    nights:()=>G2('🕎 חידה: לחץ "התחל!" והדלק את חנוכיית השמן כמו בלילה של היום — הבזיכים הנכונים, בסדר הנכון. בזך לא נכון יאדים','🕎 חידה: לחצי "התחילי!" והדליקי את חנוכיית השמן כמו בלילה של היום — הבזיכים הנכונים, בסדר הנכון. בזך לא נכון יאדים'),
     clap:()=>MIC.on?G2('👏 מחא כפיים — כל עוד מוחאים הוא מסתובב!','👏 מחאי כפיים — כל עוד מוחאים הוא מסתובב!'):'👏 לחיצה כאן מפעילה את המיקרופון',
     sing:()=>!MIC.on?G2('🎤 לחץ "התחל לשיר!" — והמיקרופון יופעל','🎤 לחצי "התחילי לשיר!" — והמיקרופון יופעל')
         :SING.on?G2('🎶 המשך לשיר... כשתפסיק — הוא יסתובב לבד!','🎶 המשיכי לשיר... כשתפסיקי — הוא יסתובב לבד!')
@@ -1952,19 +1962,20 @@ function mgCandles(area,nightMode){
     const N=nightMode?(hanukkahNight()||1+Math.floor(Math.random()*8)):8;
     const ORDER=[];for(let i=8-N;i<8;i++)ORDER.push(i);ORDER.push('s');
     let k=0,t0=0,wrong=0;const LIMIT=nightMode?20000:12000;
-    let html='<div class="mg-menorah">';
-    for(let i=0;i<8;i++){if(i===4)html+=`<div class="mg-candle shamash" data-c="s"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`;
-        html+=`<div class="mg-candle${i<8-N?' empty':''}" data-c="${i}"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`}
+    // the riddle uses an oil menorah: nine identical cups (the shamash a little higher, on a short leg) — nothing gives away which ones tonight
+    let html=`<div class="mg-menorah${nightMode?' oil':''}">`;
+    for(let i=0;i<8;i++){if(i===4)html+=`<div class="mg-candle shamash" data-c="s"><span class="fl"></span><span class="wax"></span><span class="stem"></span><span class="num"></span></div>`;
+        html+=`<div class="mg-candle" data-c="${i}"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`}
     html+='</div><div class="mg-base"></div>'+(nightMode?`<div class="mg-night">🕎 הלילה ${NIGHT_WORDS[N]} של חנוכה</div>`:'');area.innerHTML=html;
     mgEl('mgFoot').textContent=nightMode
-        ?G2(`הדלק את נרות הלילה ${NIGHT_WORDS[N]} בסדר הנכון: מתחילים מהנר החדש (השמאלי) ופונים ימינה — והשמש בסוף`,`הדליקי את נרות הלילה ${NIGHT_WORDS[N]} בסדר הנכון: מתחילים מהנר החדש (השמאלי) ופונים ימינה — והשמש בסוף`)
+        ?G2(`הדלק את הלילה ${NIGHT_WORDS[N]} — הבזיכים הנכונים, בסדר הנכון. בזך לא נכון יאדים`,`הדליקי את הלילה ${NIGHT_WORDS[N]} — הבזיכים הנכונים, בסדר הנכון. בזך לא נכון יאדים`)
         :G2('הדלק את הנרות משמאל לימין, ואת השמש (הנר הגבוה) בסוף — הנר הבא מהבהב','הדליקי את הנרות משמאל לימין, ואת השמש (הנר הגבוה) בסוף — הנר הבא מהבהב');
     const showNext=!nightMode;
     const mark=(force)=>{area.querySelectorAll('.mg-candle').forEach(c=>{c.classList.remove('next');if(!c.classList.contains('lit'))c.querySelector('.num').textContent=''});
         if(!showNext&&!force)return;
         const nx=area.querySelector(`.mg-candle[data-c="${ORDER[k]}"]`);if(nx){nx.classList.add('next');nx.querySelector('.num').textContent=ORDER[k]==='s'?'שמש':(k+1)}};
     mark();
-    const finishPartial=()=>{const lit=k;mgFinish(Math.max(.15,lit/ORDER.length*.5),lit?`🕯️ ${lit} מתוך ${ORDER.length} דלקו`:'🕯️ הנרות לא דלקו הפעם')};
+    const finishPartial=()=>{const lit=k;mgFinish(Math.max(.15,lit/ORDER.length*.5),lit?`🕯️ ${lit} מתוך ${ORDER.length} דלקו`:(nightMode?'🕎 החנוכייה לא דלקה הפעם':'🕯️ הנרות לא דלקו הפעם'))};
     const down=e=>{
         const c=e.target.closest('.mg-candle');if(!c||MG.done)return;e.preventDefault();
         if(!t0){t0=performance.now();mgTimed(LIMIT,null,finishPartial)}
@@ -1975,7 +1986,7 @@ function mgCandles(area,nightMode){
             if(nightMode&&wrong>=3)mark(true);                       // after 3 mistakes — a hint: the right candle flashes
             return}
         c.classList.remove('wrong');c.classList.add('lit');playSfx(pick(SFX.tick),{vol:.4,rate:1+k*.06});k++;
-        mgEl('mgScore').textContent='🕯️ '+k+'/'+ORDER.length;
+        mgEl('mgScore').textContent=nightMode?'🔥 '+k:'🕯️ '+k+'/'+ORDER.length;   // (the riddle does not tell how many)
         if(k>=ORDER.length){
             const sec=(performance.now()-t0)/1000;
             const p=nightMode?1.25-sec/(5+N*.9)*.45-wrong*.08:1.25-sec/10;
