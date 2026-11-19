@@ -777,6 +777,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
     <div style="font-size:.65rem;color:var(--text-dim);margin:4px 0">כל לחיצה על ⏺ מוסיפה הקלטה (עד 5 שניות). אפשר כמה הקלטות לכל תוצאה — הקריין יבחר ביניהן. נשמר במכשיר הזה.</div>
     <div id="myRecRows"></div>
   </details>
+  <details class="sp-sec sp-admin"><summary>🧪 לנסות כאילו זה חנוכה</summary><div class="admin-body">
+  <div class="settings-row"><label>הלילה הוא:</label><select id="testNight" class="input" style="flex:1" onchange="setTestNight(this.value)">
+    <option value="">לפי התאריך האמיתי</option><option value="1">לילה ראשון</option><option value="2">לילה שני</option><option value="3">לילה שלישי</option><option value="4">לילה רביעי</option>
+    <option value="5">לילה חמישי</option><option value="6">לילה שישי</option><option value="7">לילה שביעי</option><option value="8">לילה שמיני</option></select></div>
+  <div style="font-size:.72rem;color:var(--text-dim);margin-top:4px">המשחק יתנהג כאילו זה הלילה הזה: הנרות למעלה, בונוס הלילה במשחק חדש, וחידת "נרות הלילה". חוזר לבד לתאריך האמיתי כשסוגרים את המשחק.</div>
+  </div></details>
   <details class="sp-sec sp-admin"><summary>⏰ תזכורת לשחקן שמתמהמה</summary><div class="admin-body">
   <label class="sound-toggle"><input type="checkbox" id="nudgeOn" checked> להזכיר לשחקן שתורו הגיע</label>
   <div class="settings-row nudge-nums"><label>מופיעה אחרי <input type="number" id="nudgeAfter" min="5" max="300" value="15"> שנ׳</label>
@@ -825,7 +831,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v76';
+const APP_VERSION='v77';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1397,8 +1403,9 @@ async function loadHebcal(){
     return ok;
 }
 setTimeout(loadHebcal,1200);
+function setTestNight(v){ssSet('dreidel_testnight',v||'');showNight()}
 function hanukkahNight(d){
-    const forced=+new URLSearchParams(location.search).get('night');if(forced>=1&&forced<=8)return forced;
+    const forced=+new URLSearchParams(location.search).get('night')||+(ssGet('dreidel_testnight')||0);if(forced>=1&&forced<=8)return forced;   // (a test night: from the settings, until the game is closed)
     d=d||new Date();
     // the Jewish day follows the night: the candles of a night are lit at nightfall on the civil day before,
     // so a civil date's evening is already that night; and after midnight (until dawn) it is still the same night as the evening before
@@ -1417,7 +1424,7 @@ function hanukkahNight(d){
 function showNight(){
     const n=hanukkahNight(),b=document.getElementById('nightBox');
     b.classList.toggle('hidden',!n);
-    if(n)b.innerHTML=`🕎 נר ${['','ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני'][n]} <span style="letter-spacing:-2px">${'🕯️'.repeat(n)}</span>`;
+    if(n)b.innerHTML=(ssGet('dreidel_testnight')?'🧪 ':'')+`🕎 נר ${['','ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני'][n]} <span style="letter-spacing:-2px">${'🕯️'.repeat(n)}</span>`;
 }
 // Fresh amounts/pot for a new round with the same players (first game and rematches)
 function resetRound(){
@@ -3526,7 +3533,8 @@ document.addEventListener('keydown',unlockAudio,{passive:true});
 document.getElementById('soundOn').addEventListener('change',()=>{if(document.getElementById('soundOn').checked){_sfxPreloaded=false;preloadSfx()}});
 
 // ══════ SETTINGS ══════
-function toggleSettings(){ renderInstallHelp(); adminUI(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
+function syncTestNight(){const t=document.getElementById('testNight');if(t)t.value=ssGet('dreidel_testnight')||''}
+function toggleSettings(){ renderInstallHelp(); adminUI(); syncTestNight(); document.getElementById('settingsPanel').classList.toggle('hidden'); }
 // ── manager settings: game rules open with a code on this device; online guests can't change them at all ──
 const ADMIN_KEY='dreidel_admin';
 function ssGet(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
