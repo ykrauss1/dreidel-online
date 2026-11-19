@@ -489,6 +489,10 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 @keyframes mgNext{to{box-shadow:0 0 0 4px #fff3b0,0 0 34px 12px rgba(245,200,66,.95)}}
 .mg-candle .num{position:absolute;top:-2.6em;font-size:1rem;color:var(--gold);font-weight:700;white-space:nowrap}
 .mg-candle.wrong{animation:mgNo .3s}
+.mg-candle.wrong .wax{background:linear-gradient(90deg,#c0392b,#ff6b5b,#a5281c);box-shadow:0 0 0 3px #ff4d3d,0 0 22px 6px rgba(255,60,40,.7)}
+.mg-candle.lit .wax{background:linear-gradient(90deg,#e9eefc,#fff,#c9d2ee)}
+.mg-candle.empty .wax{flex:none;height:14%;width:70%;background:linear-gradient(180deg,#d9b44e,#8d6a1c);border-radius:3px 3px 8px 8px;box-shadow:none}
+.mg-night{position:absolute;top:2%;left:0;right:0;text-align:center;font-family:'Secular One',sans-serif;font-size:clamp(1.3rem,3.5vw,2rem);color:var(--gold)}
 @keyframes mgNo{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .mg-candle:hover .wax{filter:brightness(1.08)}
 #mgCv{position:absolute;inset:0;cursor:crosshair}
@@ -676,6 +680,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
                     <button data-m="race">⚡ מירוץ לחצנים</button>
                     <button data-m="coins">🪙 תפיסת מטבעות</button>
                     <button data-m="candles">🕯️ הדלקת נרות</button>
+                    <button data-m="nights">🕎 נרות הלילה</button>
                     <button type="button" class="ask-btn" id="askBtn" onclick="askTriviaNow()" title="שאלת חנוכה לשחקן שבתור — עכשיו">❓ שאלה עכשיו</button>
                 </div>
                 <div class="spin-prompt" id="spinPrompt"></div>
@@ -801,7 +806,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v73';
+const APP_VERSION='v74';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1352,6 +1357,9 @@ function startOnlineGame(){
 function hanukkahNight(d){
     const forced=+new URLSearchParams(location.search).get('night');if(forced>=1&&forced<=8)return forced;
     d=d||new Date();
+    // the Jewish day follows the night: the candles of a night are lit at nightfall on the civil day before,
+    // so a civil date's evening is already that night; and after midnight (until dawn) it is still the same night as the evening before
+    if(d.getHours()<5)d=new Date(d.getTime()-864e5);
     try{
         const f=new Intl.DateTimeFormat('en-u-ca-hebrew',{month:'long',day:'numeric'});
         for(let back=0;back<8;back++){
@@ -1652,7 +1660,7 @@ function spinFromInput(power,how,extra){
     NEXT_EXTRA=Object.assign({power:spinPower},extra||{});
     if(how==='hold'&&spinPower>0.93)NEXT_EXTRA.skill='bull';
     const pm=document.getElementById('powerMeter');pm.classList.remove('hidden');
-    document.getElementById('powerClicks').textContent={taps:'● ● ●',hold:'🎯',flick:'👋',circle:'🌀',shake:'📳',clap:'👏👏👏',sing:'🎤',wheel:'🖱️',letter:'✍️',drum:'🥁',race:'⚡',coins:'🪙',candles:'🕯️'}[how]||'';
+    document.getElementById('powerClicks').textContent={taps:'● ● ●',hold:'🎯',flick:'👋',circle:'🌀',shake:'📳',clap:'👏👏👏',sing:'🎤',wheel:'🖱️',letter:'✍️',drum:'🥁',race:'⚡',coins:'🪙',candles:'🕯️',nights:'🕎'}[how]||'';
     document.getElementById('powerFill').style.width=Math.round(spinPower*100)+'%';
     const bull=how==='hold'&&spinPower>0.93;
     document.getElementById('powerLabel').textContent=bull?'🎯 בול בשיא!':spinPower>0.75?'💥 חזק מאוד!':spinPower>0.4?'👍 בינוני':'😴 עייף...';
@@ -1747,7 +1755,7 @@ document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressA
 //   taps   — 3 quick taps on "סובב" (or space)
 //   hold   — hold "סובב" (or space), a meter swings, release at the top
 //   shake  — shake the phone
-const SPIN_MODES=['circle','wheel','flick','taps','hold','clap','sing','shake','letter','drum','race','coins','candles'];
+const SPIN_MODES=['circle','wheel','flick','taps','hold','clap','sing','shake','letter','drum','race','coins','candles','nights'];
 function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH||m==='wheel'&&IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
 const PROMPTS={
     circle:()=>IS_TOUCH?G2('🌀 שים אצבע על הסביבון וסובב במעגלים... ועזוב!','🌀 שימי אצבע על הסביבון וסובבי במעגלים... ועזבי!')
@@ -1761,7 +1769,8 @@ const PROMPTS={
     drum:()=>G2('🥁 לחץ "התחל!" ותופף בקצב','🥁 לחצי "התחילי!" ותופפי בקצב'),
     race:()=>G2('⚡ לחץ "התחל!" — ואז שמאלי, ימני, שמאלי, ימני… מהר!','⚡ לחצי "התחילי!" — ואז שמאלי, ימני, שמאלי, ימני… מהר!'),
     coins:()=>G2('🪙 לחץ "התחל!" ותפוס כמה שיותר מטבעות','🪙 לחצי "התחילי!" ותפסי כמה שיותר מטבעות'),
-    candles:()=>G2('🕯️ לחץ "התחל!" והדלק את הנרות מהר','🕯️ לחצי "התחילי!" והדליקי את הנרות מהר'),
+    candles:()=>G2('🕯️ לחץ "התחל!" והדלק את כל הנרות משמאל לימין — והשמש בסוף. מהר = סיבוב חזק','🕯️ לחצי "התחילי!" והדליקי את כל הנרות משמאל לימין — והשמש בסוף. מהר = סיבוב חזק'),
+    nights:()=>G2('🕎 חידה: לחץ "התחל!" והדלק רק את נרות הלילה, בסדר הנכון, והשמש בסוף. נר לא נכון — לא נדלק','🕎 חידה: לחצי "התחילי!" והדליקי רק את נרות הלילה, בסדר הנכון, והשמש בסוף. נר לא נכון — לא נדלק'),
     clap:()=>MIC.on?G2('👏 מחא כפיים — כל עוד מוחאים הוא מסתובב!','👏 מחאי כפיים — כל עוד מוחאים הוא מסתובב!'):'👏 לחיצה כאן מפעילה את המיקרופון',
     sing:()=>!MIC.on?G2('🎤 לחץ "התחל לשיר!" — והמיקרופון יופעל','🎤 לחצי "התחילי לשיר!" — והמיקרופון יופעל')
         :SING.on?G2('🎶 המשך לשיר... כשתפסיק — הוא יסתובב לבד!','🎶 המשיכי לשיר... כשתפסיקי — הוא יסתובב לבד!')
@@ -1814,9 +1823,9 @@ document.getElementById('spinModes').addEventListener('click',e=>{
 setInterval(refreshSpinUI,500); // cheap safety net (turn changes online, modal closes, …)
 // ═══════════ 🎮 mouse mini-games — the score is the strength of the spin ═══════════
 // Made for a big family round one big screen: everything is done with the mouse (or a finger), passed from hand to hand.
-var MG_MODES=['letter','drum','race','coins','candles'];
+var MG_MODES=['letter','drum','race','coins','candles','nights'];
 var MG={open:false,mode:'',timers:[],raf:0};
-const MG_TITLES={letter:'✍️ ציור אות',drum:'🥁 תיפוף בקצב',race:'⚡ מירוץ לחצנים',coins:'🪙 תפיסת מטבעות',candles:'🕯️ הדלקת נרות'};
+const MG_TITLES={letter:'✍️ ציור אות',drum:'🥁 תיפוף בקצב',race:'⚡ מירוץ לחצנים',coins:'🪙 תפיסת מטבעות',candles:'🕯️ הדלקת נרות',nights:'🕎 נרות הלילה'};
 function mgEl(id){return document.getElementById(id)}
 function mgLater(f,ms){const t=setTimeout(f,ms);MG.timers.push(t);return t}
 function mgClear(){MG.timers.forEach(clearTimeout);MG.timers=[];cancelAnimationFrame(MG.raf);if(MG.off)MG.off();MG.off=null}
@@ -1837,7 +1846,7 @@ function mgStart(mode){
     mgEl('mgScore').textContent='';mgEl('mgFoot').textContent='';mgBar(1);
     const area=mgEl('mgArea');area.innerHTML='';area.className='mg-area mga-'+mode;
     o.classList.add('show');refreshSpinUI();
-    ({letter:mgLetter,drum:mgDrum,race:mgRace,coins:mgCoins,candles:mgCandles})[mode](area);
+    ({letter:mgLetter,drum:mgDrum,race:mgRace,coins:mgCoins,candles:a=>mgCandles(a,false),nights:a=>mgCandles(a,true)})[mode](area);
 }
 function mgCancel(){if(!MG.open)return;mgClear();MG.open=false;mgEl('mg').classList.remove('show');resetSpinUI();refreshSpinUI()}
 // the game ended: show how it went for a moment, then the dreidel flies with that strength
@@ -1934,25 +1943,44 @@ function mgDrum(area){
     },500);
 }
 
-// ── 🕯️ light the candles: first the shamash, then the candles from the left (the newest first), as fast as you can ──
-function mgCandles(area){
-    const ORDER=['s',0,1,2,3,4,5,6,7];let k=0,t0=0;const LIMIT=12000;
-    // candles 0..7 drawn from left to right, the shamash in the middle and higher
+// ── 🕯️ light the candles: all eight, from left to right — the shamash last (as most authorities rule);
+//    🕎 the night's candles (a riddle for the children): only that night's candles, in the right order, the shamash last.
+//    On night N the candles stand in the N places on the right; one starts with the newest (the leftmost of them) and goes right.
+//    A wrong candle does not light — it flashes red.
+const NIGHT_WORDS=['','הראשון','השני','השלישי','הרביעי','החמישי','השישי','השביעי','השמיני'];
+function mgCandles(area,nightMode){
+    const N=nightMode?(hanukkahNight()||1+Math.floor(Math.random()*8)):8;
+    const ORDER=[];for(let i=8-N;i<8;i++)ORDER.push(i);ORDER.push('s');
+    let k=0,t0=0,wrong=0;const LIMIT=nightMode?20000:12000;
     let html='<div class="mg-menorah">';
     for(let i=0;i<8;i++){if(i===4)html+=`<div class="mg-candle shamash" data-c="s"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`;
-        html+=`<div class="mg-candle" data-c="${i}"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`}
-    html+='</div><div class="mg-base"></div>';area.innerHTML=html;
-    mgEl('mgFoot').textContent=G2('הדלק: קודם את השמש (באמצע), ואז מהנר השמאלי ימינה — הנר הבא מהבהב','הדליקי: קודם את השמש (באמצע), ואז מהנר השמאלי ימינה — הנר הבא מהבהב');
-    const mark=()=>{area.querySelectorAll('.mg-candle').forEach(c=>c.classList.remove('next'));
-        const nx=area.querySelector(`.mg-candle[data-c="${ORDER[k]}"]`);if(nx){nx.classList.add('next');nx.querySelector('.num').textContent=k===0?'שמש':k}};
+        html+=`<div class="mg-candle${i<8-N?' empty':''}" data-c="${i}"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`}
+    html+='</div><div class="mg-base"></div>'+(nightMode?`<div class="mg-night">🕎 הלילה ${NIGHT_WORDS[N]} של חנוכה</div>`:'');area.innerHTML=html;
+    mgEl('mgFoot').textContent=nightMode
+        ?G2(`הדלק את נרות הלילה ${NIGHT_WORDS[N]} בסדר הנכון: מתחילים מהנר החדש (השמאלי) ופונים ימינה — והשמש בסוף`,`הדליקי את נרות הלילה ${NIGHT_WORDS[N]} בסדר הנכון: מתחילים מהנר החדש (השמאלי) ופונים ימינה — והשמש בסוף`)
+        :G2('הדלק את הנרות משמאל לימין, ואת השמש (הנר הגבוה) בסוף — הנר הבא מהבהב','הדליקי את הנרות משמאל לימין, ואת השמש (הנר הגבוה) בסוף — הנר הבא מהבהב');
+    const showNext=!nightMode;
+    const mark=(force)=>{area.querySelectorAll('.mg-candle').forEach(c=>{c.classList.remove('next');if(!c.classList.contains('lit'))c.querySelector('.num').textContent=''});
+        if(!showNext&&!force)return;
+        const nx=area.querySelector(`.mg-candle[data-c="${ORDER[k]}"]`);if(nx){nx.classList.add('next');nx.querySelector('.num').textContent=ORDER[k]==='s'?'שמש':(k+1)}};
     mark();
+    const finishPartial=()=>{const lit=k;mgFinish(Math.max(.15,lit/ORDER.length*.5),lit?`🕯️ ${lit} מתוך ${ORDER.length} דלקו`:'🕯️ הנרות לא דלקו הפעם')};
     const down=e=>{
         const c=e.target.closest('.mg-candle');if(!c||MG.done)return;e.preventDefault();
-        if(!t0){t0=performance.now();mgTimed(LIMIT,null,()=>mgFinish(Math.max(.15,k/9*.55),`🕯️ ${k-1>0?k-1:0} נרות דלקו`))}
-        if(c.dataset.c!==String(ORDER[k])){c.classList.remove('wrong');void c.offsetWidth;c.classList.add('wrong');return}
-        c.classList.add('lit');c.classList.remove('next');c.querySelector('.num').textContent='';playSfx(pick(SFX.tick),{vol:.4,rate:1+k*.06});k++;
-        mgEl('mgScore').textContent='🕯️ '+Math.max(0,k-1)+'/8';
-        if(k>=ORDER.length){const sec=(performance.now()-t0)/1000;mgFinish(Math.max(.3,Math.min(1,1.25-sec/10)),`🕎 כל הנרות דולקים! (${sec.toFixed(1)} שניות)`);return}
+        if(!t0){t0=performance.now();mgTimed(LIMIT,null,finishPartial)}
+        if(c.dataset.c!==String(ORDER[k])){
+            if(c.classList.contains('lit'))return;
+            c.classList.remove('wrong');void c.offsetWidth;c.classList.add('wrong');wrong++;clearTimeout(c._w);c._w=setTimeout(()=>c.classList.remove('wrong'),1100);
+            playSfx(pick(SFX.click),{vol:.4,rate:.6});
+            if(nightMode&&wrong>=3)mark(true);                       // after 3 mistakes — a hint: the right candle flashes
+            return}
+        c.classList.remove('wrong');c.classList.add('lit');playSfx(pick(SFX.tick),{vol:.4,rate:1+k*.06});k++;
+        mgEl('mgScore').textContent='🕯️ '+k+'/'+ORDER.length;
+        if(k>=ORDER.length){
+            const sec=(performance.now()-t0)/1000;
+            const p=nightMode?1.25-sec/(5+N*.9)*.45-wrong*.08:1.25-sec/10;
+            mgFinish(Math.max(.3,Math.min(1,p)),nightMode?(wrong?`🕎 הלילה ${NIGHT_WORDS[N]} — דלק! (${sec.toFixed(1)} שניות, ${wrong} טעויות)`:`🕎 הלילה ${NIGHT_WORDS[N]} — בלי אף טעות! (${sec.toFixed(1)} שניות)`)
+                :`🕎 כל הנרות דולקים! (${sec.toFixed(1)} שניות)`);return}
         mark();
     };
     area.addEventListener('pointerdown',down);MG.off=()=>area.removeEventListener('pointerdown',down);
@@ -2009,7 +2037,7 @@ function mgLetter(area){
 
 // ── which ways to spin are shown (per device, in the settings) ──
 const MODE_NAMES={circle:'🌀 סיבוב בעכבר / באצבע',wheel:'🖱️ גלגלת העכבר',flick:'✊ זריקה',taps:'👆 3 לחיצות',hold:'🎯 החזק ושחרר',clap:'👏 מחיאות כפיים',sing:'🎤 שירה',shake:'📳 נענוע (טלפון)',
-    letter:'✍️ ציור אות',drum:'🥁 תיפוף בקצב',race:'⚡ מירוץ לחצנים',coins:'🪙 תפיסת מטבעות',candles:'🕯️ הדלקת נרות'};
+    letter:'✍️ ציור אות',drum:'🥁 תיפוף בקצב',race:'⚡ מירוץ לחצנים',coins:'🪙 תפיסת מטבעות',candles:'🕯️ הדלקת נרות',nights:'🕎 נרות הלילה (חידה)'};
 function modesOff(){try{return JSON.parse(lsGet('dreidel_modes_off')||'[]')}catch(e){return []}}
 function applyModeVisibility(){
     const off=modesOff();
