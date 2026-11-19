@@ -492,6 +492,15 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .mg-candle.wrong .wax{background:linear-gradient(90deg,#c0392b,#ff6b5b,#a5281c);box-shadow:0 0 0 3px #ff4d3d,0 0 22px 6px rgba(255,60,40,.7)}
 .mg-candle.lit .wax{background:linear-gradient(90deg,#e9eefc,#fff,#c9d2ee)}
 .mg-candle .stem{display:none}
+.mg-hide{visibility:hidden!important}
+.mg-candle .oilv{display:none}
+.mg-menorah.oil .mg-candle .wax{position:relative;overflow:hidden}
+.mg-menorah.oil .mg-candle .oilv{display:block;position:absolute;left:12%;right:12%;bottom:18%;height:calc(var(--oil,0)*48%);background:linear-gradient(180deg,#d8c25a,#9c8a22);border-radius:0 0 50% 50%/0 0 100% 100%;opacity:.9;transition:height .2s linear}
+.mg-menorah.oil .mg-candle.lit .fl{transform:scale(calc(.45 + var(--oil,1)*.55))}
+.mg-menorah.oil .mg-candle.out .wax{filter:brightness(.55) saturate(.6)}
+.mg-menorah.oil .mg-candle.out.flash .wax{animation:mgNo .3s 2}
+.mg-candle .smoke{position:absolute;bottom:60%;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:rgba(200,200,210,.55);filter:blur(3px);animation:mgSmoke 1.2s ease-out forwards;pointer-events:none}
+@keyframes mgSmoke{to{transform:translateY(-70px) scale(2.4);opacity:0}}
 /* oil menorah (the riddle): little cups (בזיכים); the shamash a bit higher on a short leg */
 .mg-menorah.oil .mg-candle{height:auto}
 .mg-menorah.oil .mg-candle .wax{flex:none;width:100%;max-width:74px;height:clamp(22px,6vh,40px);border-radius:6px 6px 50% 50%/6px 6px 100% 100%;
@@ -816,7 +825,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v75';
+const APP_VERSION='v76';
 document.getElementById('appVersion').textContent=APP_VERSION;
 
 // Escape any text that goes into innerHTML (names arrive from other players!)
@@ -1364,12 +1373,37 @@ function startOnlineGame(){
 
 // Which Hanukkah candle is lit tonight (1–8), or 0. Uses the browser's Hebrew calendar — no internet needed.
 // (?night=N in the address forces it — handy for showing the kids)
+// 🕎 Hanukkah dates from Hebcal (like the other projects): "Chanukah: N Candles" on the civil date whose evening is night N.
+// Kept on the device per year; until it arrives (or offline) the browser's own Hebrew calendar is used.
+let HEB_NIGHTS=null;
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+async function loadHebcal(){
+    const y=new Date().getFullYear(),map={};let ok=true;
+    for(const yy of [y-1,y]){
+        let items=null;
+        try{items=JSON.parse(lsGet('dreidel_hebcal_'+yy)||'null')}catch(e){}
+        if(!items){
+            try{
+                const ctl=new AbortController();setTimeout(()=>ctl.abort(),8000);
+                const r=await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=off&mod=off&nx=off&mf=off&ss=off&c=off&year=${yy}&month=x`,{signal:ctl.signal});
+                const j=await r.json();
+                items=(j.items||[]).filter(i=>/^Chanukah: \d Candles?$/.test(i.title)).map(i=>[i.date.slice(0,10),+i.title.match(/\d/)[0]]);
+                if(items.length===8)lsSet('dreidel_hebcal_'+yy,JSON.stringify(items));else ok=false;
+            }catch(e){ok=false;items=[]}
+        }
+        items.forEach(([dt,n])=>map[dt]=n);
+    }
+    if(Object.keys(map).length){HEB_NIGHTS=map;try{showNight()}catch(e){}}
+    return ok;
+}
+setTimeout(loadHebcal,1200);
 function hanukkahNight(d){
     const forced=+new URLSearchParams(location.search).get('night');if(forced>=1&&forced<=8)return forced;
     d=d||new Date();
     // the Jewish day follows the night: the candles of a night are lit at nightfall on the civil day before,
     // so a civil date's evening is already that night; and after midnight (until dawn) it is still the same night as the evening before
     if(d.getHours()<5)d=new Date(d.getTime()-864e5);
+    if(HEB_NIGHTS)return HEB_NIGHTS[ymd(d)]||0;
     try{
         const f=new Intl.DateTimeFormat('en-u-ca-hebrew',{month:'long',day:'numeric'});
         for(let back=0;back<8;back++){
@@ -1858,14 +1892,14 @@ function mgStart(mode){
     o.classList.add('show');refreshSpinUI();
     ({letter:mgLetter,drum:mgDrum,race:mgRace,coins:mgCoins,candles:a=>mgCandles(a,false),nights:a=>mgCandles(a,true)})[mode](area);
 }
-function mgCancel(){if(!MG.open)return;mgClear();MG.open=false;mgEl('mg').classList.remove('show');resetSpinUI();refreshSpinUI()}
+function mgCancel(){if(!MG.open)return;mgClear();if(MG.onClose){MG.onClose();MG.onClose=null}MG.open=false;mgEl('mg').classList.remove('show');resetSpinUI();refreshSpinUI()}
 // the game ended: show how it went for a moment, then the dreidel flies with that strength
 function mgFinish(power,text){
     if(!MG.open||MG.done)return;MG.done=true;mgClear();
     const area=mgEl('mgArea'),big=document.createElement('div');big.className='mg-big';big.textContent=text;area.appendChild(big);
     playSfx(pick(power>.6?SFX.gimel:SFX.he),{vol:.5});
     const mode=MG.mode;
-    setTimeout(()=>{MG.open=false;MG.done=false;mgEl('mg').classList.remove('show');
+    setTimeout(()=>{MG.open=false;MG.done=false;mgEl('mg').classList.remove('show');if(MG.onClose){MG.onClose();MG.onClose=null}
         if(G.over||spinning)return;playWhoosh(power);spinFromInput(power,mode,{mgText:text})},1300);
 }
 // "ready… go!" then the game
@@ -1959,42 +1993,57 @@ function mgDrum(area){
 //    A wrong candle does not light — it flashes red.
 const NIGHT_WORDS=['','הראשון','השני','השלישי','הרביעי','החמישי','השישי','השביעי','השמיני'];
 function mgCandles(area,nightMode){
-    const N=nightMode?(hanukkahNight()||1+Math.floor(Math.random()*8)):8;
+    const real=nightMode?hanukkahNight():0;
+    const N=nightMode?(real||1+Math.floor(Math.random()*8)):8;
     const ORDER=[];for(let i=8-N;i<8;i++)ORDER.push(i);ORDER.push('s');
-    let k=0,t0=0,wrong=0;const LIMIT=nightMode?20000:12000;
+    let k=0,t0=0,wrong=0,outs=0;const LIMIT=nightMode?25000:12000;
     // the riddle uses an oil menorah: nine identical cups (the shamash a little higher, on a short leg) — nothing gives away which ones tonight
     let html=`<div class="mg-menorah${nightMode?' oil':''}">`;
-    for(let i=0;i<8;i++){if(i===4)html+=`<div class="mg-candle shamash" data-c="s"><span class="fl"></span><span class="wax"></span><span class="stem"></span><span class="num"></span></div>`;
-        html+=`<div class="mg-candle" data-c="${i}"><span class="fl"></span><span class="wax"></span><span class="num"></span></div>`}
-    html+='</div><div class="mg-base"></div>'+(nightMode?`<div class="mg-night">🕎 הלילה ${NIGHT_WORDS[N]} של חנוכה</div>`:'');area.innerHTML=html;
+    const cup=(c,extra)=>`<div class="mg-candle${extra||''}" data-c="${c}"><span class="fl"></span><span class="wax"><i class="oilv"></i></span>${c==='s'?'<span class="stem"></span>':''}<span class="num"></span></div>`;
+    for(let i=0;i<8;i++){if(i===4)html+=cup('s',' shamash');html+=cup(i)}
+    html+='</div><div class="mg-base"></div>'+(nightMode?`<div class="mg-night">${real?`🕎 הלילה ${NIGHT_WORDS[N]} של חנוכה`:`🕎 איך מדליקים בלילה ${NIGHT_WORDS[N]} של חנוכה?`}</div>`:'');
+    area.innerHTML=html;
     mgEl('mgFoot').textContent=nightMode
-        ?G2(`הדלק את הלילה ${NIGHT_WORDS[N]} — הבזיכים הנכונים, בסדר הנכון. בזך לא נכון יאדים`,`הדליקי את הלילה ${NIGHT_WORDS[N]} — הבזיכים הנכונים, בסדר הנכון. בזך לא נכון יאדים`)
+        ?G2(`הדלק את הבזיכים הנכונים בסדר הנכון — מהר, לפני שהשמן נגמר! בזך שכבה — הדלק שוב`,`הדליקי את הבזיכים הנכונים בסדר הנכון — מהר, לפני שהשמן נגמר! בזך שכבה — הדליקי שוב`)
         :G2('הדלק את הנרות משמאל לימין, ואת השמש (הנר הגבוה) בסוף — הנר הבא מהבהב','הדליקי את הנרות משמאל לימין, ואת השמש (הנר הגבוה) בסוף — הנר הבא מהבהב');
+    const nightBox=document.getElementById('nightBox');if(nightMode&&nightBox){nightBox.classList.add('mg-hide');MG.onClose=()=>nightBox.classList.remove('mg-hide')}
     const showNext=!nightMode;
     const mark=(force)=>{area.querySelectorAll('.mg-candle').forEach(c=>{c.classList.remove('next');if(!c.classList.contains('lit'))c.querySelector('.num').textContent=''});
         if(!showNext&&!force)return;
         const nx=area.querySelector(`.mg-candle[data-c="${ORDER[k]}"]`);if(nx){nx.classList.add('next');nx.querySelector('.num').textContent=ORDER[k]==='s'?'שמש':(k+1)}};
     mark();
+    // 🫒 oil: every lit cup burns down; an empty cup goes out and must be lit again (the shamash only when all of them are burning)
+    const BURN=(3.2+N*.85)*1000,oil={};
+    const burnLoop=()=>{
+        if(MG.done)return;const now=performance.now();
+        for(const c in oil){const el=area.querySelector(`.mg-candle[data-c="${c}"]`);if(!el||oil[c].out)continue;
+            const left=Math.max(0,1-(now-oil[c].at)/BURN);el.style.setProperty('--oil',left.toFixed(3));
+            if(left<=0){oil[c].out=true;outs++;el.classList.remove('lit');el.classList.add('out');playSfx(pick(SFX.click),{vol:.25,rate:.5});
+                const sm=document.createElement('span');sm.className='smoke';el.appendChild(sm);setTimeout(()=>sm.remove(),1200)}}
+        MG.raf2=requestAnimationFrame(burnLoop)};
+    const light=el=>{const c=el.dataset.c;el.classList.remove('wrong','out');el.classList.add('lit');if(nightMode&&c!=='s'){oil[c]={at:performance.now(),out:false};el.style.setProperty('--oil',1)}};
     const finishPartial=()=>{const lit=k;mgFinish(Math.max(.15,lit/ORDER.length*.5),lit?`🕯️ ${lit} מתוך ${ORDER.length} דלקו`:(nightMode?'🕎 החנוכייה לא דלקה הפעם':'🕯️ הנרות לא דלקו הפעם'))};
+    const bad=c=>{c.classList.remove('wrong');void c.offsetWidth;c.classList.add('wrong');wrong++;clearTimeout(c._w);c._w=setTimeout(()=>c.classList.remove('wrong'),1100);
+        playSfx(pick(SFX.click),{vol:.4,rate:.6});if(nightMode&&wrong>=3)mark(true)};
     const down=e=>{
         const c=e.target.closest('.mg-candle');if(!c||MG.done)return;e.preventDefault();
-        if(!t0){t0=performance.now();mgTimed(LIMIT,null,finishPartial)}
-        if(c.dataset.c!==String(ORDER[k])){
-            if(c.classList.contains('lit'))return;
-            c.classList.remove('wrong');void c.offsetWidth;c.classList.add('wrong');wrong++;clearTimeout(c._w);c._w=setTimeout(()=>c.classList.remove('wrong'),1100);
-            playSfx(pick(SFX.click),{vol:.4,rate:.6});
-            if(nightMode&&wrong>=3)mark(true);                       // after 3 mistakes — a hint: the right candle flashes
-            return}
-        c.classList.remove('wrong');c.classList.add('lit');playSfx(pick(SFX.tick),{vol:.4,rate:1+k*.06});k++;
+        if(!t0){t0=performance.now();mgTimed(LIMIT,null,finishPartial);if(nightMode)burnLoop()}
+        // a cup that went out → light it again (any time)
+        if(c.classList.contains('out')){light(c);playSfx(pick(SFX.tick),{vol:.4,rate:1.2});return}
+        if(c.dataset.c!==String(ORDER[k])){if(!c.classList.contains('lit'))bad(c);return}
+        if(c.dataset.c==='s'&&area.querySelector('.mg-candle.out')){              // the shamash last — only when all are burning
+            bad(c);area.querySelectorAll('.mg-candle.out').forEach(o=>{o.classList.remove('flash');void o.offsetWidth;o.classList.add('flash')});return}
+        light(c);playSfx(pick(SFX.tick),{vol:.4,rate:1+k*.06});k++;
         mgEl('mgScore').textContent=nightMode?'🔥 '+k:'🕯️ '+k+'/'+ORDER.length;   // (the riddle does not tell how many)
         if(k>=ORDER.length){
             const sec=(performance.now()-t0)/1000;
-            const p=nightMode?1.25-sec/(5+N*.9)*.45-wrong*.08:1.25-sec/10;
-            mgFinish(Math.max(.3,Math.min(1,p)),nightMode?(wrong?`🕎 הלילה ${NIGHT_WORDS[N]} — דלק! (${sec.toFixed(1)} שניות, ${wrong} טעויות)`:`🕎 הלילה ${NIGHT_WORDS[N]} — בלי אף טעות! (${sec.toFixed(1)} שניות)`)
+            const p=nightMode?1.25-sec/(5+N*.9)*.45-wrong*.08-outs*.06:1.25-sec/10;
+            const extra=[wrong?`${wrong} טעויות`:'',outs?`${outs} כבו`:''].filter(Boolean).join(', ');
+            mgFinish(Math.max(.3,Math.min(1,p)),nightMode?(wrong||outs?`🕎 הלילה ${NIGHT_WORDS[N]} — דלק! (${sec.toFixed(1)} שניות, ${extra})`:`🕎 הלילה ${NIGHT_WORDS[N]} — בלי אף טעות! (${sec.toFixed(1)} שניות)`)
                 :`🕎 כל הנרות דולקים! (${sec.toFixed(1)} שניות)`);return}
         mark();
     };
-    area.addEventListener('pointerdown',down);MG.off=()=>area.removeEventListener('pointerdown',down);
+    area.addEventListener('pointerdown',down);MG.off=()=>{area.removeEventListener('pointerdown',down);cancelAnimationFrame(MG.raf2)};
 }
 
 // ── ✍️ draw the letter: a big dotted letter — go over it with the mouse held down. Accurate and complete = strong spin ──
