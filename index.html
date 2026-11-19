@@ -849,7 +849,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v85';
+const APP_VERSION='v86';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1551,13 +1551,15 @@ function syncFaceColor(){paintFaces();saveSettings()}
 // θ turns the whole body; the result face ends on the right at 45°, like the original picture.
 const D3={theta:0,tilt:0,psi:0,drift:0,omega:0,fallen:false,els:null};
 const D3_FRONT=45;   // the result face on the right at 45° — symmetric, the handle stands exactly over the front corner
-function d3Rest(letter){return 90*Math.max(0,FACE_ORDER.indexOf(letter))+D3_FRONT-45}   // θ that shows this letter in front
+// the letters go round like on a real dreidel (נ, and to its left ג, then ה, then פ), and it turns clockwise:
+// face j sits at yaw 45-90j and the spin is applied as −θ, so at θ=d3Rest(l) the face of l is at −45° (the left of the front corner)
+function d3Rest(letter){return 90-90*Math.max(0,FACE_ORDER.indexOf(letter))}   // θ that shows this letter in front
 function d3Els(){
     if(D3.els)return D3.els;
     const spin=document.getElementById('d3Spin');if(!spin)return null;
     const faces=[...spin.querySelectorAll('.d3-face')],tips=[...spin.querySelectorAll('.d3-tip')];
-    faces.forEach((f,j)=>f.style.transform=`rotateY(${90*j-45}deg) translateZ(162px)`);   // mirrored → turns clockwise
-    tips.forEach((t,j)=>t.style.transform=`rotateY(${90*j-45}deg) translateZ(162px) rotateX(-38.2deg)`);
+    faces.forEach((f,j)=>f.style.transform=`rotateY(${45-90*j}deg) translateZ(162px)`);
+    tips.forEach((t,j)=>t.style.transform=`rotateY(${45-90*j}deg) translateZ(162px) rotateX(-38.2deg)`);
     return D3.els={spin,tilt:document.getElementById('d3Tilt'),faces,tips,
         fShade:faces.map(f=>f.querySelector('.d3-shade')),fGloss:faces.map(f=>f.querySelector('.d3-gloss')),
         letters:faces.map(f=>f.querySelector('.face-letter')),tints:faces.map(f=>f.querySelector('.face-tint')),
@@ -1576,7 +1578,7 @@ function d3Render(){
     const blurLetters=Math.max(.3,Math.min(1,1.3-Math.abs(D3.omega)/1000));    // letters smear when it is fast
     const TIPN=[0,Math.sin(38.2*Math.PI/180),Math.cos(38.2*Math.PI/180)];     // a tip face looks down-and-out
     for(let j=0;j<4;j++){
-        const yaw=(90*j-45-D3.theta)*Math.PI/180;
+        const yaw=(45-90*j-D3.theta)*Math.PI/180;
         const nf=_lean(_rotY([0,0,1],yaw)),nt=_lean(_rotY(TIPN,yaw));
         const lit=Math.max(0,_dot(nf,LIGHT)),litT=Math.max(0,_dot(nt,LIGHT));
         e.fShade[j].style.opacity=(0.6*(1-lit)).toFixed(3);
@@ -1672,7 +1674,7 @@ function setFace(letter, dim, turn){
     art.classList.toggle('dimmed',!!dim);
 }
 // the letter that faces us at angle θ
-function d3FrontLetter(theta){const j=((Math.round((theta-(D3_FRONT-45))/90))%4+4)%4;return FACE_ORDER[j]}
+function d3FrontLetter(theta){const j=((Math.round((90-theta)/90))%4+4)%4;return FACE_ORDER[j]}
 
 // ── 3-click power mechanic ──
 let spinClicks=0, spinClickTimes=[], spinPower=0.5, spinClickTimer=null;
