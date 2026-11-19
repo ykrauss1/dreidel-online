@@ -849,7 +849,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v84';
+const APP_VERSION='v85';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1832,6 +1832,7 @@ document.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){if(pressA
 //   taps   — 3 quick taps on "סובב" (or space)
 //   hold   — hold "סובב" (or space), a meter swings, release at the top
 //   shake  — shake the phone
+var IS_TOUCH=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches);
 const SPIN_MODES=['circle','wheel','flick','taps','hold','clap','sing','shake','letter','drum','race','coins','candles','nights'];
 function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH||m==='wheel'&&IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
 const PROMPTS={
@@ -2148,7 +2149,7 @@ function applyModeVisibility(){
     }
     box.querySelectorAll('input[data-mm]').forEach(i=>i.checked=!off.includes(i.dataset.mm));
 }
-applyModeVisibility();
+setTimeout(applyModeVisibility,0);
 
 // ── "נו, משה! תורך!": if the player whose turn it is takes too long, a friendly nudge with their name ──
 const NUDGE={key:'',since:0,count:0,FIRST:15000,EVERY:20000,MAX:3,SHOW:5000};
@@ -2720,7 +2721,7 @@ function showReaction(emo,from){
 }
 
 // ── Shake the phone (touch devices) ──
-const IS_TOUCH=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches);
+
 (function wireShake(){
     if(!IS_TOUCH||!window.DeviceMotionEvent)return;
     let last=0,peak=0,win=null;
