@@ -932,7 +932,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v95';
+const APP_VERSION='v96';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1076,7 +1076,7 @@ async function famSave(){
     if(!players.length){uiAlert('הוסיפו לפחות שחקן אחד.');return}
     const btn=document.getElementById('famSaveBtn');btn.disabled=true;btn.textContent='שומר…';
     try{
-        const k=await sbRpc('dreidel_save_family',{p_key:f.key||null,p_name:f.name,p_players:players.map(p=>({name:p.name,avatar:p.avatar||null,level:p.level||2,photo:p.photo||''}))});
+        const k=await sbRpc('dreidel_save_family',{p_key:f.key||null,p_name:f.name,p_players:players.map(p=>({id:p.id||null,name:p.name,avatar:p.avatar||null,level:p.level||2,photo:p.photo||''}))});
         famRemember(k);lsSet('dreidel_my_fam',k);famBtnsUI();
         const fresh=await famFetch(k,true);FAM_EDIT=clone(fresh||{...f,key:k,players});famDirty=false;famRender();
         floatText(document.getElementById('famSaveBtn')||document.body,'נשמר ✓','plus');
