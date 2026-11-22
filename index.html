@@ -462,7 +462,7 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
 .dreidel-controls[data-mode="sing"].can-spin .sing-btn,.dreidel-controls[data-mode="sing"].sing-live .sing-btn{display:inline-flex}
 .sing-btn.armed{background:linear-gradient(180deg,#ff8a8a,#d94848)!important;color:#fff!important;animation:singPulse 1s infinite}
 @keyframes singPulse{50%{box-shadow:0 0 0 10px rgba(255,100,100,.15)}}
-.dreidel-controls[data-mode="circle"] .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="wheel"] .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn,.dreidel-controls[data-mode="clap"] .spin-btn,.dreidel-controls[data-mode="sing"] .spin-btn:not(.sing-btn){display:none}
+.dreidel-controls[data-mode="circle"].armed .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="wheel"] .spin-btn:not(.sing-btn),.dreidel-controls[data-mode="flick"] .spin-btn,.dreidel-controls[data-mode="shake"] .spin-btn,.dreidel-controls[data-mode="clap"] .spin-btn,.dreidel-controls[data-mode="sing"] .spin-btn:not(.sing-btn){display:none}
 .spin-prompt.mic-off{cursor:pointer;text-decoration:underline dotted}
 @media(min-width:1000px){.spin-modes button{font-size:.95rem;padding:7px 16px}.spin-prompt{font-size:1.35rem}}
 @media(hover:none) and (pointer:coarse){.spin-modes .desk-only{display:none}}
@@ -536,6 +536,8 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
 #mgCv{position:absolute;inset:0;cursor:crosshair}
 .mg-done{position:absolute;bottom:10px;left:10px;z-index:3;padding:8px 18px}
 .dreidel-art.grabbing{cursor:grabbing}
+.grabbing #dreidelSvg,.dreidel-scale.grabbing #dreidelSvg{filter:drop-shadow(0 0 10px rgba(255,220,110,.95)) drop-shadow(0 0 28px rgba(255,180,40,.7))!important}
+body.circle-armed{touch-action:none}
 .dreidel-art.charging{animation:chargeWiggle .12s infinite alternate}
 @keyframes chargeWiggle{from{transform:rotate(calc(var(--cv,0)*-4deg))}to{transform:rotate(calc(var(--cv,0)*4deg))}}
 .power-fill.hot{background:linear-gradient(90deg,var(--green),var(--gold),var(--red))}
@@ -682,6 +684,7 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
         <div class="game-btns">
         <button class="btn btn-outline new-game-btn" onclick="confirmNewGame()">משחק חדש</button>
         <button class="btn btn-outline finish-btn" id="finishBtn" onclick="confirmFinishNow()" title="לסיים עכשיו ולראות מי ניצח">🏁 סיים כעת</button>
+        <button class="btn btn-outline hidden" id="undoBtn" onclick="undoSpin()" title="מנהל: לבטל את הסיבוב האחרון ולתת לאותו שחקן לסובב שוב">↩️ בטל סיבוב</button>
         <button class="btn btn-outline fs-btn" id="fsBtn" onclick="toggleFullscreen()" title="מסך מלא">⛶ מסך מלא</button>
         </div>
         <div class="game-main">
@@ -851,7 +854,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v87';
+const APP_VERSION='v88';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1776,6 +1779,7 @@ let pressAt=0,holdTimer=null,charging=false,chargeT0=0,chargeVal=0,chargeRAF=0;
 function pressStart(){
     if(!canSpinNow()||pressAt)return;
     if(MG_MODES.includes(spinMode())){playClickSound();mgStart(spinMode());return}
+    if(spinMode()==='circle'){playClickSound();if(window._armCircle)window._armCircle();return}
     pressAt=performance.now();clearTimeout(holdTimer);
     holdTimer=setTimeout(startCharge,HOLD_MS);
 }
@@ -1840,8 +1844,9 @@ var IS_TOUCH=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)
 const SPIN_MODES=['circle','wheel','flick','taps','hold','clap','sing','shake','letter','drum','race','coins','candles','nights'];
 function spinMode(){let m=lsGet('dreidel_spinmode')||'circle';if(m==='shake'&&!IS_TOUCH||m==='wheel'&&IS_TOUCH)m='circle';return SPIN_MODES.includes(m)?m:'circle'}
 const PROMPTS={
-    circle:()=>IS_TOUCH?G2('🌀 שים אצבע על הסביבון וסובב במעגלים... ועזוב!','🌀 שימי אצבע על הסביבון וסובבי במעגלים... ועזבי!')
-                       :G2('🌀 סובב את העכבר במעגלים... ועצור!','🌀 סובבי את העכבר במעגלים... ועצרי!'),
+    circle:()=>CIRCLE.armed?(IS_TOUCH?G2('🌀 עכשיו סובב את האצבע במעגלים, בכל מקום על המסך... ועזוב!','🌀 עכשיו סובבי את האצבע במעגלים, בכל מקום על המסך... ועזבי!')
+                           :G2('🌀 עכשיו סובב את העכבר במעגלים, בכל מקום על המסך... ועצור!','🌀 עכשיו סובבי את העכבר במעגלים, בכל מקום על המסך... ועצרי!'))
+                       :G2('🌀 לחץ "סובב!" — ואז סובב את העכבר במעגלים','🌀 לחצי "סובבי!" — ואז סובבי את העכבר במעגלים'),
     flick:()=>IS_TOUCH?G2('✊ החלק את הסביבון מהר הצידה','✊ החליקי את הסביבון מהר הצידה'):G2('✊ תפוס את הסביבון בעכבר ומשוך מהר הצידה','✊ תפסי את הסביבון בעכבר ומשכי מהר הצידה'),
     taps:()=>G2('👆 לחץ 3 פעמים מהר על "סובב!"','👆 לחצי 3 פעמים מהר על "סובב!"')+(IS_TOUCH?'':' (או רווח)'),
     hold:()=>G2('🎯 החזק את "סובב!" — ושחרר בשיא','🎯 החזיקי את "סובב!" — ושחררי בשיא'),
@@ -1859,7 +1864,7 @@ const PROMPTS={
         :SING.armed?G2('🎶 שיר בקול: "סביבון סוב סוב סוב"! (רק שירה נחשבת, לא דיבור)','🎶 שירי בקול: "סביבון סוב סוב סוב"! (רק שירה נחשבת, לא דיבור)')
         :G2('🎤 לחץ "התחל לשיר!" ושיר','🎤 לחצי "התחילי לשיר!" ושירי')
 };
-const CIRCLE={engaged:false,grabbing:false,justLaunched:false,singing:false};
+const CIRCLE={engaged:false,grabbing:false,justLaunched:false,singing:false,armed:false};
 // refresh the chooser / prompt / idle turning — call whenever the turn or state changes
 function refreshSpinUI(){
     const c=document.querySelector('.dreidel-controls');if(!c)return;
@@ -1869,7 +1874,7 @@ function refreshSpinUI(){
     const pr=document.getElementById('spinPrompt');pr.textContent=PROMPTS[m]();
     pr.classList.toggle('mic-off',(m==='clap'||m==='sing')&&!MIC.on);
     if(can)maybeAskTrivia();
-    const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick'||m==='circle'&&IS_TOUCH);
+    const sc=document.getElementById('dreidelSvg').parentElement;sc.classList.toggle('m-flick',m==='flick');
     if(can&&D3.fallen&&!D3.standing&&performance.now()-(D3.fallenAt||0)>1800)d3StandUp();   // ready for the next player
     if(window._idleTurn)window._idleTurn(can&&(m==='circle'||m==='wheel'));
     if(MG_MODES.includes(m)&&!charging&&!spinClicks)document.getElementById('spinBtn').textContent=G2('🎮 התחל!','🎮 התחילי!');
@@ -2255,7 +2260,7 @@ setInterval(nudgeTick,1000);
         refreshSpinUI();
         cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);
     }
-    function disengage(){cancelAnimationFrame(raf);chargeTone(false);CIRCLE.engaged=false;document.getElementById('powerFill').classList.remove('hot');ring.classList.remove('show','wound')}
+    function disengage(){cancelAnimationFrame(raf);chargeTone(false);CIRCLE.engaged=false;CIRCLE.armed=false;clearTimeout(armT);document.body.classList.remove('circle-armed');document.querySelector('.dreidel-controls')?.classList.remove('armed');document.getElementById('powerFill').classList.remove('hot');ring.classList.remove('show','wound')}
     function launch(w){
         disengage();CIRCLE.justLaunched=true;setTimeout(()=>CIRCLE.justLaunched=false,400);
         art.style.transform='';
@@ -2291,28 +2296,41 @@ setInterval(nudgeTick,1000);
         const now=performance.now();acc+=d;samples.push([now,d]);while(samples.length&&now-samples[0][0]>500)samples.shift();lastMove=now;
     },{passive:false});
 
-    // ── mouse (no click): in circle mode, circling anywhere turns it ──
+    // ── circle mode: press "סובב!", then circle the mouse (or a finger, or the touchpad) ANYWHERE on the screen ──
+    // (before the button nothing happens, so moving the mouse around the screen never spins it by accident)
+    let armT=0;
+    function disarm(){CIRCLE.armed=false;clearTimeout(armT);document.body.classList.remove('circle-armed');
+        document.querySelector('.dreidel-controls')?.classList.remove('armed');if(!CIRCLE.engaged){clear()}refreshSpinUI()}
+    window._armCircle=()=>{
+        if(!canSpinNow())return;
+        CIRCLE.armed=true;clear();lastMove=performance.now();document.body.classList.add('circle-armed');
+        document.querySelector('.dreidel-controls')?.classList.add('armed');
+        clearTimeout(armT);armT=setTimeout(()=>{if(CIRCLE.armed&&!CIRCLE.engaged)disarm()},20000);   // nobody circled → back to the button
+        refreshSpinUI();
+    };
+    document.addEventListener('pointerdown',e=>{if(CIRCLE.armed&&!CIRCLE.engaged){lastPt=null;lastHead=null}},{passive:true});   // a new finger: start from here
     document.addEventListener('pointermove',e=>{
-        if(e.pointerType==='touch'||CIRCLE.grabbing)return;
-        if(spinMode()!=='circle')return;
-        if(!canSpinNow()||charging){if(CIRCLE.engaged)letGo();return}
-        if(e.target&&e.target.closest&&e.target.closest('.settings-panel,.spin-modes,.modal-bg'))return;  // not while using menus
-        if(!CIRCLE.engaged&&lastMove&&performance.now()-lastMove>350){clear();lastMove=performance.now()}   // a pause: start counting again (once)
+        if(!CIRCLE.armed||CIRCLE.grabbing)return;
+        if(spinMode()!=='circle'||!canSpinNow()||charging){if(CIRCLE.engaged)letGo();disarm();return}
+        if(e.pointerType==='touch'&&!e.pressure&&e.buttons===0)return;
+        if(!CIRCLE.engaged&&lastMove&&performance.now()-lastMove>500){clear();lastMove=performance.now()}   // a pause: start counting again
         track(e.clientX,e.clientY);
-        // a whole circle in one direction, and a real one (not a small twitch of the mouse)
-        if(!CIRCLE.engaged&&Math.abs(acc)>=TURN*.85&&pathSize()>=MIN_CIRCLE_PX)engage();
+        if(!CIRCLE.engaged&&Math.abs(acc)>=TURN*.6&&pathSize()>=20)engage();          // most of a circle, of any size → it turns
+    },{passive:true});
+    document.addEventListener('pointerup',e=>{                                          // a finger lifted while turning → let it fly
+        if(e.pointerType!=='touch'||!CIRCLE.armed||!CIRCLE.engaged||CIRCLE.grabbing)return;
+        const w=Math.max(Math.abs(omega(160)),performance.now()-lastMove<120?recent:0);if(w>MIN_W)launch(w);else letGo();
     },{passive:true});
 
     // ── press on the dreidel: finger-circling (touch, circle mode) or a flick ──
     box.addEventListener('pointerdown',e=>{
         if(e.button>0||!canSpinNow()||charging)return;
         const m=spinMode();
-        const fingerCircle=m==='circle'&&e.pointerType!=='mouse';
-        if(m!=='flick'&&!fingerCircle)return;
+        if(m!=='flick')return;
         e.preventDefault();try{box.setPointerCapture(e.pointerId)}catch(_){}
         clear();CIRCLE.grabbing=true;window._idleTurn(false);
         x0=e.clientX;y0=e.clientY;flickPts=[[e.clientX,performance.now()]];
-        box.classList.add('grabbing');art.style.transition='none';
+        box.classList.add('grabbing');art.style.transition='none';playSfx(pick(SFX.tick),{vol:.25,rate:1.4});
         track(e.clientX,e.clientY);
     });
     box.addEventListener('pointermove',e=>{
@@ -2335,6 +2353,7 @@ setInterval(nudgeTick,1000);
             return;
         }
         const power=Math.max(.1,Math.min(1,(speed-0.2)/1.5));
+        playSfx(pick(SFX.click),{vol:.25+power*.75,rate:1.15-power*.35});            // the knock: harder throw → louder, deeper
         playWhoosh(power);spinFromInput(power,'flick');
     };
     box.addEventListener('pointerup',release);box.addEventListener('pointercancel',release);
@@ -2774,6 +2793,7 @@ function doSpin(){
     spinning=true;
     document.getElementById('spinBtn').disabled=true;
     G.players.forEach(p=>p.change='');
+    UNDO=clone(G);                                               // ↩️ the manager can take this spin back
     const ex=NEXT_EXTRA||{power:spinPower};NEXT_EXTRA=null;
     ex.golden=Math.random()<GOLDEN_CHANCE;                       // ✨ "נס גדול" — rare golden spin, pays double
     const opts={power:spinPower,dur:getSpinDur(spinPower),dir:Math.random()>.5?'fall-right':'fall-left',who:G.players[G.currentTurn]?.name||'',golden:ex.golden,rot:ex.rot===-1?-1:1};
@@ -2805,6 +2825,7 @@ function playNextRemoteSpin(){
         renderGame();updateOnlineUI();playNextRemoteSpin();return;
     }
     spinning=true;if(window._idleTurn)window._idleTurn(false);resetDreidel();
+    UNDO=clone(G);
     showSpinAnimation(p.letter,p.opts||{power:.5},()=>{
         G=p.state;
         (p.logs||[]).forEach(addLogLocal);
@@ -4129,6 +4150,25 @@ function finishVisible(){const b=document.getElementById('finishBtn');if(!b)retu
 // there is something to sum up only after at least two spins (otherwise everybody is still level and "everybody wins")
 function canFinish(){return (G.spinsDone||0)>=2}
 setInterval(finishVisible,700);
+// ↩️ "the spin didn't come out right" — the manager takes the last spin back and the same player spins again
+let UNDO=null;
+function undoVisible(){const b=document.getElementById('undoBtn');if(!b)return;
+    b.classList.toggle('hidden',!UNDO||spinning||(MODE==='online'&&!IS_HOST)||MG.open||CIRCLE.engaged)}
+setInterval(undoVisible,600);
+async function undoSpin(){
+    if(!UNDO||spinning)return;
+    const who=UNDO.players[UNDO.currentTurn]?.name||'';
+    let ok;
+    if(adminOpen()||!(adminCode()||lsGet(ADMIN_KEY)))ok=await uiConfirm(`לבטל את הסיבוב האחרון? ${who} ${G2('יסובב','תסובב',UNDO.players[UNDO.currentTurn])} שוב.`,'↩️ כן, לבטל');
+    else{const v=await uiPrompt('↩️ ביטול סיבוב — קוד מנהל:','');ok=v!=null&&await adminCheck(String(v).replace(/\D/g,''));
+        if(v!=null&&!ok)uiAlert('קוד לא נכון.');if(ok)ssSet(ADMIN_KEY+'_ok','1')}
+    if(!ok||!UNDO||spinning)return;
+    G=UNDO;UNDO=null;
+    document.getElementById('winModal').classList.remove('show');
+    addLog(`↩️ הסיבוב בוטל — ${who} ${G2('מסובב','מסובבת',G.players[G.currentTurn])} שוב`);
+    if(MODE==='online'&&channel){LAST_STATE=clone(G);try{channel.send({type:'broadcast',event:'state_update',payload:{from:MY_ID,state:G}})}catch(e){}saveSession&&saveSession()}
+    resetDreidel();resetSpinUI();renderGame();if(MODE==='online')updateOnlineUI();refreshSpinUI();undoVisible();finishVisible();
+}
 function confirmFinishNow(){
     if(G.over||spinning)return;
     if(!canFinish()){uiAlert('אפשר לסיים אחרי ששני שחקנים לפחות סובבו.');return}
