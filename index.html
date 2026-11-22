@@ -140,6 +140,7 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .p-card .p-name .p-photo{width:40px;height:40px}
 .players-grid.many .p-photo{width:22px;height:22px}
 .row-photo{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;border:2px solid rgba(245,200,66,.7)}
+.invite-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 10px}
 .fam-home{width:100%;text-align:center;margin-top:12px}
 .fam-box{max-width:520px;width:94vw;max-height:88vh;overflow:auto;position:relative;text-align:right}
 .fam-box h2{text-align:center;margin:0 0 10px;color:var(--gold)}
@@ -698,6 +699,7 @@ body.circle-armed{touch-action:none}
         <h2 class="section-title" id="waitingTitle">ממתינים לשחקנים...</h2>
         <div class="room-code-display" id="roomCodeDisplay">----</div>
         <p style="text-align:center;color:var(--text-dim);font-size:.75rem;margin-bottom:8px">שתף את הקוד עם החברים</p>
+        <div class="invite-row"><button type="button" class="btn btn-gold btn-sm" onclick="inviteWhatsApp()">📲 הזמנה בוואטסאפ</button><button type="button" class="btn btn-outline btn-sm" id="copyInvite" onclick="copyInvite()">📋 העתק קישור</button></div>
         <div id="lobbyPlayers"></div>
         <button class="btn btn-gold hidden" style="width:100%;margin-top:10px" id="startOnlineBtn" onclick="startOnlineGame()">🎲 התחל!</button>
     </div>
@@ -887,7 +889,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v89';
+const APP_VERSION='v90';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1166,6 +1168,21 @@ function startLocalGame(){
 }
 
 // ═══════════ ONLINE LOBBY ═══════════
+// 📲 invite: a link that opens the game ready to join this room (code and kind of room already filled in)
+function inviteLink(){return location.origin+location.pathname+'?room='+encodeURIComponent(ROOM_CODE)+(ONLINE_TYPE==='family'?'&t=family':'')}
+function inviteText(){
+    const host=G.families?.[0]?.name||G.players?.[0]?.name||'';
+    return `🕎 בואו לשחק איתנו סביבון אונליין${host?` (${ONLINE_TYPE==='family'?'משפחת ':''}${host})`:''}!\nקוד החדר: ${ROOM_CODE}\nלחצו כאן כדי להצטרף:\n${inviteLink()}`}
+function inviteWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(inviteText()),'_blank')}
+async function copyInvite(){const b=document.getElementById('copyInvite');
+    try{await navigator.clipboard.writeText(inviteText());b.textContent='✓ הועתק'}catch(e){b.textContent=inviteLink()}setTimeout(()=>b.textContent='📋 העתק קישור',2500)}
+// arriving from an invitation link → straight to "join", with the code filled in
+(function joinFromLink(){const q=new URLSearchParams(location.search),r=(q.get('room')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(r.length<4)return;
+    setTimeout(()=>{try{selectMode('online');if(q.get('t')==='family')setOnlineType('family');showOnlineTab('join');
+        document.getElementById('joinCode').value=r;
+        const n=document.getElementById(q.get('t')==='family'?'joinFamilyName':'joinName');n&&n.focus();
+        floatText(n||document.body,'👋 הוזמנתם! כתבו שם ולחצו "הצטרף"','plus')}catch(e){}},400)})();
 function showOnlineTab(t){document.getElementById('tabCreate').classList.toggle('active',t==='create');document.getElementById('tabJoin').classList.toggle('active',t==='join');toggle('createPanel',t==='create');toggle('joinPanel',t==='join')}
 function genCode(){const c='ABCDEFGHJKLMNPRSTUVWXYZ23456789';let r='';for(let i=0;i<4;i++)r+=c[Math.floor(Math.random()*c.length)];return r}
 
