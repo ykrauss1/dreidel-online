@@ -151,6 +151,9 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .chip{background:rgba(255,255,255,.06);border:1px solid var(--border-l);color:var(--text);border-radius:14px;padding:4px 10px;cursor:pointer}
 .fam-list{display:flex;flex-direction:column;gap:8px}
 .fam-row{display:flex;align-items:center;gap:8px}
+#crashBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;max-width:94vw;background:#2a1630;border:2px solid #ff8a8a;color:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 8px 30px rgba(0,0,0,.6);font-size:1rem;direction:rtl}
+#crashBar button{border:0;border-radius:10px;padding:7px 14px;font:inherit;font-weight:700;cursor:pointer}
+#crashBar .cb-reload{background:#f5c842;color:#2a1a00}#crashBar .cb-close{background:rgba(255,255,255,.15);color:#fff}
 .fam-pic{width:52px;height:52px;border-radius:50%;flex:none;border:2px dashed var(--border-l);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;font-size:1.3rem;background:rgba(255,255,255,.04)}
 .fam-pic img{width:100%;height:100%;object-fit:cover}.fam-pic .fam-cam{position:absolute;bottom:-1px;left:-1px;font-style:normal;font-size:.75rem;background:var(--bg-card,#1a1f3d);border-radius:50%;padding:2px;line-height:1}.fam-pic{overflow:visible}.fam-pic img{border-radius:50%}.fam-pic:has(img){border-style:solid;border-color:var(--gold)}.fam-pic:has(img.silh){border-style:dashed;border-color:var(--border-l)}
 .fam-file{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -883,6 +886,42 @@ body.circle-armed{touch-action:none}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+// ═══════════ SAFETY NET ═══════════
+// Something broke → a short report to us, and a calm message with "reload" (the game comes back after reloading).
+(function(){
+    const sent={};let count=0,shownAt=0;
+    function report(kind,msg,src,stack){
+        try{
+            const key=kind+'|'+msg+'|'+src;if(sent[key]||count>=6)return;sent[key]=1;count++;
+            const ctx=[...document.querySelectorAll('#gameScreen,#modeScreen,#onlineSetup,#localSetup')].filter(e=>!e.classList.contains('hidden')).map(e=>e.id).join(',')+' '+(typeof MODE!=='undefined'?MODE:'')+' '+(localStorage.getItem('dreidel_spinmode')||'');
+            const ver=(()=>{try{return APP_VERSION}catch(e){return '?'}})();
+            fetch('https://vhcxfrrafpqhvmmunoxp.supabase.co/rest/v1/rpc/dreidel_log_error',{method:'POST',keepalive:true,
+                headers:{'apikey':SBK(),'Authorization':'Bearer '+SBK(),'Content-Type':'application/json'},
+                body:JSON.stringify({p_ver:ver,p_kind:kind,p_msg:String(msg||'').slice(0,500),p_src:String(src||'').slice(0,300),p_stack:String(stack||'').slice(0,2000),p_ua:navigator.userAgent.slice(0,300),p_ctx:ctx.slice(0,200)})}).catch(()=>{});
+        }catch(e){}
+    }
+    function SBK(){try{return SB_KEY}catch(e){return ''}}
+    function showBar(){
+        if(Date.now()-shownAt<30000)return;shownAt=Date.now();
+        let b=document.getElementById('crashBar');
+        if(!b){b=document.createElement('div');b.id='crashBar';b.setAttribute('role','alert');
+            b.innerHTML='<span>😕 משהו השתבש. טעינה מחדש תחזיר אתכם למשחק.</span><button type="button" class="cb-reload">🔄 טען מחדש</button><button type="button" class="cb-close" aria-label="המשך">המשך</button>';
+            b.querySelector('.cb-reload').onclick=()=>location.reload();b.querySelector('.cb-close').onclick=()=>b.remove();
+            (document.body||document.documentElement).appendChild(b)}
+    }
+    const ours=f=>!f||f.indexOf(location.origin)===0;
+    window.addEventListener('error',e=>{
+        if(!e||e.target&&e.target!==window)return;                                   // a picture/sound that didn't load — not a crash
+        const m=e.message||'';if(/ResizeObserver|^Script error\.?$/i.test(m)||!ours(e.filename))return;
+        report('error',m,(e.filename||'').replace(location.origin,'')+':'+e.lineno+':'+e.colno,e.error&&e.error.stack);showBar();
+    });
+    window.addEventListener('unhandledrejection',e=>{
+        const r=e&&e.reason,m=r&&(r.message||r.name)||String(r);
+        if(r&&/AbortError|NotAllowedError|NotSupportedError|NotFoundError/.test(r.name||''))return;   // sound/camera refusals — expected
+        report('promise',m,'',r&&r.stack);                                           // (reported, but no message: usually harmless)
+    });
+    window.__crashTest=()=>{setTimeout(()=>{throw new Error('crash test')},0)};
+})();
 // ═══════════ STATE ═══════════
 let MODE=null, sb=null, channel=null;
 let ONLINE_TYPE='individual'; // 'individual' | 'family'
@@ -893,7 +932,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v93';
+const APP_VERSION='v95';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1406,7 +1445,22 @@ function saveSession(){
     try{sessionStorage.setItem(SESSION_KEY,v)}catch(e){}
     lsSet(SESSION_KEY,v);
 }
-function clearSession(){try{sessionStorage.removeItem(SESSION_KEY)}catch(e){}try{localStorage.removeItem(SESSION_KEY)}catch(e){}}
+// a local game is kept on this device after every move — so a crash / refresh / closed browser can carry on
+const LOCAL_KEY='dreidel_local';
+function saveLocalGame(){
+    if(MODE!=='local')return;
+    if(G.over||!G.players.length||document.getElementById('gameScreen').classList.contains('hidden')){try{localStorage.removeItem(LOCAL_KEY)}catch(e){}return}
+    lsSet(LOCAL_KEY,JSON.stringify({G,t:Date.now()}));
+}
+function loadLocalGame(){try{const x=JSON.parse(lsGet(LOCAL_KEY)||'null');if(x&&x.G&&x.G.players&&x.G.players.length&&!x.G.over&&Date.now()-x.t<12*3600e3)return x}catch(e){}return null}
+function resumeLocalGame(){
+    const x=loadLocalGame();if(!x)return;hide('rejoinBanner');
+    MODE='local';G=x.G;
+    hide('modeScreen');hide('localSetup');show('gameScreen');document.getElementById('videoSection').classList.add('hidden');
+    document.getElementById('spinBtn').classList.remove('hidden');document.getElementById('waitingMsg').classList.add('hidden');
+    addLog('🔄 חזרנו למשחק מאיפה שעצרנו.');renderGame();
+}
+function clearSession(){try{localStorage.removeItem(LOCAL_KEY)}catch(e){}try{sessionStorage.removeItem(SESSION_KEY)}catch(e){}try{localStorage.removeItem(SESSION_KEY)}catch(e){}}
 function loadSession(){
     const parse=v=>{try{const x=JSON.parse(v||'null');if(x&&x.code&&x.id&&Date.now()-x.t<12*3600e3)return x}catch(e){}return null};
     let ss=null;try{ss=sessionStorage.getItem(SESSION_KEY)}catch(e){}
@@ -1422,7 +1476,7 @@ function enterOnlineGameScreen(){
 
 // Back into a game after refresh / closing the app
 function rejoinGame(){
-    const x=loadSession();if(!x)return;
+    const x=loadSession();if(!x){resumeLocalGame();return}
     hide('rejoinBanner');
     MODE='online';ROOM_CODE=x.code;MY_ID=x.id;MY_FAMILY=x.fam;IS_HOST=!!x.host;
     if(!sb){try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){uiAlert(e.message);return}}
@@ -1657,6 +1711,27 @@ async function loadHebcal(){
 }
 setTimeout(loadHebcal,1200);
 function setTestNight(v){ssSet('dreidel_testnight',v||'');showNight()}
+// Hebrew numerals: 25 → כ"ה, 15 → ט"ו, 787 → תשפ"ז, 1 → א'
+function gem(n){
+    n=Math.floor(n)%1000;let s='ת'.repeat(Math.floor(n/400))+['','ק','ר','ש'][Math.floor(n%400/100)];const r=n%100;
+    s+=r===15?'טו':r===16?'טז':['','י','כ','ל','מ','נ','ס','ע','פ','צ'][Math.floor(r/10)]+['','א','ב','ג','ד','ה','ו','ז','ח','ט'][r%10];
+    return s.length===1?s+"'":s.slice(0,-1)+'"'+s.slice(-1);
+}
+// the Hebrew date for the summary: "כ"ה כסלו תשפ"ז · א' דחנוכה". The day follows the night — after dusk it is already the next day.
+function hebDateLine(d){
+    d=d||new Date();const mins=d.getHours()*60+d.getMinutes();
+    if(mins>=16*60+30)d=new Date(d.getTime()+864e5);   // (winter dusk in Israel; the game is played after candle lighting)
+    try{
+        const f=new Intl.DateTimeFormat('he-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
+        const P=x=>{const o={};f.formatToParts(x).forEach(q=>o[q.type]=q.value);return o};
+        const t=P(d);let line=`${gem(+t.day)} ${t.month} ${gem(+t.year)}`;
+        const forced=+new URLSearchParams(location.search).get('night')||+(ssGet('dreidel_testnight')||0);
+        let hd=forced>=1&&forced<=8?forced:0;
+        if(!hd)for(let b=0;b<8;b++){const o=P(new Date(d.getTime()-b*864e5));if(o.month==='כסלו'&&+o.day===25){hd=b+1;break}}
+        if(hd)line+=` · ${gem(hd)} דחנוכה`;
+        return line;
+    }catch(e){return d.toLocaleDateString('he-IL')}
+}
 function hanukkahNight(d){
     const forced=+new URLSearchParams(location.search).get('night')||+(ssGet('dreidel_testnight')||0);if(forced>=1&&forced<=8)return forced;   // (a test night: from the settings, until the game is closed)
     d=d||new Date();
@@ -4033,6 +4108,7 @@ function viewSnapshot(){return{pot:G.pot,amt:Object.fromEntries(G.players.map(p=
 function renderGame(animate){
     const prev=PREV_VIEW;PREV_VIEW=viewSnapshot();
     renderGameNow();
+    saveLocalGame();
     if(animate&&prev)playMoneyFx(prev,PREV_VIEW);
 }
 function sizePile(pot){
@@ -4107,9 +4183,8 @@ async function summaryCanvas(){
     g.direction='rtl';g.textAlign='center';
     const F=(sz,w)=>`${w||700} ${sz}px 'Secular One','Rubik',Arial,sans-serif`;
     g.font=F(64);g.fillStyle='#f5c842';g.fillText('🕎 סביבון סוב סוב סוב',W/2,120);
-    const n=hanukkahNight();const d=new Date();
     g.font=F(34,400);g.fillStyle='#c9cbe6';
-    g.fillText((n?`נר ${['','ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני'][n]} של חנוכה · `:'')+d.toLocaleDateString('he-IL'),W/2,175);
+    g.fillText(hebDateLine(),W/2,175);
     g.font=F(58);g.fillStyle='#fff';g.fillText((SUMMARY?.winText||'').replace('🎉','🏆'),W/2,270);
     g.font=F(34,400);g.fillStyle='#c9cbe6';g.fillText(SUMMARY?.sub||'',W/2,320);
     // ranking
@@ -4403,6 +4478,7 @@ window.addEventListener('appinstalled',()=>{deferredPrompt=null;document.getElem
 window.addEventListener('load',()=>{
     const ses=loadSession();
     if(ses){document.getElementById('rejoinText').innerHTML='<b>יש לך משחק פתוח</b><br>בחדר <b dir="ltr">'+esc(ses.code)+'</b> — לחזור אליו?';document.getElementById('rejoinBanner').classList.add('show')}
+    else{const lg=loadLocalGame();if(lg){document.getElementById('rejoinText').innerHTML='<b>יש משחק שלא הסתיים</b><br>'+esc(lg.G.players.map(p=>p.name).slice(0,4).join(', '))+(lg.G.players.length>4?'…':'')+' — להמשיך?';document.getElementById('rejoinBanner').classList.add('show')}}
     if(isIOS())showInstallBanner();
     if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
