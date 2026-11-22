@@ -152,7 +152,7 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .fam-list{display:flex;flex-direction:column;gap:8px}
 .fam-row{display:flex;align-items:center;gap:8px}
 .fam-pic{width:52px;height:52px;border-radius:50%;flex:none;border:2px dashed var(--border-l);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;font-size:1.3rem;background:rgba(255,255,255,.04)}
-.fam-pic img{width:100%;height:100%;object-fit:cover}.fam-pic:has(img){border-style:solid;border-color:var(--gold)}
+.fam-pic img{width:100%;height:100%;object-fit:cover}.fam-pic .fam-cam{position:absolute;bottom:-1px;left:-1px;font-style:normal;font-size:.75rem;background:var(--bg-card,#1a1f3d);border-radius:50%;padding:2px;line-height:1}.fam-pic{overflow:visible}.fam-pic img{border-radius:50%}.fam-pic:has(img){border-style:solid;border-color:var(--gold)}.fam-pic:has(img.silh){border-style:dashed;border-color:var(--border-l)}
 .fam-file{position:absolute;inset:0;opacity:0;cursor:pointer}
 .fam-pname{flex:1}
 .fam-x{background:none;border:1px solid var(--border-l);border-radius:8px;color:var(--text-dim);cursor:pointer;padding:4px 7px;font-size:.85rem;flex:none}
@@ -893,7 +893,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v92';
+const APP_VERSION='v93';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -965,7 +965,10 @@ function photoOf(p){
 // a family we see for the first time (another home's players) → fetch once, then draw again
 function famNeed(k){if(FAM.cache[k]||FAM.loading[k]||FAM.miss?.[k])return;(FAM.miss=FAM.miss||{})[k]=1;famFetch(k).then(f=>{if(f){delete FAM.miss[k];try{renderGame();renderLobby&&renderLobby()}catch(e){}}})}
 // avatar for HTML: the player's picture when there is one, otherwise the animal
-function avH(p,cls){const ph=photoOf(p);return ph?`<img class="p-photo${cls?' '+cls:''}" src="${ph}" alt="">`:av(p)}
+// no picture yet → the usual head-and-shoulders figure (for family players; others keep their animal)
+const SILH='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#2b3566"/><circle cx="32" cy="25" r="11.5" fill="#aeb3d6"/><path d="M9 64c0-15 10-24 23-24s23 9 23 24z" fill="#aeb3d6"/></svg>');
+function photoOrSilh(p){return photoOf(p)||(p&&FK_RE.test(p.fk||'')?SILH:'')}
+function avH(p,cls){const ph=photoOrSilh(p);return ph?`<img class="p-photo${cls?' '+cls:''}" src="${ph}" alt="">`:av(p)}
 
 // a picture from the camera / the computer → a small square (centre cut), ~10 KB
 function famPhotoFromFile(file){
@@ -1008,7 +1011,7 @@ function famRender(){
     const f=FAM_EDIT,b=document.getElementById('famBody');
     b.innerHTML=`<div class="form-row"><label>שם המשפחה:</label><input class="input" id="famName" maxlength="40" placeholder="למשל: קראוס רמות" value="${esc(f.name||'')}"></div>
       <div class="fam-list">${f.players.map((p,i)=>`<div class="fam-row" data-i="${i}">
-          <label class="fam-pic" title="תמונה — לחיצה לצילום או בחירה">${p.photo?`<img src="${p.photo}" alt="">`:'<span>📷</span>'}<input type="file" accept="image/*" class="fam-file" data-i="${i}"></label>
+          <label class="fam-pic" title="תמונה — לחיצה לצילום או בחירה">${p.photo?`<img src="${p.photo}" alt="">`:`<img class="silh" src="${SILH}" alt=""><i class="fam-cam">📷</i>`}<input type="file" accept="image/*" class="fam-file" data-i="${i}"></label>
           <input class="input fam-pname" data-i="${i}" maxlength="20" placeholder="שם" value="${esc(p.name||'')}">
           ${p.photo?`<button type="button" class="fam-x" title="הסר תמונה" onclick="famSet(${i},'photo','')">🖼✕</button>`:''}
           <button type="button" class="fam-x" title="הסר שחקן" onclick="famDel(${i})">🗑</button></div>`).join('')}</div>
@@ -1063,7 +1066,7 @@ function famChooser(onPick,single){
     const m=document.getElementById('famPickModal'),b=document.getElementById('famPickBody');
     b.innerHTML=keys.map(k=>{const f=famLocal(k);if(!f)return '';
         return `<label class="fam-pick"><input type="${single?'radio':'checkbox'}" name="fpk" value="${k}" ${k===lsGet('dreidel_my_fam')?'checked':''}>
-          <b>${esc(f.name)}</b><span>${(f.players||[]).map(p=>p.photo?`<img src="${p.photo}" alt="">`:esc(p.name)).join(' ')}</span></label>`}).join('');
+          <b>${esc(f.name)}</b><span>${(f.players||[]).map(p=>p.photo?`<img src="${p.photo}" alt="">`:`<img src="${SILH}" alt="" title="${esc(p.name)}">`).join(' ')}</span></label>`}).join('');
     m.classList.add('show');
     document.getElementById('famPickOk').onclick=()=>{const ks=[...b.querySelectorAll('input:checked')].map(i=>i.value);m.classList.remove('show');if(ks.length)onPick(ks.map(famLocal).filter(Boolean))};
 }
@@ -1087,7 +1090,7 @@ function famUseOnline(nameId,listId){
         (f.players||[]).slice(0,10).forEach(p=>{addMemberInput(listId);const r=d.lastElementChild;r.querySelector('.member-name').value=p.name;r.dataset.fk=f.key;r.dataset.fpid=p.id;if(p.avatar||p.level)applyPersona(r,p);famRowPhoto(r)});
     },true);
 }
-function famRowPhoto(r){const ph=photoOf({fk:r.dataset.fk,fpid:r.dataset.fpid});let im=r.querySelector('.row-photo');
+function famRowPhoto(r){const ph=photoOrSilh({fk:r.dataset.fk,fpid:r.dataset.fpid});let im=r.querySelector('.row-photo');
     if(!ph){im&&im.remove();return}if(!im){im=document.createElement('img');im.className='row-photo';im.alt='';r.insertBefore(im,r.querySelector('input'))}im.src=ph}
 
 
@@ -4114,7 +4117,7 @@ async function summaryCanvas(){
     for(let i=0;i<rk.length;i++){const p=rk[i];
         g.fillStyle=i===0?'rgba(245,200,66,.18)':'rgba(255,255,255,.05)';g.beginPath();g.roundRect?g.roundRect(80,y-56,W-160,84,18):g.rect(80,y-56,W-160,84);g.fill();
         g.textAlign='right';g.font=F(42);g.fillStyle='#fff';g.fillText((['🥇','🥈','🥉'][i]||(i+1)+'.'),W-110,y);
-        const ph=await loadImg(photoOf(p));let nx=W-200;
+        const ph=await loadImg(photoOrSilh(p));let nx=W-200;
         if(ph){g.save();g.beginPath();g.arc(nx-34,y-14,34,0,Math.PI*2);g.clip();g.drawImage(ph,nx-68,y-48,68,68);g.restore();g.strokeStyle='#f5c842';g.lineWidth=3;g.beginPath();g.arc(nx-34,y-14,34,0,Math.PI*2);g.stroke();nx-=86}
         else{g.font=F(44,400);g.fillText(p.avatar||'',nx,y);nx-=70}
         g.font=F(44);g.fillStyle='#fff';g.fillText(p.name,nx,y);
