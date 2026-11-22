@@ -135,6 +135,33 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .pin-eye{background:none;border:1px solid var(--border-l);border-radius:8px;cursor:pointer;padding:3px 7px;font-size:1rem;color:var(--text)}
 .pin-forgot{font-size:.75rem;color:var(--text-dim);text-decoration:underline;cursor:pointer}
 .pin-note{font-size:.72rem;color:var(--text-dim);margin-top:4px}
+.p-photo{width:26px;height:26px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-inline-end:5px;border:2px solid rgba(245,200,66,.7);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.p-photo.big{width:38px;height:38px}
+.p-card .p-name .p-photo{width:40px;height:40px}
+.players-grid.many .p-photo{width:22px;height:22px}
+.row-photo{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;border:2px solid rgba(245,200,66,.7)}
+.fam-home{width:100%;text-align:center;margin-top:12px}
+.fam-box{max-width:520px;width:94vw;max-height:88vh;overflow:auto;position:relative;text-align:right}
+.fam-box h2{text-align:center;margin:0 0 10px;color:var(--gold)}
+.fam-close{position:absolute;top:10px;left:12px;background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer}
+.fam-hint{font-size:.82rem;color:var(--text-dim);margin:4px 0 10px;text-align:center}
+.fam-or{text-align:center;color:var(--text-dim);margin:6px 0 10px;font-size:.85rem}
+.fam-known{margin-top:12px;font-size:.85rem;color:var(--text-dim);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{background:rgba(255,255,255,.06);border:1px solid var(--border-l);color:var(--text);border-radius:14px;padding:4px 10px;cursor:pointer}
+.fam-list{display:flex;flex-direction:column;gap:8px}
+.fam-row{display:flex;align-items:center;gap:8px}
+.fam-pic{width:52px;height:52px;border-radius:50%;flex:none;border:2px dashed var(--border-l);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;font-size:1.3rem;background:rgba(255,255,255,.04)}
+.fam-pic img{width:100%;height:100%;object-fit:cover}.fam-pic:has(img){border-style:solid;border-color:var(--gold)}
+.fam-file{position:absolute;inset:0;opacity:0;cursor:pointer}
+.fam-pname{flex:1}
+.fam-x{background:none;border:1px solid var(--border-l);border-radius:8px;color:var(--text-dim);cursor:pointer;padding:4px 7px;font-size:.85rem;flex:none}
+.fam-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.fam-code{margin-top:14px;padding:10px;border:1px solid var(--gold);border-radius:12px;text-align:center;background:rgba(245,200,66,.07)}
+.fam-code b{font-size:1.4rem;letter-spacing:.15em;color:var(--gold)}
+.fam-code .btn{margin:4px}
+.fam-pick{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border-l);border-radius:10px;margin-bottom:8px;cursor:pointer;flex-wrap:wrap}
+.fam-pick span{display:flex;gap:4px;flex-wrap:wrap;font-size:.8rem;color:var(--text-dim);align-items:center}
+.fam-pick span img{width:26px;height:26px;border-radius:50%;object-fit:cover}
 .test-tag{font-size:.7rem;color:#9fd3ff;border:1px solid #4a7fb0;border-radius:6px;padding:0 5px;margin-inline-start:4px}
 .game-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
 .game-btns{position:fixed;top:12px;left:12px;z-index:100;display:flex;gap:8px;align-items:center}
@@ -570,6 +597,7 @@ body.circle-armed{touch-action:none}
         <div class="back-wrap"><button class="btn btn-outline" onclick="resetMode()">◂ חזרה</button></div>
         <div class="mode-card" data-mode="local" onclick="selectMode('local')"><div class="icon">🎮</div><div class="label">מקומי</div><div class="desc">כל השחקנים על אותו מכשיר</div></div>
         <div class="mode-card" data-mode="online" onclick="selectMode('online')"><div class="icon">🌐</div><div class="label">אונליין</div><div class="desc">שלח קוד חדר לחברים</div></div>
+        <div class="fam-home"><button type="button" class="btn btn-outline btn-sm" onclick="openFamily()">👨‍👩‍👧 המשפחה שלנו — שמות ותמונות</button></div>
     </div>
     <div class="install-banner" id="rejoinBanner" style="border-color:var(--blue)">
         <span style="font-size:1.4rem">🔄</span>
@@ -591,7 +619,7 @@ body.circle-armed{touch-action:none}
     <div class="form-row"><label>שחקנים:</label><select id="localNumPlayers" class="input" onchange="otherSelChange(this,PLAYERS_OTHER)||renderLocalNames()"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="other">יותר…</option></select></div>
     <div class="form-row"><label>סכום התחלתי:</label><input type="number" id="localStartAmt" class="input" value="100" min="10" step="10"></div>
     <div class="form-row"><label>זמן משחק:</label><select id="localTime" class="input" onchange="timeSelChange(this)"><option value="0">ללא הגבלה</option><option value="10">10 דקות</option><option value="20">20 דקות</option><option value="30" selected>30 דקות</option><option value="45">45 דקות</option><option value="60">שעה</option><option value="other">אחר…</option></select></div>
-    <hr class="divider"><button type="button" class="btn btn-outline last-players hidden" id="lastPlayersBtn" onclick="useLastPlayers()"></button><div id="localNames"></div>
+    <hr class="divider"><button type="button" class="btn btn-outline last-players fam-use hidden" onclick="famUseLocal()">👨‍👩‍👧 שחקנים מהמשפחה (עם תמונות)</button><button type="button" class="btn btn-outline last-players hidden" id="lastPlayersBtn" onclick="useLastPlayers()"></button><div id="localNames"></div>
     <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="startLocalGame()">🎲 התחל!</button>
 </div>
 
@@ -619,6 +647,7 @@ body.circle-armed{touch-action:none}
             </div>
             <!-- Family mode -->
             <div id="createFamily" class="hidden">
+                <button type="button" class="btn btn-outline btn-sm fam-use hidden" style="width:100%;margin-bottom:8px" onclick="famUseOnline('hostFamilyName','hostMembers')">👨‍👩‍👧 טען את המשפחה שלנו (עם תמונות)</button>
                 <div class="form-row"><label>שם משפחה:</label><input type="text" id="hostFamilyName" maxlength="20" class="input" placeholder="כהן, לוי..."></div>
                 <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:6px">בני משפחה:</div>
                 <div id="hostMembers"></div>
@@ -653,6 +682,7 @@ body.circle-armed{touch-action:none}
             </div>
             <!-- Family mode -->
             <div id="joinFamily" class="hidden">
+                <button type="button" class="btn btn-outline btn-sm fam-use hidden" style="width:100%;margin-bottom:8px" onclick="famUseOnline('joinFamilyName','joinMembers')">👨‍👩‍👧 טען את המשפחה שלנו (עם תמונות)</button>
                 <div class="form-row"><label>שם משפחה:</label><input type="text" id="joinFamilyName" maxlength="20" class="input" placeholder="כהן, לוי..."></div>
                 <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:6px">בני משפחה:</div>
                 <div id="joinMembers"></div>
@@ -760,6 +790,9 @@ body.circle-armed{touch-action:none}
     <div class="trivia-msg" id="triviaMsg"></div>
 </div></div>
 <div class="editor-wrap hidden" id="editorWrap" role="dialog" aria-modal="true" aria-label="עורך שאלות"><iframe id="editorFrame" title="עורך שאלות"></iframe></div>
+<div class="modal-bg" id="famModal" role="dialog" aria-modal="true"><div class="win-modal fam-box"><button type="button" class="fam-close" onclick="closeFamily()">✕</button><h2>👨‍👩‍👧 המשפחה שלנו</h2><div id="famBody"></div></div></div>
+<div class="modal-bg" id="famPickModal" role="dialog" aria-modal="true"><div class="win-modal fam-box"><h2>👨‍👩‍👧 מאיזו משפחה?</h2><div id="famPickBody"></div>
+  <div class="fam-actions"><button type="button" class="btn btn-gold" id="famPickOk">אישור</button><button type="button" class="btn btn-outline" onclick="document.getElementById('famPickModal').classList.remove('show');openFamily()">➕ משפחה / קוד</button><button type="button" class="btn btn-outline" onclick="document.getElementById('famPickModal').classList.remove('show')">ביטול</button></div></div></div>
 <div class="modal-bg" id="uiModal" role="dialog" aria-modal="true"><div class="win-modal ui-box"><div class="ui-msg" id="uiMsg"></div><div class="ui-btns"><button class="btn btn-gold" id="uiOk">אישור</button><button class="btn btn-outline" id="uiCancel">ביטול</button></div></div></div>
 <div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p><div class="win-titles" id="winTitles"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -854,7 +887,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v88';
+const APP_VERSION='v89';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -880,13 +913,177 @@ function initPersonas(root){
         sp.querySelector('.lvl-sel').onchange=()=>saveSettings();
     });
 }
-function applyPersona(row,pr){const b=row.querySelector('.av-btn'),s=row.querySelector('.lvl-sel');if(b&&pr.avatar)b.textContent=safeAvatar(pr.avatar);if(s&&pr.level)s.value=safeLevel(pr.level)}
+function applyPersona(row,pr){const b=row.querySelector('.av-btn'),s=row.querySelector('.lvl-sel');if(b&&pr.avatar)b.textContent=safeAvatar(pr.avatar);if(s&&pr.level)s.value=safeLevel(pr.level);
+    if(pr.fk&&FK_RE.test(pr.fk)){row.dataset.fk=pr.fk;row.dataset.fpid=pr.fpid||'';setTimeout(()=>famRowPhoto(row),0)}}
 function readPersona(row){
     const b=row&&row.querySelector('.av-btn'),s=row&&row.querySelector('.lvl-sel');
-    return{avatar:b?safeAvatar(b.textContent):safeAvatar(),level:s?safeLevel(s.value):2};
+    const fk=row&&row.dataset&&FK_RE.test(row.dataset.fk||'')?row.dataset.fk:'',fpid=fk&&FPID_RE.test(row.dataset.fpid||'')?row.dataset.fpid:'';
+    return{avatar:b?safeAvatar(b.textContent):safeAvatar(),level:s?safeLevel(s.value):2,...(fk?{fk,fpid}:{})};
 }
 // escaped like the names: the game state arrives whole from another device
 function av(p){return p&&p.avatar?esc(p.avatar)+' ':''}
+// ═══════════ 👨‍👩‍👧 family rosters with photos (Supabase) ═══════════
+// A family (e.g. "קראוס רמות") is saved once with its players and their pictures, and reached by its secret 8-letter
+// family code. Players created from it carry fk (family code) + fpid (player id); the picture is looked up by them —
+// pictures never travel inside the game state, so online messages stay small.
+const FAM={cache:{},loading:{}};
+const FK_RE=/^[A-Z2-9]{8}$/,FPID_RE=/^[0-9a-f-]{36}$/i;
+function famLink(m){return m&&FK_RE.test(m.fk||'')&&FPID_RE.test(m.fpid||'')?{fk:m.fk,fpid:m.fpid}:{}}   // (checked: it arrives from other devices)
+function famKeys(){try{return JSON.parse(lsGet('dreidel_fams')||'[]').filter(k=>FK_RE.test(k))}catch(e){return []}}
+function famRemember(k){const a=famKeys().filter(x=>x!==k);a.unshift(k);lsSet('dreidel_fams',JSON.stringify(a.slice(0,12)))}
+function famForget(k){lsSet('dreidel_fams',JSON.stringify(famKeys().filter(x=>x!==k)));try{localStorage.removeItem('dreidel_fam_'+k)}catch(e){}delete FAM.cache[k];if(lsGet('dreidel_my_fam')===k)lsSet('dreidel_my_fam','')}
+function famLocal(k){if(FAM.cache[k])return FAM.cache[k];try{const f=JSON.parse(lsGet('dreidel_fam_'+k)||'null');if(f)FAM.cache[k]=f;return f}catch(e){return null}}
+async function sbRpc(fn,args){
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});
+    const t=await r.text();if(!r.ok)throw new Error(t||r.status);return t?JSON.parse(t):null;
+}
+async function famFetch(k,force){
+    k=String(k||'').toUpperCase().trim();if(!FK_RE.test(k))return null;
+    if(!force&&FAM.cache[k]&&FAM.cache[k]._fresh)return FAM.cache[k];
+    if(FAM.loading[k])return FAM.loading[k];
+    FAM.loading[k]=(async()=>{
+        try{const f=await sbRpc('dreidel_get_family',{p_key:k});
+            if(f&&f.key){f._fresh=1;FAM.cache[k]=f;try{lsSet('dreidel_fam_'+k,JSON.stringify(f))}catch(e){}return f}
+            return null;
+        }catch(e){return famLocal(k)}                                            // offline → the copy kept on this device
+        finally{delete FAM.loading[k]}
+    })();
+    return FAM.loading[k];
+}
+function photoOf(p){
+    if(!p||!FK_RE.test(p.fk||''))return '';
+    const f=famLocal(p.fk);if(!f){famNeed(p.fk);return ''}
+    const pl=(f.players||[]).find(x=>x.id===p.fpid);const ph=pl&&pl.photo;
+    return /^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(ph||'')?ph:'';
+}
+// a family we see for the first time (another home's players) → fetch once, then draw again
+function famNeed(k){if(FAM.cache[k]||FAM.loading[k]||FAM.miss?.[k])return;(FAM.miss=FAM.miss||{})[k]=1;famFetch(k).then(f=>{if(f){delete FAM.miss[k];try{renderGame();renderLobby&&renderLobby()}catch(e){}}})}
+// avatar for HTML: the player's picture when there is one, otherwise the animal
+function avH(p,cls){const ph=photoOf(p);return ph?`<img class="p-photo${cls?' '+cls:''}" src="${ph}" alt="">`:av(p)}
+
+// a picture from the camera / the computer → a small square (centre cut), ~10 KB
+function famPhotoFromFile(file){
+    return new Promise((res,rej)=>{
+        const url=URL.createObjectURL(file),img=new Image();
+        img.onload=()=>{const S=192,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');
+            const m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)*.35;   // a little above the middle — faces
+            g.drawImage(img,sx,sy,m,m,0,0,S,S);URL.revokeObjectURL(url);
+            let d=c.toDataURL('image/webp',.8);if(!d.startsWith('data:image/webp'))d=c.toDataURL('image/jpeg',.82);res(d)};
+        img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('bad image'))};img.src=url;
+    });
+}
+
+// ── the "our family" window ──
+let FAM_EDIT=null;   // {key,name,players:[{id,name,avatar,level,photo}]}
+function openFamily(){
+    const k=lsGet('dreidel_my_fam');
+    FAM_EDIT=null;document.getElementById('famModal').classList.add('show');
+    if(k&&FK_RE.test(k)){const f=famLocal(k);if(f){FAM_EDIT=clone(f);famRender()}else famRenderStart();famFetch(k,true).then(f=>{if(f&&!famDirty){FAM_EDIT=clone(f);famRender()}})}
+    else famRenderStart();
+}
+let famDirty=false;
+function closeFamily(){document.getElementById('famModal').classList.remove('show');famDirty=false;try{lastPlayersUI();famBtnsUI()}catch(e){}}
+function famRenderStart(){
+    const b=document.getElementById('famBody');
+    b.innerHTML=`<p class="fam-hint">שומרים כאן פעם אחת את שמות השחקנים של המשפחה ואת התמונות שלהם — ובמשחק רואים את התמונה של מי שבתורו.</p>
+      <button type="button" class="btn btn-gold" style="width:100%;margin-bottom:10px" onclick="FAM_EDIT={key:'',name:'',players:[{name:''},{name:''}]};famDirty=true;famRender()">➕ משפחה חדשה</button>
+      <div class="fam-or">— או —</div>
+      <div class="form-row"><label>יש לנו קוד משפחה:</label><input class="input" id="famCodeIn" maxlength="8" placeholder="למשל ABCD2345" style="text-transform:uppercase;direction:ltr;text-align:center"></div>
+      <button type="button" class="btn btn-outline" style="width:100%" onclick="famLoadCode()">🔑 טען את המשפחה</button>
+      ${famKeys().length?`<div class="fam-known">משפחות שכבר שמורות במכשיר: ${famKeys().map(k=>`<button type="button" class="chip" onclick="lsSet('dreidel_my_fam','${k}');openFamily()">${esc(famLocal(k)?.name||k)}</button>`).join(' ')}</div>`:''}`;
+}
+async function famLoadCode(){
+    const k=(document.getElementById('famCodeIn').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(!FK_RE.test(k)){uiAlert('קוד משפחה הוא 8 אותיות ומספרים.');return}
+    const f=await famFetch(k,true);if(!f){uiAlert('לא מצאתי משפחה עם הקוד הזה. בדקו את הקוד (ושיש אינטרנט).');return}
+    famRemember(k);lsSet('dreidel_my_fam',k);FAM_EDIT=clone(f);famDirty=false;famRender();
+}
+function famRender(){
+    const f=FAM_EDIT,b=document.getElementById('famBody');
+    b.innerHTML=`<div class="form-row"><label>שם המשפחה:</label><input class="input" id="famName" maxlength="40" placeholder="למשל: קראוס רמות" value="${esc(f.name||'')}"></div>
+      <div class="fam-list">${f.players.map((p,i)=>`<div class="fam-row" data-i="${i}">
+          <label class="fam-pic" title="תמונה — לחיצה לצילום או בחירה">${p.photo?`<img src="${p.photo}" alt="">`:'<span>📷</span>'}<input type="file" accept="image/*" class="fam-file" data-i="${i}"></label>
+          <input class="input fam-pname" data-i="${i}" maxlength="20" placeholder="שם" value="${esc(p.name||'')}">
+          ${p.photo?`<button type="button" class="fam-x" title="הסר תמונה" onclick="famSet(${i},'photo','')">🖼✕</button>`:''}
+          <button type="button" class="fam-x" title="הסר שחקן" onclick="famDel(${i})">🗑</button></div>`).join('')}</div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="famAdd()" style="margin:6px 0 12px">➕ עוד שחקן</button>
+      <div class="fam-actions"><button type="button" class="btn btn-gold" id="famSaveBtn" onclick="famSave()">💾 שמור</button>
+        <button type="button" class="btn btn-outline" onclick="closeFamily()">סגור</button></div>
+      ${f.key?`<div class="fam-code">קוד המשפחה: <b dir="ltr">${f.key}</b>
+          <div class="fam-hint">בני המשפחה בבתים אחרים מכניסים את הקוד הזה ב"המשפחה שלנו" — ורואים את אותם שחקנים ותמונות.</div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="famShare()">📲 שלח את הקוד בוואטסאפ</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="lsSet('dreidel_my_fam','');FAM_EDIT=null;famRenderStart()">↔ משפחה אחרת</button></div>`:''}`;
+    b.querySelectorAll('.fam-pname').forEach(i=>i.oninput=()=>{FAM_EDIT.players[+i.dataset.i].name=i.value;famDirty=true});
+    b.querySelector('#famName').oninput=e=>{FAM_EDIT.name=e.target.value;famDirty=true};
+    b.querySelectorAll('.fam-file').forEach(i=>i.onchange=async()=>{const f=i.files&&i.files[0];if(!f)return;
+        try{const d=await famPhotoFromFile(f);famSet(+i.dataset.i,'photo',d)}catch(e){uiAlert('לא הצלחתי לקרוא את התמונה.')}});
+}
+function famSet(i,k,v){FAM_EDIT.players[i][k]=v;famDirty=true;famRender()}
+function famAdd(){if(FAM_EDIT.players.length>=24)return;FAM_EDIT.players.push({name:''});famDirty=true;famRender();setTimeout(()=>{const a=document.querySelectorAll('.fam-pname');a[a.length-1]?.focus()},30)}
+async function famDel(i){const p=FAM_EDIT.players[i];if((p.name||p.photo)&&!await uiConfirm(`להסיר את ${p.name||'השחקן'} מהמשפחה?`,'הסר'))return;FAM_EDIT.players.splice(i,1);famDirty=true;famRender()}
+async function famSave(){
+    const f=FAM_EDIT;f.name=(f.name||'').trim();
+    const players=f.players.map(p=>({...p,name:(p.name||'').trim()})).filter(p=>p.name);
+    if(!f.name){uiAlert('כתבו שם למשפחה — למשל "קראוס רמות".');return}
+    if(!players.length){uiAlert('הוסיפו לפחות שחקן אחד.');return}
+    const btn=document.getElementById('famSaveBtn');btn.disabled=true;btn.textContent='שומר…';
+    try{
+        const k=await sbRpc('dreidel_save_family',{p_key:f.key||null,p_name:f.name,p_players:players.map(p=>({name:p.name,avatar:p.avatar||null,level:p.level||2,photo:p.photo||''}))});
+        famRemember(k);lsSet('dreidel_my_fam',k);famBtnsUI();
+        const fresh=await famFetch(k,true);FAM_EDIT=clone(fresh||{...f,key:k,players});famDirty=false;famRender();
+        floatText(document.getElementById('famSaveBtn')||document.body,'נשמר ✓','plus');
+    }catch(e){
+        btn.disabled=false;btn.textContent='💾 שמור';
+        uiAlert(/dreidel_save_family|Could not find|404|PGRST202/.test(String(e.message))?'השמירה בשרת עוד לא הופעלה (צריך להריץ פעם אחת את קוד ה-SQL ב-Supabase).':'השמירה נכשלה — בדקו שיש אינטרנט ונסו שוב.');
+    }
+}
+function famShare(){
+    const f=FAM_EDIT;if(!f||!f.key)return;
+    const url=location.origin+location.pathname+'?fam='+f.key;
+    const txt=`👨‍👩‍👧 משפחת ${f.name} — למשחק הסביבון 🕎\nקוד המשפחה: ${f.key}\nפותחים כאן (השחקנים והתמונות ייטענו לבד):\n${url}`;
+    window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+// a link with ?fam=CODE → that family is added to this device
+(function famFromLink(){const k=(new URLSearchParams(location.search).get('fam')||'').toUpperCase();
+    if(FK_RE.test(k))setTimeout(()=>famFetch(k,true).then(f=>{if(f){famRemember(k);if(!lsGet('dreidel_my_fam'))lsSet('dreidel_my_fam',k);floatText(document.body,`👨‍👩‍👧 ${f.name} נוספה למכשיר`,'plus');famBtnsUI()}}),900)})();
+// keep the families on this device fresh (pictures changed in another home)
+setTimeout(()=>famKeys().forEach(k=>famFetch(k,true)),2500);
+
+// ── choose players from families: for the local game and for an online family ──
+function famBtnsUI(){const has=famKeys().length>0;document.querySelectorAll('.fam-use').forEach(b=>b.classList.toggle('hidden',!has))}
+setTimeout(famBtnsUI,0);
+function famChooser(onPick,single){
+    const keys=famKeys();if(!keys.length){openFamily();return}
+    const m=document.getElementById('famPickModal'),b=document.getElementById('famPickBody');
+    b.innerHTML=keys.map(k=>{const f=famLocal(k);if(!f)return '';
+        return `<label class="fam-pick"><input type="${single?'radio':'checkbox'}" name="fpk" value="${k}" ${k===lsGet('dreidel_my_fam')?'checked':''}>
+          <b>${esc(f.name)}</b><span>${(f.players||[]).map(p=>p.photo?`<img src="${p.photo}" alt="">`:esc(p.name)).join(' ')}</span></label>`}).join('');
+    m.classList.add('show');
+    document.getElementById('famPickOk').onclick=()=>{const ks=[...b.querySelectorAll('input:checked')].map(i=>i.value);m.classList.remove('show');if(ks.length)onPick(ks.map(famLocal).filter(Boolean))};
+}
+// local game: the chosen families' players fill the name rows (with their pictures)
+function famUseLocal(){
+    famChooser(fams=>{
+        const pl=[];fams.forEach(f=>(f.players||[]).forEach(p=>pl.push({name:p.name,fk:f.key,fpid:p.id,avatar:p.avatar,level:p.level})));
+        if(!pl.length)return;const n=Math.min(24,pl.length);
+        const ns=document.getElementById('localNumPlayers');ensureNumOption(ns,n,PLAYERS_OTHER);ns.value=String(n);ns.dataset.prev=ns.value;
+        document.querySelectorAll('.local-name').forEach(i=>i.value='');renderLocalNames();
+        const rows=document.querySelectorAll('#localNames .player-name-row');
+        pl.slice(0,n).forEach((p,i)=>{const r=rows[i];if(!r)return;r.querySelector('.local-name').value=p.name;r.dataset.fk=p.fk;r.dataset.fpid=p.fpid;if(p.avatar||p.level)applyPersona(r,p);famRowPhoto(r)});
+        saveSettings();lastPlayersUI();
+    });
+}
+// online: our family's name and members
+function famUseOnline(nameId,listId){
+    famChooser(([f])=>{
+        if(!f)return;document.getElementById(nameId).value=f.name.slice(0,20);
+        const d=document.getElementById(listId);d.innerHTML='';
+        (f.players||[]).slice(0,10).forEach(p=>{addMemberInput(listId);const r=d.lastElementChild;r.querySelector('.member-name').value=p.name;r.dataset.fk=f.key;r.dataset.fpid=p.id;if(p.avatar||p.level)applyPersona(r,p);famRowPhoto(r)});
+    },true);
+}
+function famRowPhoto(r){const ph=photoOf({fk:r.dataset.fk,fpid:r.dataset.fpid});let im=r.querySelector('.row-photo');
+    if(!ph){im&&im.remove();return}if(!im){im=document.createElement('img');im.className='row-photo';im.alt='';r.insertBefore(im,r.querySelector('input'))}im.src=ph}
+
 
 // ── our own message / question window (never the browser's alert/confirm) ──
 window.UI_ALERTS=[];
@@ -952,6 +1149,7 @@ function renderLocalNames(){
     for(let i=0;i<n;i++){const k=keep[i]||{};
         d.innerHTML+=`<div class="player-name-row"><span class="badge">${i+1}</span><input class="input local-name" maxlength="20" placeholder="שחקן ${i+1}" value="${esc(k.v||'')}"><span class="persona" data-av="${k.avatar!=null?AVATARS.indexOf(k.avatar):(i*5)%AVATARS.length}" data-lvl="${k.level||2}"></span></div>`}
     initPersonas(d);
+    d.querySelectorAll('.player-name-row').forEach((r,i)=>{const k=keep[i];if(k&&k.fk){r.dataset.fk=k.fk;r.dataset.fpid=k.fpid||'';famRowPhoto(r)}});
 }
 renderLocalNames();
 
@@ -960,7 +1158,7 @@ function startLocalGame(){
     G.startAmt=parseInt(document.getElementById('localStartAmt').value)||100;G.ante=Math.round(G.startAmt*.1);
     G.players=[];G.families=[];G.scoringMode='individual';G.firstTurn=0;G.round=1;
     G.timeLimitMin=parseInt(document.getElementById('localTime').value)||0;
-    document.querySelectorAll('#localNames .player-name-row').forEach((row,i)=>{const pr=readPersona(row);G.players.push({id:'p'+i,name:cleanName(row.querySelector('.local-name').value,`שחקן ${i+1}`),family:null,amount:0,alive:true,change:'',avatar:pr.avatar,level:pr.level})});
+    document.querySelectorAll('#localNames .player-name-row').forEach((row,i)=>{const pr=readPersona(row);G.players.push({id:'p'+i,name:cleanName(row.querySelector('.local-name').value,`שחקן ${i+1}`),family:null,amount:0,alive:true,change:'',avatar:pr.avatar,level:pr.level,...(pr.fk?{fk:pr.fk,fpid:pr.fpid}:{})})});
     resetRound();
     hide('modeScreen');hide('localSetup');show('gameScreen');document.getElementById('videoSection').classList.add('hidden');
     document.getElementById('spinBtn').classList.remove('hidden');document.getElementById('waitingMsg').classList.add('hidden');
@@ -1006,7 +1204,7 @@ async function createRoom(){
         if(members.length===0)members.push({name:famName,avatar:AVATARS[0],level:2});
         MY_FAMILY=MY_ID;
         G.families.push({id:MY_ID,name:famName,color:FAM_COLORS[0]});
-        members.forEach((m,i)=>{G.players.push({id:MY_ID+'_'+i,name:cleanName(m.name||m,famName),family:MY_ID,amount:0,alive:true,change:'',avatar:safeAvatar(m.avatar),level:safeLevel(m.level)})});
+        members.forEach((m,i)=>{G.players.push({id:MY_ID+'_'+i,name:cleanName(m.name||m,famName),family:MY_ID,amount:0,alive:true,change:'',avatar:safeAvatar(m.avatar),level:safeLevel(m.level),...famLink(m)})});
     }else{
         const name=document.getElementById('hostName').value.trim()||'מארח';
         MY_FAMILY=null;const pr=readPersona(document.getElementById('hostName').parentElement);
@@ -1072,9 +1270,9 @@ function joinChannel(onReady){
             const famName=cleanName(p.name,'משפחה');
             G.families.push({id:p.id,name:famName,color});
             const members=(Array.isArray(p.members)?p.members:[]).slice(0,10)
-                .map(m=>typeof m==='string'?{name:m}:m||{}).map(m=>({name:cleanName(m.name,''),avatar:safeAvatar(m.avatar),level:safeLevel(m.level)})).filter(m=>m.name);
+                .map(m=>typeof m==='string'?{name:m}:m||{}).map(m=>({name:cleanName(m.name,''),avatar:safeAvatar(m.avatar),level:safeLevel(m.level),...famLink(m)})).filter(m=>m.name);
             if(!members.length)members.push({name:famName,avatar:safeAvatar(),level:2});
-            members.forEach((m,i)=>{G.players.push({id:p.id+'_'+i,name:m.name,family:p.id,amount:0,alive:true,change:'',avatar:m.avatar,level:m.level})});
+            members.forEach((m,i)=>{G.players.push({id:p.id+'_'+i,name:m.name,family:p.id,amount:0,alive:true,change:'',avatar:m.avatar,level:m.level,...famLink(m)})});
         }else{
             if(G.players.find(pl=>pl.id===p.id))return;
             G.players.push({id:p.id,name:cleanName(p.name,'שחקן'),family:null,amount:0,alive:true,change:'',avatar:safeAvatar(p.avatar),level:safeLevel(p.level)});
@@ -1335,7 +1533,7 @@ function loadSettings(){
 }
 loadSettings();
 document.getElementById('localNames').addEventListener('change',saveSettings);
-document.getElementById('localNames').addEventListener('input',lastPlayersUI);
+document.getElementById('localNames').addEventListener('input',e=>{lastPlayersUI();const r=e.target.closest('.player-name-row');if(r&&r.dataset.fk&&e.target.classList.contains('local-name')){const f=famLocal(r.dataset.fk),p=f&&(f.players||[]).find(x=>x.id===r.dataset.fpid);if(!p||p.name!==e.target.value.trim()){delete r.dataset.fk;delete r.dataset.fpid;famRowPhoto(r)}}});
 SETTING_IDS.forEach(id=>document.getElementById(id)?.addEventListener('change',saveSettings));
 function advanceTurn(){G.turnNo=(G.turnNo||0)+1;do{G.currentTurn=(G.currentTurn+1)%G.players.length}while(!G.players[G.currentTurn].alive)}
 function skipTurn(cp){
@@ -1358,14 +1556,14 @@ function renderLobby(){
             const members=G.players.filter(p=>p.family===f.id);
             return `<div class="lobby-family">
                 <div class="lobby-family-name"><span style="color:${safeColor(f.color)}">●</span> משפ׳ ${esc(f.name)}</div>
-                <div class="lobby-family-members">${members.map(m=>`<span>${av(m)}${esc(m.name)}</span>`).join('')}</div>
+                <div class="lobby-family-members">${members.map(m=>`<span>${avH(m)}${esc(m.name)}</span>`).join('')}</div>
             </div>`;
         }).join('');
         // Also show non-family players if mixed
         const noFam=G.players.filter(p=>!p.family);
         if(noFam.length)el.innerHTML+=noFam.map(p=>`<div class="lobby-player ${lobbyOff(p)}"><span class="dot"></span> ${esc(p.name)}</div>`).join('');
     }else{
-        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''} ${lobbyOff(p)}"><span class="dot"></span> ${av(p)}${esc(p.name)}</div>`).join('');
+        el.innerHTML=G.players.map((p,i)=>`<div class="lobby-player ${i===0?'host':''} ${lobbyOff(p)}"><span class="dot"></span> ${avH(p)}${esc(p.name)}</div>`).join('');
     }
 }
 
@@ -3824,7 +4022,7 @@ function renderGameNow(){
     if(MODE==='online'&&G.started&&!G.over)saveSession();
     document.getElementById('potVal').textContent=G.pot;sizePile(G.pot);
     const cp=G.players[G.currentTurn];
-    document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?av(cp)+esc(cp.name):'—'}</strong>`;
+    document.getElementById('turnBox').innerHTML=`תור: <strong>${cp?avH(cp,'big')+esc(cp.name):'—'}</strong>`;
 
     const area=document.getElementById('playersArea');
 
@@ -3857,7 +4055,7 @@ function setStack(id,a,top){const el=cardEl(id)?.querySelector('.p-stack');if(el
 function playerCard(p,i){
     const off=MODE==='online'&&G.started&&ONLINE.size>0&&!isOnline(p)&&p.alive;
     return `<div data-pid="${esc(p.id)}" class="p-card ${i===G.currentTurn&&p.alive?'active':''} ${!p.alive?'out':''} ${isWinner(p)?'winner':''} ${off?'offline':''}">
-        <div class="p-name"><span class="crown">👑</span>${av(p)}${esc(p.name)}${!p.alive?' ❌':''}${off?' <span title="לא מחובר">📴</span>':''}</div>
+        <div class="p-name"><span class="crown">👑</span>${avH(p)}${esc(p.name)}${!p.alive?' ❌':''}${off?' <span title="לא מחובר">📴</span>':''}</div>
         <div class="p-amt">${p.alive?(Number(p.amount)||0):0}</div>
         <div class="p-stack">${stackCoins(p.alive?Number(p.amount)||0:0)}</div>
         <div class="p-delta ${(p.change+'').startsWith('+')?'plus':(p.change+'').startsWith('-')?'minus':'zero'}">${esc(p.change)}</div>
