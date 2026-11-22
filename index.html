@@ -310,8 +310,9 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .tune-player button.tp-main:hover{background:#ffd75a}
 .tune-player input{width:150px;accent-color:var(--gold)}
 .tune-player .tp-track{direction:rtl;background:var(--bg-input);color:var(--gold);border:1px solid var(--border-l);border-radius:14px;padding:4px 8px;font-family:inherit;font-size:.85rem;max-width:170px}
+.tune-player button.on{background:var(--gold-dim,#7a6420);color:var(--gold)}
 .tune-player .tp-time{font-size:.75rem;color:var(--text-dim);min-width:70px;font-variant-numeric:tabular-nums}
-@media(max-width:600px){.tune-player{left:10px;right:10px;bottom:112px;max-width:none}.tune-player input{flex:1;width:auto}.tune-player .tp-track{max-width:110px}}
+@media(max-width:600px){.tune-player{left:10px;right:10px;bottom:112px;max-width:none;flex-wrap:wrap;justify-content:center}.tune-player input{flex:1;width:auto}.tune-player .tp-track{max-width:110px}}
 .mic-badge{position:fixed;bottom:18px;left:118px;z-index:120;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--green);border-radius:20px;padding:5px 10px;color:var(--text);cursor:pointer;font-size:.9rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .mic-badge i{display:block;width:44px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--green) var(--lv,0%),rgba(255,255,255,.12) 0)}
 .mic-badge.clap{box-shadow:0 0 16px var(--green)}
@@ -818,7 +819,11 @@ body.circle-armed{touch-action:none}
   <select id="tuneTrack" class="tp-track" onchange="tuneChoose(this.value)" aria-label="בחירת שיר"><option value="maoz">🕎 מעוז צור</option></select>
   <button onclick="tuneAddPick()" title="הוספת שיר מהמחשב / מהטלפון"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button>
   <button id="tuneDel" onclick="tuneDelete()" title="הסרת השיר מהרשימה" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5"/></svg></button>
+  <button onclick="document.getElementById('tuneDir').click()" title="הוספת תיקייה שלמה של שירים"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6.5h6l2 2h10v10.5H3z"/><path d="M12 11.5v5M9.5 14h5" stroke-linecap="round"/></svg></button>
   <input type="file" id="tuneFile" accept="audio/*" multiple hidden onchange="tuneAddFiles(this.files);this.value=''">
+  <input type="file" id="tuneDir" webkitdirectory directory multiple hidden onchange="tuneAddFiles(this.files);this.value=''">
+  <button id="tuneShuf" onclick="tuneShuffleToggle()" title="ערבוב — כל השירים, בסדר אקראי" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.5c2 0 3 1 4.2 2.8l2.6 4.4C14.5 16 15.5 17 17.5 17H21M18 14l3 3-3 3M3 17h3.5c1.4 0 2.3-.5 3.1-1.4M14.4 8.4c.8-.9 1.7-1.4 3.1-1.4H21M18 4l3 3-3 3"/></svg></button>
+  <button id="tuneNextBtn" onclick="tuneNext()" title="השיר הבא" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 6v12l9-6zM16 6h2.5v12H16z"/></svg></button>
   <button onclick="tuneSkip(-8)" title="אחורה"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.5 6v12L3 12zM21 6v12l-8.5-6z"/></svg></button>
   <button id="tunePlay" class="tp-main" onclick="tuneToggle()" title="נגן / השהה"></button>
   <button onclick="tuneSkip(8)" title="קדימה"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.5 6v12L21 12zM3 6v12l8.5-6z"/></svg></button>
@@ -932,7 +937,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v96';
+const APP_VERSION='v97';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -3597,7 +3602,22 @@ function _tuneTick(){
     if(TUNE.pos>=TUNE.len+.5){tunePause();TUNE.pos=0;tuneUI()}
 }
 // songs from the user's own computer / phone: kept on this device (IndexedDB), played with an <audio>
-const SONGS={list:[],aud:null,url:null,loaded:null};
+const SONGS={list:[],aud:null,url:null,loaded:null,q:[],shuffle:(()=>{try{return localStorage.getItem('dreidel_tune_shuffle')==='1'}catch(e){return false}})()};
+// shuffle: every song once, in random order, then a new random round (never the same song twice in a row)
+function tuneNext(){
+    if(!SONGS.list.length)return;
+    const ids=SONGS.list.map(x=>String(x.id));
+    SONGS.q=SONGS.q.filter(id=>ids.includes(id));
+    if(!SONGS.q.length){SONGS.q=ids.filter(id=>id!==TUNE.track||ids.length===1);for(let i=SONGS.q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[SONGS.q[i],SONGS.q[j]]=[SONGS.q[j],SONGS.q[i]]}}
+    if(!SONGS.shuffle){const i=ids.indexOf(TUNE.track);tuneChoose(ids[(i+1)%ids.length]);return}   // in order
+    tuneChoose(SONGS.q.shift());
+}
+function tuneShuffleToggle(){
+    SONGS.shuffle=!SONGS.shuffle;SONGS.q=[];try{localStorage.setItem('dreidel_tune_shuffle',SONGS.shuffle?'1':'0')}catch(e){}
+    tuneFillList();
+    if(SONGS.shuffle&&(!tuneIsFile()||!TUNE.playing))tuneNext();
+    floatText(document.getElementById('tuneShuf')||document.body,SONGS.shuffle?'🔀 ערבוב — כל השירים':'ערבוב כבוי','plus');
+}
 function songsDB(){return new Promise((res,rej)=>{try{const r=indexedDB.open('dreidel_songs',1);
     r.onupgradeneeded=()=>r.result.createObjectStore('songs',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
 async function songsLoad(){
@@ -3611,12 +3631,17 @@ function tuneFillList(){
     const sel=document.getElementById('tuneTrack');if(!sel)return;
     sel.innerHTML='<option value="maoz">🕎 מעוז צור</option>'+SONGS.list.map(x=>`<option value="${x.id}">🎵 ${esc(x.name)}</option>`).join('');
     sel.value=TUNE.track;document.getElementById('tuneDel').style.display=tuneIsFile()?'':'none';
+    const many=SONGS.list.length>1,sh=document.getElementById('tuneShuf');
+    sh.style.display=many?'':'none';sh.classList.toggle('on',SONGS.shuffle);
+    document.getElementById('tuneNextBtn').style.display=many||(SONGS.list.length&&!tuneIsFile())?'':'none';
 }
 function tuneIsFile(){return TUNE.track!=='maoz'}
 function tuneAud(){
     if(!SONGS.aud){SONGS.aud=new Audio();SONGS.aud.preload='auto';
         SONGS.aud.addEventListener('timeupdate',tuneUI);SONGS.aud.addEventListener('loadedmetadata',tuneUI);
-        SONGS.aud.addEventListener('ended',()=>{TUNE.playing=false;SONGS.aud.currentTime=0;tuneUI()})}
+        SONGS.aud.addEventListener('ended',()=>{
+            if(SONGS.shuffle&&SONGS.list.length>1){tuneNext();return}      // shuffle: straight on to the next song
+            TUNE.playing=false;SONGS.aud.currentTime=0;tuneUI()})}
     const x=SONGS.list.find(o=>String(o.id)===String(TUNE.track));
     if(x&&SONGS.loaded!==x.id){if(SONGS.url)URL.revokeObjectURL(SONGS.url);SONGS.url=URL.createObjectURL(x.blob);SONGS.aud.src=SONGS.url;SONGS.loaded=x.id}
     return x?SONGS.aud:null;
@@ -3631,11 +3656,20 @@ function tuneAddPick(){document.getElementById('tuneFile').click()}
 async function tuneAddFiles(files){
     files=[...files].filter(f=>/^audio\//.test(f.type)||/\.(mp3|m4a|aac|wav|ogg|oga|flac|opus|webm)$/i.test(f.name));
     if(!files.length){uiAlert('זה לא נראה כמו קובץ שמע. אפשר לבחור mp3, m4a, wav, ogg וכדומה.');return}
-    let last=null;
+    const have=new Set(SONGS.list.map(x=>x.name+'|'+(x.blob&&x.blob.size)));
+    const nm=f=>f.name.replace(/\.[^.]+$/,'');
+    const fresh=files.filter(f=>!have.has(nm(f)+'|'+f.size));
+    if(!fresh.length){uiAlert('השירים האלה כבר ברשימה.');return}
+    files=fresh.sort((a,b)=>a.name.localeCompare(b.name,'he',{numeric:true}));
+    const tt=document.getElementById('tuneTime');
+    let last=null,n=0;
     try{const db=await songsDB();
-        for(const f of files){last=await new Promise((res,rej)=>{const q=db.transaction('songs','readwrite').objectStore('songs').add({name:f.name.replace(/\.[^.]+$/,''),type:f.type,blob:f,added:Date.now()});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+        for(const f of files){if(tt&&files.length>2)tt.textContent=`מוסיף ${++n}/${files.length}`;last=await new Promise((res,rej)=>{const q=db.transaction('songs','readwrite').objectStore('songs').add({name:f.name.replace(/\.[^.]+$/,''),type:f.type,blob:f,added:Date.now()});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
     }catch(e){uiAlert('לא הצלחתי לשמור את השיר במכשיר ('+(e&&e.message||e)+').');return}
-    await songsLoad();if(last!=null)tuneChoose(last);
+    await songsLoad();
+    if(files.length>1){SONGS.shuffle=true;SONGS.q=[];try{localStorage.setItem('dreidel_tune_shuffle','1')}catch(e){}tuneFillList();tuneNext();
+        floatText(document.getElementById('tuneShuf')||document.body,`נוספו ${files.length} שירים · 🔀 ערבוב`,'plus');}
+    else if(last!=null)tuneChoose(last);
 }
 async function tuneDelete(){
     if(!tuneIsFile())return;
