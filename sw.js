@@ -10,7 +10,7 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v91';
+const CACHE = 'dreidel-v92';
 const FALLBACK = './index.html';
 // Each picture is listed once, as .webp. The .png / .jpg twins exist only for a browser that cannot
 // show webp; precaching both made every install download the pictures twice (about 1.2 MB extra).
