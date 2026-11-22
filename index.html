@@ -315,6 +315,9 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .dreidel-art.golden{filter:drop-shadow(0 0 22px #ffd700) drop-shadow(0 0 48px rgba(255,190,0,.75))}
 .dreidel-art.golden .face-tint{background:#d4a017!important}
 .dreidel-art.golden .d3-face>img,.dreidel-art.golden .d3-tip>img{filter:sepia(1) saturate(3) hue-rotate(5deg) brightness(1.1)}
+.win-rank{display:flex;flex-direction:column;gap:4px;margin:4px auto 10px;max-width:360px}
+.wr{display:flex;align-items:center;gap:8px;padding:4px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:.95rem}
+.wr.first{background:rgba(245,200,66,.18)}.wr-n{width:26px;text-align:center}.wr-name{flex:1;text-align:right}.wr-c{color:var(--gold);font-weight:700}
 .win-titles{display:flex;flex-direction:column;gap:4px;margin:4px 0 12px;font-size:.9rem;color:var(--text)}
 .win-titles div{background:var(--bg-input);border-radius:8px;padding:4px 10px}
 .trivia{max-width:520px}
@@ -796,9 +799,10 @@ body.circle-armed{touch-action:none}
 <div class="modal-bg" id="famPickModal" role="dialog" aria-modal="true"><div class="win-modal fam-box"><h2>👨‍👩‍👧 מאיזו משפחה?</h2><div id="famPickBody"></div>
   <div class="fam-actions"><button type="button" class="btn btn-gold" id="famPickOk">אישור</button><button type="button" class="btn btn-outline" onclick="document.getElementById('famPickModal').classList.remove('show');openFamily()">➕ משפחה / קוד</button><button type="button" class="btn btn-outline" onclick="document.getElementById('famPickModal').classList.remove('show')">ביטול</button></div></div></div>
 <div class="modal-bg" id="uiModal" role="dialog" aria-modal="true"><div class="win-modal ui-box"><div class="ui-msg" id="uiMsg"></div><div class="ui-btns"><button class="btn btn-gold" id="uiOk">אישור</button><button class="btn btn-outline" id="uiCancel">ביטול</button></div></div></div>
-<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p><div class="win-titles" id="winTitles"></div>
+<div class="modal-bg" id="winModal"><div class="win-modal"><div class="big-icon" id="winIcon">🏆</div><h2 id="winName">—</h2><p id="winSub">ניצח את המשחק!</p><div class="win-rank" id="winRank"></div><div class="win-titles" id="winTitles"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-gold" id="rematchBtn" onclick="rematch()">🔁 משחק חוזר — אותם שחקנים</button>
+        <button class="btn btn-blue" id="shareSumBtn" onclick="shareSummary()">📸 שתפו את הסיכום (תמונה)</button>
         <div id="rematchWait" class="hidden" style="font-size:.8rem;color:var(--text-dim)">המארח יכול להתחיל משחק חוזר באותו חדר</div>
         <button class="btn btn-outline" onclick="clearSession();location.reload()">משחק חדש</button>
     </div></div></div>
@@ -889,7 +893,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v90';
+const APP_VERSION='v91';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1674,6 +1678,7 @@ function showNight(){
 }
 // Fresh amounts/pot for a new round with the same players (first game and rematches)
 function resetRound(){
+    G.startedAt=Date.now();
     G.stats={};G.streaks={};G.bank=0;G.turnNo=0;
     if(G.scoringMode==='family'){
         // Family scoring: all members share one pool per family
@@ -4086,6 +4091,57 @@ function sideName(k){
     if(fam&&G.scoringMode==='family')return 'משפחת '+fam.name;
     return G.players.find(p=>p.id===k)?.name||'?';
 }
+// ── 📸 the end-of-game summary: one picture to send to the family group ──
+let SUMMARY=null;
+function ranking(){return [...G.players].sort((a,b)=>((b.alive?+b.amount:0)-(a.alive?+a.amount:0)))}
+function loadImg(src){return new Promise(r=>{if(!src)return r(null);const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src})}
+async function summaryCanvas(){
+    const W=1080,rk=ranking().slice(0,10),T=(SUMMARY&&SUMMARY.titles)||[];
+    const H=560+rk.length*96+T.length*54+120;
+    const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+    const bgr=g.createLinearGradient(0,0,0,H);bgr.addColorStop(0,'#141a3a');bgr.addColorStop(1,'#0b0f24');g.fillStyle=bgr;g.fillRect(0,0,W,H);
+    g.strokeStyle='#f5c842';g.lineWidth=6;g.strokeRect(24,24,W-48,H-48);
+    g.direction='rtl';g.textAlign='center';
+    const F=(sz,w)=>`${w||700} ${sz}px 'Secular One','Rubik',Arial,sans-serif`;
+    g.font=F(64);g.fillStyle='#f5c842';g.fillText('🕎 סביבון סוב סוב סוב',W/2,120);
+    const n=hanukkahNight();const d=new Date();
+    g.font=F(34,400);g.fillStyle='#c9cbe6';
+    g.fillText((n?`נר ${['','ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני'][n]} של חנוכה · `:'')+d.toLocaleDateString('he-IL'),W/2,175);
+    g.font=F(58);g.fillStyle='#fff';g.fillText((SUMMARY?.winText||'').replace('🎉','🏆'),W/2,270);
+    g.font=F(34,400);g.fillStyle='#c9cbe6';g.fillText(SUMMARY?.sub||'',W/2,320);
+    // ranking
+    let y=400;
+    for(let i=0;i<rk.length;i++){const p=rk[i];
+        g.fillStyle=i===0?'rgba(245,200,66,.18)':'rgba(255,255,255,.05)';g.beginPath();g.roundRect?g.roundRect(80,y-56,W-160,84,18):g.rect(80,y-56,W-160,84);g.fill();
+        g.textAlign='right';g.font=F(42);g.fillStyle='#fff';g.fillText((['🥇','🥈','🥉'][i]||(i+1)+'.'),W-110,y);
+        const ph=await loadImg(photoOf(p));let nx=W-200;
+        if(ph){g.save();g.beginPath();g.arc(nx-34,y-14,34,0,Math.PI*2);g.clip();g.drawImage(ph,nx-68,y-48,68,68);g.restore();g.strokeStyle='#f5c842';g.lineWidth=3;g.beginPath();g.arc(nx-34,y-14,34,0,Math.PI*2);g.stroke();nx-=86}
+        else{g.font=F(44,400);g.fillText(p.avatar||'',nx,y);nx-=70}
+        g.font=F(44);g.fillStyle='#fff';g.fillText(p.name,nx,y);
+        g.textAlign='left';g.fillStyle='#f5c842';g.font=F(44);g.fillText(`${p.alive?(+p.amount||0):0} 🪙`,120,y);
+        y+=96}
+    // titles
+    g.textAlign='center';y+=30;
+    if(T.length){g.font=F(40);g.fillStyle='#f5c842';g.fillText('🏅 תארים',W/2,y);y+=54;
+        g.font=F(34,400);g.fillStyle='#e7e8f6';T.forEach(t=>{g.fillText(t,W/2,y);y+=54})}
+    const mins=G.startedAt?Math.max(1,Math.round((Date.now()-G.startedAt)/60000)):0;
+    g.font=F(30,400);g.fillStyle='#9aa0c8';g.fillText(`${G.spinsDone||0} סיבובים`+(mins?(mins===1?' · דקת משחק אחת':` · ${mins} דקות משחק`):''),W/2,H-96);
+    g.font=F(24,400);g.fillStyle='#7a7fa8';g.fillText('© כל הזכויות שמורות · Yosef Krauss',W/2,H-52);
+    return c;
+}
+async function shareSummary(){
+    const b=document.getElementById('shareSumBtn');b.disabled=true;
+    try{
+        const c=await summaryCanvas();
+        const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+        const file=new File([blob],'dreidel-summary.png',{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'סיכום משחק הסביבון',text:(SUMMARY?.winText||'')+' 🕎'})}
+        else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dreidel-summary.png';document.body.appendChild(a);a.click();a.remove();
+            setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+            uiAlert('התמונה נשמרה במחשב (בתיקיית ההורדות) — אפשר לשלוח אותה בוואטסאפ לקבוצת המשפחה.')}
+    }catch(e){if(e&&e.name!=='AbortError')uiAlert('לא הצלחתי ליצור את התמונה.')}
+    b.disabled=false;
+}
 function showWinner(){
     if(!G.over)return; // a rematch may have started while this call was waiting for the coins to land
     const alive=G.players.filter(p=>p.alive);
@@ -4112,6 +4168,8 @@ function showWinner(){
     [['gimel','👑 מלך הגימל'],['maxPower','💪 המסובב החזק'],['sing','🎤 הזמר של הערב'],['bonus','🎁 צייד הבונוסים'],['nun','😅 אלוף הנון'],['pe','💸 התורם הנדיב']]
         .forEach(([k,label])=>{const p=best(k);if(p){got[p.id]=(got[p.id]||0)+1;titles.push(`${isFemaleName(p.name)?(TITLE_F[k]||label):label} — ${esc(p.name)}`)}});
     document.getElementById('winTitles').innerHTML=titles.map(t=>`<div>${t}</div>`).join('');
+    SUMMARY={winText,sub:document.getElementById('winSub').textContent,titles:titles.map(t=>t.replace(/<[^>]+>/g,'').replace(/&[a-z#0-9]+;/g,m=>({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&#39;':"'"}[m]||m)))};
+    document.getElementById('winRank').innerHTML=ranking().slice(0,8).map((p,i)=>`<div class="wr${i===0?' first':''}"><span class="wr-n">${['🥇','🥈','🥉'][i]||(i+1)}</span>${avH(p)}<span class="wr-name">${esc(p.name)}</span><span class="wr-c">🪙 ${p.alive?(+p.amount||0):0}</span></div>`).join('');
     const can=canRematch();
     document.getElementById('rematchBtn').classList.toggle('hidden',!can);
     document.getElementById('rematchWait').classList.toggle('hidden',can||MODE!=='online');
