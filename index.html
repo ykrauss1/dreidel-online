@@ -825,6 +825,7 @@ body.circle-armed{touch-action:none}
   <input type="file" id="tuneFile" accept="audio/*" multiple hidden onchange="tuneAddFiles(this.files);this.value=''">
   <input type="file" id="tuneDir" webkitdirectory directory multiple hidden onchange="tuneAddFiles(this.files);this.value=''">
   <button id="tuneShuf" onclick="tuneShuffleToggle()" title="ערבוב — כל השירים, בסדר אקראי" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.5c2 0 3 1 4.2 2.8l2.6 4.4C14.5 16 15.5 17 17.5 17H21M18 14l3 3-3 3M3 17h3.5c1.4 0 2.3-.5 3.1-1.4M14.4 8.4c.8-.9 1.7-1.4 3.1-1.4H21M18 4l3 3-3 3"/></svg></button>
+  <button id="tuneDance" onclick="danceToggle()" title="הסביבון רוקד עם השיר — שירו איתו והוא ישתולל (הפסקה, לא חלק מהמשחק)">💃</button>
   <button id="tuneNextBtn" onclick="tuneNext()" title="השיר הבא" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 6v12l9-6zM16 6h2.5v12H16z"/></svg></button>
   <button onclick="tuneSkip(-8)" title="אחורה"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.5 6v12L3 12zM21 6v12l-8.5-6z"/></svg></button>
   <button id="tunePlay" class="tp-main" onclick="tuneToggle()" title="נגן / השהה"></button>
@@ -939,7 +940,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v104';
+const APP_VERSION='v105';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2061,6 +2062,7 @@ function canSpinNow(){
 let NEXT_EXTRA=null;            // extras for the next spin: power, skill bonus, singing seconds
 const GOLDEN_CHANCE=1/18;
 function spinFromInput(power,how,extra){
+    if(DANCE.on)danceStop();
     if(spinning||G.over)return;
     spinPower=Math.max(0.08,Math.min(1,power));
     NEXT_EXTRA=Object.assign({power:spinPower},extra||{});
@@ -2321,13 +2323,13 @@ function mgRace(area){
 
 // ── 🥁 drum to the beat: 4 counting beats, then click on each of the next 8 beats ──
 function mgDrum(area){
-    const BEAT=600,N=8,COUNT=4;let t0=0,hits=new Array(N).fill(0),extra=0;
+    let BEAT=600;const N=8,COUNT=4;let t0=0,hits=new Array(N).fill(0),extra=0,withMusic=false;
     area.innerHTML=`<div class="mg-drum" id="mgDrum">🥁</div><div class="mg-beats" id="mgBeats">${'<i></i>'.repeat(N)}</div><div class="mg-words" id="mgWords"></div>`;
     mgEl('mgFoot').textContent=G2('ספור עם התוף 1-2-3-4, ואז לחץ (או רווח) בדיוק על כל פעמה','ספרי עם התוף 1-2-3-4, ואז לחצי (או רווח) בדיוק על כל פעמה');
     const words=['סְבִי','בוֹן','סוֹב','סוֹב','סוֹב','חֲנֻכָּה','חַג','טוֹב'];
     const beatAt=i=>t0+(COUNT+i)*BEAT;
     const pulse=(i,count)=>{const d=mgEl('mgDrum');if(!d)return;d.classList.remove('beat');void d.offsetWidth;d.classList.add('beat');
-        playSfx(pick(SFX.tick),{vol:count?.45:.6,rate:count?1.5:1});
+        playSfx(pick(SFX.tick),{vol:(count?.45:.6)*(withMusic?.55:1),rate:count?1.5:1});
         if(count)mgEl('mgWords').textContent=String(i+1);else{mgEl('mgWords').textContent=words[i];mgEl('mgBeats').children[i].classList.add('now')}};
     const tap=e=>{
         if(e&&e.type==='pointerdown'){e.preventDefault()}
@@ -2343,10 +2345,14 @@ function mgDrum(area){
     area.addEventListener('pointerdown',tap);document.addEventListener('keydown',key,true);
     MG.off=()=>{area.removeEventListener('pointerdown',tap);document.removeEventListener('keydown',key,true)};
     mgLater(()=>{
-        t0=performance.now();
-        for(let i=0;i<COUNT;i++)mgLater(()=>pulse(i,true),i*BEAT);
-        for(let i=0;i<N;i++)mgLater(()=>pulse(i,false),(COUNT+i)*BEAT);
-        mgTimed((COUNT+N)*BEAT+350,null,()=>{
+        // music playing → the drum goes with the song's own beat
+        const mb=musicBeat();let first=performance.now();
+        if(mb){let p=mb.period;while(p<420)p*=2;while(p>900)p/=2;BEAT=p;first=mb.next;while(first<performance.now()+120)first+=mb.period;withMusic=true;
+            mgEl('mgFoot').textContent=G2('תופפו בקצב של השיר! ספור 1-2-3-4, ואז לחץ (או רווח) על כל פעמה','תופפי בקצב של השיר! ספרי 1-2-3-4, ואז לחצי (או רווח) על כל פעמה')}
+        t0=first;const d0=first-performance.now();
+        for(let i=0;i<COUNT;i++)mgLater(()=>pulse(i,true),d0+i*BEAT);
+        for(let i=0;i<N;i++)mgLater(()=>pulse(i,false),d0+(COUNT+i)*BEAT);
+        mgTimed(d0+(COUNT+N)*BEAT+350,null,()=>{
             const good=hits.filter(x=>x>.5).length,sc=hits.reduce((a,b)=>a+b,0)/N-extra*.04;
             mgFinish(Math.max(.15,Math.min(1,sc*1.15)),good>=7?`🥁 ${good} מתוך ${N} — מתופף אמיתי!`:`🥁 ${good} מתוך ${N} בקצב`)});
     },500);
@@ -2835,6 +2841,48 @@ async function singButton(){
     if(!MIC.on){const ok=await micStart();if(!ok)return}
     singArm(true);
 }
+// ── 💃 dance with the song: in a break, the dreidel dances to the music that's playing.
+//    Sing along (or clap) → it gets wilder: higher jumps, faster turns, somersaults, friends join. Not part of the game.
+const DANCE={on:false,last:0,el:0,nb:0,seen:0,mic:false};
+function danceToggle(){unlockAudio();DANCE.on?danceStop():danceStart()}
+async function danceStart(){
+    if(document.getElementById('gameScreen').classList.contains('hidden')){uiAlert('הסביבון רוקד במסך המשחק — היכנסו למשחק (אפשר גם באמצע, בהפסקה).');return}
+    if(spinning||PS.on||CP.on||SING.on||SING.armed||MG.open){uiAlert('רגע — הסביבון באמצע תור. אחרי הסיבוב אפשר לרקוד.');return}
+    if(!TUNE.playing)tunePlay();
+    if(tuneIsFile())songBeat(TUNE.track);
+    DANCE.on=true;DANCE.last=0;DANCE.el=6;DANCE.nb=0;danceUI();
+    psBegin('dance',true);
+    floatText(document.querySelector('.dreidel-wrap')||document.body,'💃 הסביבון רוקד! שירו איתו — הוא ישתולל','plus');
+    if(!MIC.on){const ok=await micStart();DANCE.mic=ok&&DANCE.on;if(ok&&!DANCE.on&&MIC.own)micStop()}   // the mic: so singing along makes it wilder (optional)
+    DANCE.seen=MIC.onsets||0;
+}
+function danceStop(){
+    if(!DANCE.on)return;DANCE.on=false;
+    if(PS.on&&PS.kind==='dance')psEnd();
+    try{resetDreidel()}catch(e){}
+    if(DANCE.mic&&MIC.on&&!SING.armed&&!SING.on&&spinMode()!=='clap')micStop();DANCE.mic=false;
+    danceUI();
+}
+function danceUI(){const b=document.getElementById('tuneDance');if(b)b.classList.toggle('on',DANCE.on)}
+(function danceLoop(){
+    function loop(t){requestAnimationFrame(loop);
+        if(!DANCE.on){DANCE.last=t;return}
+        if(!TUNE.playing||spinning||MG.open||document.getElementById('gameScreen').classList.contains('hidden')){danceStop();return}
+        const dt=DANCE.last?Math.min(60,t-DANCE.last)/1000:0;DANCE.last=t;
+        const now=performance.now(),singing=MIC.on&&now-(MIC.lastVoiced||0)<250;
+        // the song's beat → a hop
+        const mb=musicBeat();
+        if(mb){if(DANCE.nb&&mb.next>DANCE.nb+mb.period*.5){PARTY.beatT=DANCE.nb;PARTY.hue+=40}DANCE.nb=mb.next}
+        else if(now-PARTY.beatT>545){PARTY.beatT=now;PARTY.hue+=40}              // beat not known yet → a steady little dance
+        // singing / clapping along → extra hops, and it gets wilder
+        if(MIC.on&&(MIC.onsets||0)>DANCE.seen){DANCE.seen=MIC.onsets;if((singing||MIC.loud>.02)&&now-PARTY.beatT>220&&(!mb||mb.next-now>160)){PARTY.beatT=now;PARTY.hue+=40}}   // (not right next to the song's own beat)
+        DANCE.el+=dt*(singing?1.6:.5);
+        if(!singing&&DANCE.el>9)DANCE.el=Math.max(9,DANCE.el-dt*.8);           // without singing it calms down to just dancing
+        const sp=.45+(singing?.7+Math.min(4,MIC.loud*60):0);
+        psStep(t,dt,sp,DANCE.el,singing?MIC.loud:.015);
+    }
+    requestAnimationFrame(loop);
+})();
 // ── 🎉 the singing party: the longer they sing, the wilder it gets ──
 // 3 s colours · 6 s jumps · 10 s friends start dancing around it · 14 s somersaults · 18 s it spins on its handle
 const PARTY={friends:[],lastFlip:0,flipT0:0,flipKind:'',milestones:{},beatT:-1e9,hue:0,kind:'sing'};
@@ -2843,6 +2891,7 @@ function partyBeat(){PARTY.beatT=performance.now();PARTY.hue+=40;if(PS.on&&PS.ow
 // ── one party, seen in every home: the home whose turn it is drives it and sends its state ~7× a second ──
 const PS={on:false,owner:false,kind:'',start:0,phase:0,face:0,shown:-1,beats:0,lastSend:0,msgAt:0,rEl:0,rSp:0,rPh:0,last:0};
 function psBegin(kind,owner,face){
+    if(kind!=='dance'&&DANCE.on)danceStop();
     PS.on=true;PS.owner=owner;PS.kind=kind;PARTY.kind=kind;PS.start=performance.now();PS.phase=0;PS.beats=0;PS.last=0;PS.lastSend=0;
     if(window._idleTurn)window._idleTurn(false);resetDreidel();
     PS.face=face!=null?face:Math.max(0,FACE_ORDER.indexOf(CURRENT_FACE||'נ'));PS.shown=PS.face;
@@ -2854,7 +2903,7 @@ function psStep(t,dt,sp,el,loud){
     if(f!==PS.shown){if(PS.shown>=0)playSfx(pick(SFX.tick),{vol:.15});PS.shown=f;CURRENT_FACE=FACE_ORDER[f]}
     d3Pose({theta:th,tilt:2});
     partyFrame(el,t,loud);
-    if(PS.owner&&MODE==='online'&&channel&&performance.now()-PS.lastSend>140){PS.lastSend=performance.now();
+    if(PS.owner&&PS.kind!=='dance'&&MODE==='online'&&channel&&performance.now()-PS.lastSend>140){PS.lastSend=performance.now();
         try{channel.send({type:'broadcast',event:'party',payload:{from:MY_ID,on:1,k:PS.kind,el:+el.toFixed(2),sp:+sp.toFixed(2),ph:+PS.phase.toFixed(2),face:PS.face,beats:PS.beats}})}catch(e){}}
 }
 function psEnd(){
@@ -3671,7 +3720,7 @@ function tuneAud(){
     return x?SONGS.aud:null;
 }
 function tuneChoose(v){
-    const was=TUNE.playing;tunePause();TUNE.track=String(v);TUNE.pos=0;
+    const was=TUNE.playing,dancing=DANCE.on;DANCE.on=false;tunePause();DANCE.on=dancing;TUNE.track=String(v);TUNE.pos=0;   // (the dance goes on into the next song)
     try{localStorage.setItem('dreidel_tune',TUNE.track)}catch(e){}
     if(tuneIsFile()){const a=tuneAud();if(a)a.currentTime=0}
     tuneFillList();if(was||true)tunePlay(0);
@@ -3724,7 +3773,7 @@ function tunePlay(from){
         const a=tuneAud();if(!a){TUNE.track='maoz';tuneFillList();return tunePlay(from)}
         if(typeof from==='number')a.currentTime=from;
         document.getElementById('tunePlayer').classList.remove('hidden');
-        TUNE.playing=true;a.play().catch(()=>{TUNE.playing=false;tuneUI()});tuneUI();return;
+        TUNE.playing=true;a.play().catch(()=>{TUNE.playing=false;tuneUI()});tuneUI();setTimeout(()=>songBeat(TUNE.track),300);return;
     }
     const ctx=getMusicCtx();if(!ctx){uiAlert('הדפדפן הזה לא מאפשר להשמיע מוזיקה.');return}try{ctx.resume&&ctx.resume()}catch(e){}
     tuneHalt();
@@ -3735,11 +3784,59 @@ function tunePlay(from){
     document.getElementById('tunePlayer').classList.remove('hidden');
     _tuneTick();TUNE.timer=setInterval(_tuneTick,60);tuneUI();
 }
-function tunePause(){TUNE.playing=false;if(SONGS.aud)SONGS.aud.pause();tuneHalt();tuneUI()}
+function tunePause(){if(DANCE.on)danceStop();TUNE.playing=false;if(SONGS.aud)SONGS.aud.pause();tuneHalt();tuneUI()}
 function tuneSeek(beat){if(tuneIsFile()){const a=tuneAud();if(a&&isFinite(a.duration))a.currentTime=Math.max(0,Math.min(a.duration-.2,beat));tuneUI();return}
     const was=TUNE.playing;TUNE.pos=Math.max(0,Math.min(TUNE.len-1,beat));if(was)tunePlay();else tuneUI()}
 function tuneSkip(beats){if(tuneIsFile()){const a=tuneAud();if(a)tuneSeek(a.currentTime+Math.sign(beats)*10);return}tuneSeek(TUNE.pos+beats)}
 function tuneToggle(){TUNE.playing?tunePause():tunePlay()}
+// ── 🎼 the beat of the music that's playing — Maoz Tzur (known tempo) or the family's own songs (worked out once per song) ──
+const BEATS={cache:{},busy:{}};
+function songBeatKey(x){return 'dreidel_beat_'+x.name+'|'+(x.blob&&x.blob.size)}
+function songBeat(id){
+    const x=SONGS.list.find(o=>String(o.id)===String(id));if(!x||!x.blob)return Promise.resolve(null);
+    const key=songBeatKey(x);
+    if(BEATS.cache[key])return Promise.resolve(BEATS.cache[key]);
+    try{const v=JSON.parse(lsGet(key)||'null');if(v&&v.period){BEATS.cache[key]=v;return Promise.resolve(v)}}catch(e){}
+    if(BEATS.busy[key])return BEATS.busy[key];
+    return BEATS.busy[key]=(async()=>{
+        try{
+            const ctx=getMusicCtx();if(!ctx)return null;
+            const buf=await new Promise((res,rej)=>{x.blob.arrayBuffer().then(ab=>{const r=ctx.decodeAudioData(ab,res,rej);if(r&&r.then)r.then(res,rej)},rej)});
+            const v=beatAnalyse(buf);if(v){BEATS.cache[key]=v;lsSet(key,JSON.stringify(v))}
+            return v;
+        }catch(e){return null}finally{delete BEATS.busy[key]}
+    })();
+}
+// tempo and where the beats fall: an onset curve (10 ms steps) → the repeat that fits best → the exact period and offset
+function beatAnalyse(buf){
+    const sr=buf.sampleRate,hop=Math.round(sr/100),ch=[...Array(buf.numberOfChannels).keys()].slice(0,2).map(c=>buf.getChannelData(c));
+    const n=Math.min(Math.floor(ch[0].length/hop),12000);if(n<600)return null;      // (up to the first two minutes)
+    const e=new Float32Array(n);
+    for(let i=0;i<n;i++){let sum=0;const a=i*hop;for(const d of ch)for(let j=0;j<hop;j+=2){const v=d[a+j]||0;sum+=v*v}e[i]=Math.sqrt(sum)}
+    const env=new Float32Array(n);for(let i=1;i<n;i++)env[i]=Math.max(0,e[i]-e[i-1]);
+    const avg=new Float32Array(n);let acc=0;const W=25;
+    for(let i=0;i<n;i++){acc+=env[i];if(i>=2*W)acc-=env[i-2*W];avg[i]=acc/Math.min(i+1,2*W)}
+    for(let i=0;i<n;i++)env[i]=Math.max(0,env[i]-avg[Math.min(n-1,i+W)]);
+    let best=0,bestL=50;
+    for(let L=33;L<=100;L++){let r=0;for(let i=0;i+L<n;i++)r+=env[i]*env[i+L];
+        const bpm=6000/L,w=Math.exp(-.5*Math.pow(Math.log2(bpm/118)/.8,2));if(r*w>best){best=r*w;bestL=L}}
+    let bp=bestL,bo=0,bs=-1;
+    for(let p=bestL-1;p<=bestL+1.001;p+=.05){
+        for(let o=0;o<p;o++){let sc=0;for(let t=o;t<n;t+=p)sc+=env[Math.round(t)]||0;if(sc>bs){bs=sc;bp=p;bo=o}}}
+    return {period:bp/100,phase:bo/100,bpm:Math.round(6000/bp)};
+}
+// → {period: ms between beats, next: performance.now() of the next beat}, or null when no beat is known yet
+function musicBeat(){
+    if(!TUNE.playing)return null;
+    if(!tuneIsFile()){
+        const ctx=getMusicCtx();if(!ctx)return null;const per=60/TUNE.bpm,pos=TUNE.p0+(ctx.currentTime-TUNE.t0)/per,nb=Math.ceil(pos+1e-3);
+        return {period:per*1000,next:performance.now()+(nb-pos)*per*1000};
+    }
+    const a=SONGS.aud,x=SONGS.list.find(o=>String(o.id)===TUNE.track);if(!a||a.paused||!x)return null;
+    const v=BEATS.cache[songBeatKey(x)];if(!v){songBeat(x.id);return null}
+    const rate=a.playbackRate||1,k=Math.ceil((a.currentTime-v.phase)/v.period+1e-3),t=v.phase+k*v.period;
+    return {period:v.period*1000/rate,next:performance.now()+(t-a.currentTime)*1000/rate};
+}
 // 🎵 button: first press opens the player (and plays); pressing again folds the player away — the music keeps playing
 function tuneBtnClick(){
     const pl=document.getElementById('tunePlayer');
@@ -3763,7 +3860,6 @@ function tuneUI(){tuneBtnUI();
         if(r&&!r._drag){r.step=.5;r.max=TUNE.len;r.value=TUNE.pos.toFixed(2)}
         if(tt)tt.textContent=f(TUNE.pos*spb)+' / '+f(TUNE.len*spb);
     }
-    const b=document.getElementById('tuneBtn');if(b)b.textContent=TUNE.playing?'⏸ שירים':'🎵 שירים';
 }
 // old names (still called from a few places)
 function playMaozTzur(){tuneToggle()}
