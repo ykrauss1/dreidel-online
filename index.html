@@ -938,7 +938,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v101';
+const APP_VERSION='v102';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -978,7 +978,7 @@ function av(p){return p&&p.avatar?esc(p.avatar)+' ':''}
 // family code. Players created from it carry fk (family code) + fpid (player id); the picture is looked up by them —
 // pictures never travel inside the game state, so online messages stay small.
 const FAM={cache:{},loading:{}};
-const FK_RE=/^[A-Z2-9]{8}$/,FPID_RE=/^[0-9a-f-]{36}$/i;
+const FK_RE=/^[A-Z2-9]{4,8}$/,FPID_RE=/^[0-9a-f-]{36}$/i;
 function famLink(m){return m&&FK_RE.test(m.fk||'')&&FPID_RE.test(m.fpid||'')?{fk:m.fk,fpid:m.fpid}:{}}   // (checked: it arrives from other devices)
 function famKeys(){try{return JSON.parse(lsGet('dreidel_fams')||'[]').filter(k=>FK_RE.test(k))}catch(e){return []}}
 function famRemember(k){const a=famKeys().filter(x=>x!==k);a.unshift(k);lsSet('dreidel_fams',JSON.stringify(a.slice(0,12)))}
@@ -1042,14 +1042,18 @@ function famRenderStart(){
     b.innerHTML=`<p class="fam-hint">שומרים כאן פעם אחת את שמות השחקנים של המשפחה ואת התמונות שלהם — ובמשחק רואים את התמונה של מי שבתורו.</p>
       <button type="button" class="btn btn-gold" style="width:100%;margin-bottom:10px" onclick="FAM_EDIT={key:'',name:'',players:[{name:''},{name:''}]};famDirty=true;famRender()">➕ משפחה חדשה</button>
       <div class="fam-or">— או —</div>
-      <div class="form-row"><label>יש לנו קוד משפחה:</label><input class="input" id="famCodeIn" maxlength="8" placeholder="למשל ABCD2345" style="text-transform:uppercase;direction:ltr;text-align:center"></div>
+      <div class="form-row"><label>יש לנו קוד משפחה:</label><input class="input" id="famCodeIn" maxlength="8" placeholder="למשל K7QM" style="text-transform:uppercase;direction:ltr;text-align:center"></div>
       <button type="button" class="btn btn-outline" style="width:100%" onclick="famLoadCode()">🔑 טען את המשפחה</button>
       ${famKeys().length?`<div class="fam-known">משפחות שכבר שמורות במכשיר: ${famKeys().map(k=>`<button type="button" class="chip" onclick="lsSet('dreidel_my_fam','${k}');openFamily()">${esc(famLocal(k)?.name||k)}</button>`).join(' ')}</div>`:''}`;
 }
 async function famLoadCode(){
     const k=(document.getElementById('famCodeIn').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if(!FK_RE.test(k)){uiAlert('קוד משפחה הוא 8 אותיות ומספרים.');return}
-    const f=await famFetch(k,true);if(!f){uiAlert('לא מצאתי משפחה עם הקוד הזה. בדקו את הקוד (ושיש אינטרנט).');return}
+    if(!FK_RE.test(k)){uiAlert('קוד משפחה הוא 4 אותיות ומספרים באנגלית (בקודים ישנים — 8).');return}
+    let f;try{f=await sbRpc('dreidel_get_family',{p_key:k})}catch(e){
+        if(/too many tries/.test(String(e.message))){uiAlert('היו יותר מדי ניסיונות עם קודים שגויים. נסו שוב בעוד שעה — או בקשו מהמשפחה את הקישור בוואטסאפ.');return}
+        f=await famFetch(k,true)}
+    if(f&&f.key){f._fresh=1;FAM.cache[k]=f;try{lsSet('dreidel_fam_'+k,JSON.stringify(f))}catch(e){}}
+    if(!f||!f.key){uiAlert('לא מצאתי משפחה עם הקוד הזה. בדקו את הקוד (ושיש אינטרנט).');return}
     famRemember(k);lsSet('dreidel_my_fam',k);FAM_EDIT=clone(f);famDirty=false;famRender();
 }
 function famRender(){
@@ -1083,6 +1087,7 @@ async function famSave(){
     const btn=document.getElementById('famSaveBtn');btn.disabled=true;btn.textContent='שומר…';
     try{
         const k=await sbRpc('dreidel_save_family',{p_key:f.key||null,p_name:f.name,p_players:players.map(p=>({id:p.id||null,name:p.name,avatar:p.avatar||null,level:p.level||2,photo:p.photo||''}))});
+        if(!k)throw new Error('unknown family code');
         famRemember(k);lsSet('dreidel_my_fam',k);famBtnsUI();
         const fresh=await famFetch(k,true);FAM_EDIT=clone(fresh||{...f,key:k,players});famDirty=false;famRender();
         floatText(document.getElementById('famSaveBtn')||document.body,'נשמר ✓','plus');
