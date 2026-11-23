@@ -707,7 +707,7 @@ body.circle-armed{touch-action:none}
         <h2 class="section-title" id="waitingTitle">ממתינים לשחקנים...</h2>
         <div class="room-code-display" id="roomCodeDisplay">----</div>
         <p style="text-align:center;color:var(--text-dim);font-size:.75rem;margin-bottom:8px">שתף את הקוד עם החברים</p>
-        <div class="invite-row"><button type="button" class="btn btn-gold btn-sm" onclick="inviteWhatsApp()">📲 הזמנה בוואטסאפ</button><button type="button" class="btn btn-outline btn-sm" id="copyInvite" onclick="copyInvite()">📋 העתק קישור</button></div>
+        <div class="invite-row"><button type="button" class="btn btn-gold btn-sm" onclick="inviteWhatsApp()">📲 הזמנה בוואטסאפ</button><button type="button" class="btn btn-outline btn-sm" onclick="inviteEmail()">✉️ הזמנה במייל</button><button type="button" class="btn btn-outline btn-sm" id="copyInvite" onclick="copyInvite()">📋 העתק קישור</button></div>
         <div id="lobbyPlayers"></div>
         <button class="btn btn-gold hidden" style="width:100%;margin-top:10px" id="startOnlineBtn" onclick="startOnlineGame()">🎲 התחל!</button>
     </div>
@@ -938,7 +938,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v102';
+const APP_VERSION='v103';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1050,7 +1050,7 @@ async function famLoadCode(){
     const k=(document.getElementById('famCodeIn').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
     if(!FK_RE.test(k)){uiAlert('קוד משפחה הוא 4 אותיות ומספרים באנגלית (בקודים ישנים — 8).');return}
     let f;try{f=await sbRpc('dreidel_get_family',{p_key:k})}catch(e){
-        if(/too many tries/.test(String(e.message))){uiAlert('היו יותר מדי ניסיונות עם קודים שגויים. נסו שוב בעוד שעה — או בקשו מהמשפחה את הקישור בוואטסאפ.');return}
+        if(/too many tries/.test(String(e.message))){uiAlert('היו יותר מדי ניסיונות עם קודים שגויים. נסו שוב בעוד שעה — או בקשו מהמשפחה את הקישור (בוואטסאפ או במייל).');return}
         f=await famFetch(k,true)}
     if(f&&f.key){f._fresh=1;FAM.cache[k]=f;try{lsSet('dreidel_fam_'+k,JSON.stringify(f))}catch(e){}}
     if(!f||!f.key){uiAlert('לא מצאתי משפחה עם הקוד הזה. בדקו את הקוד (ושיש אינטרנט).');return}
@@ -1070,6 +1070,7 @@ function famRender(){
       ${f.key?`<div class="fam-code">קוד המשפחה: <b dir="ltr">${f.key}</b>
           <div class="fam-hint">בני המשפחה בבתים אחרים מכניסים את הקוד הזה ב"המשפחה שלנו" — ורואים את אותם שחקנים ותמונות.</div>
           <button type="button" class="btn btn-outline btn-sm" onclick="famShare()">📲 שלח את הקוד בוואטסאפ</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="famShareEmail()">✉️ שלח במייל</button>
           <button type="button" class="btn btn-outline btn-sm" onclick="lsSet('dreidel_my_fam','');FAM_EDIT=null;famRenderStart()">↔ משפחה אחרת</button></div>`:''}`;
     b.querySelectorAll('.fam-pname').forEach(i=>i.oninput=()=>{FAM_EDIT.players[+i.dataset.i].name=i.value;famDirty=true});
     b.querySelector('#famName').oninput=e=>{FAM_EDIT.name=e.target.value;famDirty=true};
@@ -1096,11 +1097,18 @@ async function famSave(){
         uiAlert(/dreidel_save_family|Could not find|404|PGRST202/.test(String(e.message))?'השמירה בשרת עוד לא הופעלה (צריך להריץ פעם אחת את קוד ה-SQL ב-Supabase).':'השמירה נכשלה — בדקו שיש אינטרנט ונסו שוב.');
     }
 }
-function famShare(){
-    const f=FAM_EDIT;if(!f||!f.key)return;
+function famShareText(){
+    const f=FAM_EDIT;if(!f||!f.key)return '';
     const url=location.origin+location.pathname+'?fam='+f.key;
-    const txt=`👨‍👩‍👧 משפחת ${f.name} — למשחק הסביבון 🕎\nקוד המשפחה: ${f.key}\nפותחים כאן (השחקנים והתמונות ייטענו לבד):\n${url}`;
-    window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+    return `👨‍👩‍👧 משפחת ${f.name} — למשחק הסביבון 🕎\nקוד המשפחה: ${f.key}\nפותחים כאן (השחקנים והתמונות ייטענו לבד):\n${url}`;
+}
+function famShare(){const t=famShareText();if(t)window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
+function famShareEmail(){const f=FAM_EDIT;const t=famShareText();if(t)sendEmail(`קוד המשפחה למשחק הסביבון — ${f.name}`,t)}
+// ✉️ e-mail: the mail program on this device, or Gmail in the browser (for those without a mail program)
+async function sendEmail(subject,body){
+    const a=await uiDialog('איך לשלוח את המייל?','Gmail (בדפדפן)','ביטול','תוכנת המייל במכשיר');
+    if(a==='extra'){location.href='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);return}
+    if(a===true)window.open('https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank');
 }
 // a link with ?fam=CODE → that family is added to this device
 (function famFromLink(){const k=(new URLSearchParams(location.search).get('fam')||'').toUpperCase();
@@ -1234,6 +1242,7 @@ function inviteText(){
     const host=G.families?.[0]?.name||G.players?.[0]?.name||'';
     return `🕎 בואו לשחק איתנו סביבון אונליין${host?` (${ONLINE_TYPE==='family'?'משפחת ':''}${host})`:''}!\nקוד החדר: ${ROOM_CODE}\nלחצו כאן כדי להצטרף:\n${inviteLink()}`}
 function inviteWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(inviteText()),'_blank')}
+function inviteEmail(){sendEmail('🕎 הזמנה למשחק סביבון אונליין — קוד חדר '+ROOM_CODE,inviteText())}
 async function copyInvite(){const b=document.getElementById('copyInvite');
     try{await navigator.clipboard.writeText(inviteText());b.textContent='✓ הועתק'}catch(e){b.textContent=inviteLink()}setTimeout(()=>b.textContent='📋 העתק קישור',2500)}
 // arriving from an invitation link → straight to "join", with the code filled in
