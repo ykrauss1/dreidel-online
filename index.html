@@ -289,8 +289,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .install-help b{color:var(--text)}
 /* ═══ FX ═══ */
 /* the pot is a pile of gelt that grows and shrinks with the amount */
-.pot-pile-wrap{width:64px;height:54px;display:flex;align-items:flex-end;justify-content:center}
-.pot-pile{width:64px;height:auto;transform-origin:50% 100%;transition:transform .5s cubic-bezier(.3,1.4,.5,1),opacity .4s;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));user-select:none;pointer-events:none}
+.pot-pile-wrap{width:84px;height:54px;display:flex;align-items:flex-end;justify-content:center}
+.pot-pile{width:84px;height:auto;transform-origin:50% 100%;transition:transform .5s cubic-bezier(.3,1.4,.5,1),opacity .4s;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));user-select:none;pointer-events:none}
 .video-tile.bump,.pot-box.bump,.p-card.bump{animation:bump .45s ease-out}
 @keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.12)}100%{transform:scale(1)}}
 .p-card.gain{box-shadow:0 0 22px rgba(52,211,153,.55)!important;border-color:var(--green)!important}
@@ -442,7 +442,7 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
     .p-card .p-amt{font-size:1.7rem}
     .p-card .p-delta{font-size:.9rem}
     .family-group-title{font-size:.95rem}
-    .pot-box{padding:10px 22px}.pot-val{font-size:2rem}.pot-label{font-size:.85rem}.pot-pile-wrap{width:104px;height:88px}.pot-pile{width:104px}
+    .pot-box{padding:10px 22px}.pot-val{font-size:2rem}.pot-label{font-size:.85rem}.pot-pile-wrap{width:136px;height:88px}.pot-pile{width:136px}
     .turn-box{font-size:1.1rem}.turn-inline{padding:6px 20px;font-size:1.15rem}
     .result-line{font-size:1.25rem;min-height:30px}
     .spin-btn{padding:14px 56px;font-size:1.4rem;border-radius:14px}
@@ -938,7 +938,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v99';
+const APP_VERSION='v100';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -4171,7 +4171,7 @@ function renderGame(animate){
 function sizePile(pot){
     const el=document.getElementById('potCoin');if(!el)return;
     const base=Math.max(1,(G.ante||10)*Math.max(2,G.players.filter(p=>p.alive).length)); // a fresh pot = 1
-    const k=pot<=0?0.35:Math.min(1.3,0.55+0.3*Math.sqrt(pot/base)*1.2);
+    const k=pot<=0?0.35:Math.min(1.15,0.55+0.3*Math.sqrt(pot/base)*1.2);
     el.style.transform=`scale(${k.toFixed(2)})`;el.style.opacity=pot<=0?'.35':'1';
 }
 function renderGameNow(){
