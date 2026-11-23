@@ -86,7 +86,8 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
 
 /* MODE */
-.mode-selector{display:flex;gap:12px;max-width:500px;margin:16px auto}
+.mode-selector{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;max-width:520px;margin:16px auto}
+.mode-selector .mode-card{flex:1 1 200px;max-width:240px}
 .mode-card{flex:1;background:var(--bg-card);border:2px solid var(--border);border-radius:var(--r);padding:20px 14px;text-align:center;cursor:pointer;transition:all .25s}
 .mode-card:hover{border-color:var(--border-l);background:var(--bg-card-alt)}
 .mode-card.selected{border-color:var(--gold);box-shadow:0 0 18px var(--gold-glow)}
@@ -141,7 +142,7 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 .players-grid.many .p-photo{width:22px;height:22px}
 .row-photo{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;border:2px solid rgba(245,200,66,.7)}
 .invite-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 10px}
-.fam-home{width:100%;text-align:center;margin-top:12px}
+.fam-home{flex:1 1 100%;width:100%;text-align:center;margin-top:10px}.fam-home .btn{padding:10px 22px}
 .fam-box{max-width:520px;width:94vw;max-height:88vh;overflow:auto;position:relative;text-align:right}
 .fam-box h2{text-align:center;margin:0 0 10px;color:var(--gold)}
 .fam-close{position:absolute;top:10px;left:12px;background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer}
@@ -578,7 +579,7 @@ body.circle-armed{touch-action:none}
 .power-fill.hot{background:linear-gradient(90deg,var(--green),var(--gold),var(--red))}
 .key-hint kbd{background:var(--bg-input);border:1px solid var(--border-l);border-radius:4px;padding:1px 6px;font-family:inherit}
 @media(max-width:768px){
-    .mode-selector{flex-direction:column}
+    .mode-selector{flex-direction:column;align-items:stretch}.mode-selector .mode-card{max-width:none;flex:none}
     .game-layout{grid-template-columns:1fr}
     .game-sidebar{flex-direction:row;flex-wrap:wrap}
     #videoSection{flex:1 1 100%}
@@ -937,7 +938,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v98';
+const APP_VERSION='v99';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
