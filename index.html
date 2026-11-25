@@ -849,9 +849,10 @@ body.circle-armed{touch-action:none}
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
   <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
   <details class="pron-box" style="margin-top:6px"><summary style="cursor:pointer;font-size:.8rem">📖 הגייה בעברית — לתקן מילים שהקריין אומר לא נכון</summary>
-    <div style="font-size:.68rem;color:var(--text-dim);margin:4px 0">שורה לכל מילה: <b>המילה = איך לומר אותה</b>. אפשר לכתוב בניקוד, ואם הקריין עדיין טועה — לכתוב כמו שזה נשמע (למשל: שמש = שאמאש). המילה מתוקנת גם עם ו/ה/ב/ל/מ/ש/כ לפניה.</div>
-    <textarea id="pronList" class="input" rows="4" dir="rtl" style="width:100%;font-size:.85rem" onchange="pronSave()"></textarea>
-    <div class="settings-row" style="margin-top:4px"><input id="pronTest" class="input" dir="rtl" style="flex:1;font-size:.85rem" value="איך קוראים לנר הגבוה בחנוכייה? שמש. בלי השמש."><button type="button" class="btn btn-outline btn-sm" onclick="pronSave();say(document.getElementById('pronTest').value)">▶ לשמוע</button></div>
+    <div style="font-size:.68rem;color:var(--text-dim);margin:4px 0">כ-100 מילים של חנוכה כבר מתוקנות בפנים (שמש, מכבים, חשמונאים, פך, הלל…). כאן מוסיפים עוד — שורה לכל מילה: <b>המילה = איך לומר אותה</b>, בניקוד, ואם הקריין עדיין טועה — כמו שזה נשמע (שמש = שאמאש). המילה מתוקנת גם עם ו/ה/ב/ל/מ/ש/כ לפניה. <b>הרשימה נשמרת לכל המכשירים</b> (בקוד מנהל).</div>
+    <textarea id="pronList" class="input" rows="4" dir="rtl" style="width:100%;font-size:.85rem" placeholder="למשל: סבתא = סָבְתָא"></textarea>
+    <div class="settings-row" style="margin-top:4px"><button type="button" class="btn btn-gold btn-sm" onclick="pronSave()">💾 שמור לכל המכשירים</button></div>
+    <div class="settings-row" style="margin-top:4px"><input id="pronTest" class="input" dir="rtl" style="flex:1;font-size:.85rem" value="איך קוראים לנר הגבוה בחנוכייה? שמש. בלי השמש."><button type="button" class="btn btn-outline btn-sm" onclick="PRON.list=null;PRON_TRY=document.getElementById('pronList').value;say(document.getElementById('pronTest').value);PRON_TRY=null">▶ לשמוע</button></div>
   </details>
   </details>
   <details class="sp-sec"><summary>🎙️ הקלטות שלנו לקריין</summary>
@@ -949,7 +950,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v109';
+const APP_VERSION='v110';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -4022,21 +4023,143 @@ let NARR_BUSY_UNTIL=0,LAST_REVEAL=0;
 function narrBusy(){return (window.speechSynthesis&&speechSynthesis.speaking)||performance.now()<NARR_BUSY_UNTIL||performance.now()-LAST_REVEAL<2600}
 function narrOn(){return document.getElementById('narratorOn')?.checked&&document.getElementById('soundOn')?.checked}
 // ── 📖 how to say Hebrew words the voice gets wrong (editable in the settings) ──
-const PRON_DEFAULT='שמש = שַׁמָּשׁ\nחנוכייה = חֲנֻכִּיָּה\nמכבים = מַכַּבִּים\nסביבון = סְבִיבוֹן';
+// built in for everyone: Chanukah words the voice tends to say wrong (with nikud, so the voice knows how)
+const PRON_BUILTIN=`שמש = שַׁמָּשׁ
+השמש = הַשַּׁמָּשׁ
+חנוכה = חֲנֻכָּה
+בחנוכה = בַּחֲנֻכָּה
+החנוכה = הַחֲנֻכָּה
+חנוכייה = חֲנֻכִּיָּה
+החנוכייה = הַחֲנֻכִּיָּה
+בחנוכייה = בַּחֲנֻכִּיָּה
+מכבים = מַכַּבִּים
+המכבים = הַמַּכַּבִּים
+מכבי = מַכַּבִּי
+המכבי = הַמַּכַּבִּי
+מקבים = מַקַּבִּים
+המקבים = הַמַּקַּבִּים
+סביבון = סְבִיבוֹן
+הסביבון = הַסְּבִיבוֹן
+לסביבון = לַסְּבִיבוֹן
+נס = נֵס
+הנס = הַנֵּס
+הניסים = הַנִּסִּים
+ניסא = נִיסָא
+פרסומי = פִּרְסוּמֵי
+פך = פַּךְ
+פכים = פַּכִּים
+שמן = שֶׁמֶן
+השמן = הַשֶּׁמֶן
+בשמן = בַּשֶּׁמֶן
+נר = נֵר
+נרות = נֵרוֹת
+הנרות = הַנֵּרוֹת
+מעוז צור = מָעוֹז צוּר
+בית הלל = בֵּית הִלֵּל
+שמאי = שַׁמַּאי
+הלל = הַלֵּל
+בהלל = בְּהַלֵּל
+יוונים = יְוָנִים
+היוונים = הַיְּוָנִים
+יווני = יְוָנִי
+היווני = הַיְּוָנִי
+חשמונאים = חַשְׁמוֹנָאִים
+החשמונאים = הַחַשְׁמוֹנָאִים
+חשמונאי = חַשְׁמוֹנַאי
+מתתיהו = מַתִּתְיָהוּ
+גר מתתיהו = גָּר מַתִּתְיָהוּ
+אנטיוכוס = אַנְטִיּוֹכוֹס
+אלעזר = אֶלְעָזָר
+מודיעין = מוֹדִיעִין
+במודיעין = בְּמוֹדִיעִין
+יהודה = יְהוּדָה
+יהודית = יְהוּדִית
+חנה = חַנָּה
+מהדרין = מְהַדְּרִין
+המהדרין = הַמְּהַדְּרִין
+מהודר = מְהֻדָּר
+הידור = הִדּוּר
+גזירות = גְּזֵרוֹת
+הגזירות = הַגְּזֵרוֹת
+גזרו = גָּזְרוּ
+שגזר = שֶׁגָּזַר
+טימאו = טִמְּאוּ
+שטיהרו = שֶׁטִּהֲרוּ
+טהור = טָהוֹר
+סופגנייה = סֻפְגָּנִיָּה
+סופגניות = סֻפְגָּנִיּוֹת
+מסופגניות = מִסֻּפְגָּנִיּוֹת
+לביבות = לְבִיבוֹת
+מסכת = מַסֶּכֶת
+מסכות = מַסֵּכוֹת
+ט"ו בשבט = טוּ בִּשְׁבָט
+טבת = טֵבֵת
+כסלו = כִּסְלֵו
+הרמב"ם = הָרַמְבָּם
+רמב"ם = רַמְבָּם
+הרמ"א = הָרַמָּא
+התנ"ך = הַתַּנַּךְ
+מהתנ"ך = מֵהַתַּנַּךְ
+אמות = אַמּוֹת
+קנים = קָנִים
+להבות = לֶהָבוֹת
+לשלהבת = לַשַּׁלְהֶבֶת
+זית = זַיִת
+חזיר = חֲזִיר
+עני = עָנִי
+לעני = לֶעָנִי
+דמה חג = דָּמָה חַג
+ההפטרה = הַהַפְטָרָה
+תחנון = תַּחֲנוּן
+מזמור = מִזְמוֹר
+גיבורים = גִּבּוֹרִים
+הגיבורה = הַגִּבּוֹרָה
+ספר = סֵפֶר
+ספרי = סִפְרֵי
+מצווה = מִצְוָה
+המצווה = הַמִּצְוָה
+הדלקה = הַדְלָקָה
+הדלקת = הַדְלָקַת
+מדליקים = מַדְלִיקִים
+תורך = תּוֹרְךָ
+קופה = קֻפָּה
+הקופה = הַקֻּפָּה`;
+// + the shared list the manager keeps (saved on the server → the same on every device and in every home)
+const PRON={shared:lsGet('dreidel_pron_shared')||'',list:null};
+function pronParse(txt){return (txt||'').split('\n').map(l=>l.split('=')).filter(x=>x.length>=2&&x[0].trim()&&x.slice(1).join('=').trim()).map(x=>[x[0].trim(),x.slice(1).join('=').trim()])}
 function pronList(){
-    const txt=lsGet('dreidel_pron')??PRON_DEFAULT;
-    return txt.split('\n').map(l=>l.split('=')).filter(x=>x.length>=2&&x[0].trim()&&x.slice(1).join('=').trim()).map(x=>[x[0].trim(),x.slice(1).join('=').trim()]);
+    if(PRON.list)return PRON.list;
+    const m=new Map();for(const src of [PRON_BUILTIN,lsGet('dreidel_pron')||'',PRON.shared])for(const [w,v] of pronParse(src))m.set(w,v);   // later ones win
+    return PRON.list=[...m.entries()].sort((a,b)=>b[0].length-a[0].length);        // longer phrases first ("בית הלל" before "הלל")
 }
+async function pronLoad(){
+    try{const v=await sbRpc('dreidel_get_config',{p_key:'pron'});if(typeof v==='string'){PRON.shared=v;lsSet('dreidel_pron_shared',v);PRON.list=null;pronInit(true)}}catch(e){}
+}
+setTimeout(pronLoad,1500);
+let PRON_TRY=null;          // the box's words while trying them out, before saving
 function pronFix(text){
-    for(const [w,say] of pronList()){
+    const extra=PRON_TRY!=null?pronParse(PRON_TRY).sort((a,b)=>b[0].length-a[0].length):[];
+    for(const [w,say] of [...extra,...pronList()]){
         const esc=w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
         // the word on its own, or with ו/ה/ב/ל/מ/ש/כ in front ("השמש", "בשמש", "והשמש")
         text=text.replace(new RegExp('(^|[^\u05D0-\u05EA\u0591-\u05C7])([ובלמשכה]{0,3})'+esc+'(?=$|[^\u05D0-\u05EA\u0591-\u05C7])','g'),(m,pre,px)=>pre+px+say);
     }
     return text;
 }
-function pronSave(){const t=document.getElementById('pronList');if(t)lsSet('dreidel_pron',t.value)}
-function pronInit(){const t=document.getElementById('pronList');if(t&&!t.value)t.value=lsGet('dreidel_pron')??PRON_DEFAULT}
+// the box in the settings = the shared list (every device gets it); saving it needs the manager code
+function pronInit(force){const t=document.getElementById('pronList');if(t&&(force||!t.value))t.value=PRON.shared||lsGet('dreidel_pron')||''}
+async function pronSave(){
+    const t=document.getElementById('pronList');if(!t)return;
+    PRON.list=null;const v=t.value.trim();
+    let code=adminOpen()?adminCode():'';
+    if(!code){const a=await uiPrompt('כדי לשמור לכל המכשירים — קוד מנהל (4 ספרות):','');if(a==null)return;code=String(a).replace(/\D/g,'');
+        if(adminCode()&&!(await adminCheck(code))){uiAlert('הקוד לא נכון.');return}}
+    try{const ok=await sbRpc('dreidel_set_config',{p_key:'pron',p_value:v,p_secret:code});
+        if(ok===false){uiAlert('השרת לא קיבל את הקוד (הרשימה נשמרה לכל המכשירים בקוד אחר).');return}
+        PRON.shared=v;lsSet('dreidel_pron_shared',v);lsSet('dreidel_pron','');PRON.list=null;
+        floatText(t,'✔ נשמר לכל המכשירים','plus');
+    }catch(e){lsSet('dreidel_pron',v);uiAlert(/too many/.test(String(e.message))?'יותר מדי ניסיונות — נסו בעוד שעה.':'לא הצלחתי לשמור בשרת — נשמר בינתיים רק במחשב הזה.')}
+}
 setTimeout(pronInit,0);
 function speakIn(lang,text){
     const nv=NARR_VOICE[lang];if(!nv||!text)return false;
