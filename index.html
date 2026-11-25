@@ -944,7 +944,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v107';
+const APP_VERSION='v108';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -3970,13 +3970,15 @@ const NARR_LANGS={
 const MALE_VOICE=/\b(asaf|avri|david|mark|guy|george|ryan|james|daniel|paul|pavel|dmitry|henri|claude|thomas|male)\b/i;
 const CHILD_VOICE=/\b(ana|maisie|eloise|gisela|xiaoyou|xiaoshuang|aigerim|child|kid|junior)\b/i;
 const FEMALE_VOICE=/\b(hila|carmit|zira|jenny|aria|samantha|karen|moira|tessa|amelie|am[ée]lie|hortense|denise|julie|marie|audrey|svetlana|dariya|irina|milena|katya|mekdes|hedda|katja|anna|petra|female|google)\b/i;
+// voices that come out much quieter than the others — left out (if a language has only such a voice, it is skipped)
+const QUIET_VOICE=/google\s+русский/i;
 const NARR_VOICE={};      // lang → {voice, child}
 // only the result (no letter name), two lines per letter, said by a bobe (grandma) or a zeyde (grandpa)
 const YI_CLIPS=(()=>{const o={};[['נ','nun'],['ג','gimel'],['ה','he'],['פ','pay']].forEach(([l,k])=>{o[l]=[];for(const who of ['bobe','zeyde'])for(const i of [1,2])o[l].push(`yi_${k}${i}_${who}`)});return o})();
 function findVoices(){
     if(!window.speechSynthesis)return;
     const vs=speechSynthesis.getVoices();
-    const best=re=>{const c=vs.filter(v=>re.test(v.lang.replace('_','-')));if(!c.length)return null;
+    const best=re=>{const c=vs.filter(v=>re.test(v.lang.replace('_','-'))&&!QUIET_VOICE.test(v.name));if(!c.length)return null;
         const score=v=>(CHILD_VOICE.test(v.name)?100:0)+(/natural|neural|online|enhanced|premium/i.test(v.name)?20:0)+(FEMALE_VOICE.test(v.name)?25:0)-(MALE_VOICE.test(v.name)?15:0)+(v.localService?0:2);
         return c.sort((a,b)=>score(b)-score(a))[0]};
     for(const k in NARR_LANGS){
