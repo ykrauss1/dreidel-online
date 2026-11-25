@@ -312,6 +312,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .tune-player input{width:150px;accent-color:var(--gold)}
 .tune-player .tp-track{direction:rtl;background:var(--bg-input);color:var(--gold);border:1px solid var(--border-l);border-radius:14px;padding:4px 8px;font-family:inherit;font-size:.85rem;max-width:170px}
 .tune-toggle.playing{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(245,200,66,.55);animation:tuneGlow 1.6s ease-in-out infinite}@keyframes tuneGlow{50%{box-shadow:0 0 0 2px var(--gold),0 0 4px rgba(245,200,66,.2)}}
+.narr-cap{position:fixed;right:16px;bottom:16px;z-index:60;background:rgba(20,24,50,.88);border:1px solid var(--border-l,#445);color:var(--text-dim,#bbc);border-radius:10px;padding:4px 10px;font-size:.8rem;opacity:0;transition:opacity .4s;pointer-events:none}.narr-cap.show{opacity:1}
 .share-note{position:fixed;left:16px;bottom:72px;z-index:60;background:rgba(20,24,50,.92);border:1px solid var(--gold);color:var(--gold);border-radius:12px;padding:6px 12px;font-size:.9rem;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tune-player button.on{background:var(--gold-dim,#7a6420);color:var(--gold)}
 .tune-player .tp-time{font-size:.75rem;color:var(--text-dim);min-width:70px;font-variant-numeric:tabular-nums}
@@ -943,7 +944,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v106';
+const APP_VERSION='v107';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2539,12 +2540,15 @@ setInterval(nudgeTick,1000);
     const art=document.getElementById('dreidelSvg'),ring=document.getElementById('spinRing'),box=art.parentElement;
     const TURN=Math.PI*2,QUARTER=Math.PI/2,MIN_W=3;
     let acc=0,samples=[],lastMove=0,lastPt=null,lastHead=null,shownFace=-1,faceBase=0,raf=0,recent=0;
-    let flickPts=[],x0=0,y0=0,idleOn=false,idleRaf=0,idlePhase=0,idleT=0,path=[];
+    let flickPts=[],x0=0,y0=0,idleOn=false,idleRaf=0,idlePhase=0,idleT=0,path=[],spd=[];
+    // the strength is how fast it was turned over the last seconds (most of the turning) — not the slow-down at the very end
+    function sustained(){const now=performance.now(),v=spd.filter(([t])=>now-t<=2500).map(x=>x[1]).sort((a,b)=>a-b);
+        return v.length<4?0:v[Math.floor(v.length*.7)]}
     // a real circle, not a nudge: the hand's path over the last 1.5 s must be at least this big (px)
     const MIN_CIRCLE_PX=35;
     function pathSize(){if(path.length<2)return 0;let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const [x,y] of path){a=Math.min(a,x);b=Math.max(b,x);c=Math.min(c,y);d=Math.max(d,y)}return Math.min(b-a,d-c)}
     function omega(win){const now=performance.now();let sum=0;for(const [t,d] of samples)if(now-t<=win)sum+=d;return sum/(win/1000)}
-    function clear(){acc=0;samples=[];recent=0;lastPt=null;lastHead=null;path=[];ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
+    function clear(){acc=0;samples=[];recent=0;spd=[];lastPt=null;lastHead=null;path=[];ring.classList.remove('show','wound');ring.style.setProperty('--p',0)}
     // Circles are measured by how the DIRECTION of the hand turns (not by the angle around the dreidel),
     // so a circle anywhere on the screen, small or big, turns the dreidel.
     function track(x,y){
@@ -2597,7 +2601,7 @@ setInterval(nudgeTick,1000);
     function launch(w){
         disengage();CIRCLE.justLaunched=true;setTimeout(()=>CIRCLE.justLaunched=false,400);
         art.style.transform='';
-        const power=Math.max(.12,Math.min(1,(w-MIN_W)/16));   // 1 circle/s ≈ .2 · 2/s ≈ .6 · 3/s = full
+        const power=Math.max(.12,Math.min(1,(Math.max(w,sustained())-MIN_W)/16));   // 1 circle/s ≈ .2 · 2/s ≈ .6 · 3/s = full
         const rot=acc<0?-1:1;clear();playWhoosh(power);spinFromInput(power,'circle',{rot});
     }
     function letGo(){disengage();art.style.transition='transform .25s ease-out';art.style.transform='';clear();d3Settle();resetSpinUI();refreshSpinUI()}
@@ -2605,7 +2609,8 @@ setInterval(nudgeTick,1000);
         if(!CIRCLE.engaged)return;
         draw(acc,true);
         const w=Math.abs(omega(220));recent=Math.max(recent*.96,w);
-        const p=Math.min(1,w/22);document.getElementById('powerFill').style.width=Math.round(p*100)+'%';chargeTone(p>.05,p);
+        if(performance.now()-lastMove<120&&w>MIN_W*.5)spd.push([performance.now(),w]);while(spd.length>400)spd.shift();
+        const p=Math.max(0,Math.min(1,(Math.max(w,sustained())-MIN_W)/16));        // the bar = the strength it would fly with nowdocument.getElementById('powerFill').style.width=Math.round(p*100)+'%';chargeTone(p>.05,p);
         ring.style.setProperty('--a',((acc*180/Math.PI)%360).toFixed(0)+'deg');
         const idle=performance.now()-lastMove;
         if(idle>(spinMode()==='wheel'?320:150)){   // (wheel notches come further apart than mouse moves)                                     // the hand stopped
@@ -4039,12 +4044,20 @@ function narrate(letter,name,force){
     for(const k of pool){r-=NARR_LANGS[k].w;if(r<=0){lang=k;break}}
     _narrLast=lang;
     const shin=letter==='פ'&&shinMode();
-    if(lang==='mine'){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();myRecPlay(recL);return}
-    if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();NARR_BUSY_UNTIL=performance.now()+4600;playSfx(pick(YI_CLIPS[letter]),{vol:1});return}
+    if(lang==='mine'){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();myRecPlay(recL);narrCaption('ההקלטה שלנו');return}
+    if(lang==='yi'&&!NARR_VOICE.yi){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();NARR_BUSY_UNTIL=performance.now()+4600;
+        const c=pick(YI_CLIPS[letter]);playSfx(c,{vol:1});narrCaption('יידיש — '+(c.includes('bobe')?'סבתא':'סבא'));return}
+    {const nv=NARR_VOICE[lang];narrCaption(NARR_LANGS[lang].name+(nv&&nv.voice?' — '+nv.voice.name.replace(/^(Microsoft|Google)\s+/,'').replace(/\s*[-–(].*$/,''):''))}
     const set=NARR_PHRASES[lang];
     const list=(shin&&set['ש'])?set['ש']:set[letter];   // the lines no longer name the letter
     const p=pick(list||NARR_PHRASES.he[letter]||['']);
     speakIn(lang,p.replace('{n}',lang==='he'?(name||''):'').replace('{takes}',isFemaleName(name)?'לוקחת':'לוקח').replace('{L}',shin?'שין':'פה'));
+}
+// a small caption: which voice is speaking (so a voice that's hard to hear can be found and turned off)
+function narrCaption(text){
+    let el=document.getElementById('narrCap');
+    if(!el){el=document.createElement('div');el.id='narrCap';el.className='narr-cap';document.body.appendChild(el)}
+    el.textContent='🗣️ '+text;el.classList.add('show');clearTimeout(narrCaption.t);narrCaption.t=setTimeout(()=>el.classList.remove('show'),3200);
 }
 function testNarrator(){unlockAudio();narrate(pick(['ג','ה','נ','פ']),'')}
 // listen to each language: one button per language this device can speak; each click = the next letter
