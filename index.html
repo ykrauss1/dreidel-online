@@ -950,7 +950,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v111';
+const APP_VERSION='v112';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2515,7 +2515,7 @@ function nudgeCfg(){
 setTimeout(()=>{const nl=document.getElementById('nudgeLines');if(nl&&!nl.value.trim())nl.value=NUDGE_DEFAULT},60);
 function nudgeText(line,name){
     const f=isFemaleName(name);
-    return line.replace(/\{(שם|n)\}/g,name).replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,m,w)=>f?w:m);
+    return line.replace(/\{(שם|n)\}/g,name).replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,m,w)=>f?(w.trim()==='את'?'אַתְּ':w):m);   // ("את" alone = you, not the object word)
 }
 function nudgeTick(){
     const gs=document.getElementById('gameScreen');
@@ -4121,7 +4121,6 @@ const PRON_BUILTIN=`שמש = שַׁמָּשׁ
 הדלקה = הַדְלָקָה
 הדלקת = הַדְלָקַת
 מדליקים = מַדְלִיקִים
-תורך = תּוֹרְךָ
 קופה = קֻפָּה
 הקופה = הַקֻּפָּה
 שמונה עשרה = שְׁמוֹנֶה עֶשְׂרֵה
@@ -4194,7 +4193,13 @@ async function pronLoad(){
 }
 setTimeout(pronLoad,1500);
 let PRON_TRY=null;          // the box's words while trying them out, before saving
-function pronFix(text){
+// "you / yours" words — said to the player whose turn it is: masculine, unless the name is clearly a girl's
+const PRON_YOU={'תורך':['תּוֹרְךָ','תּוֹרֵךְ'],'לך':['לְךָ','לָךְ'],'שלך':['שֶׁלְּךָ','שֶׁלָּךְ'],'בשבילך':['בִּשְׁבִילְךָ','בִּשְׁבִילֵךְ'],
+    'איתך':['אִתְּךָ','אִתָּךְ'],'אותך':['אוֹתְךָ','אוֹתָךְ'],'ממך':['מִמְּךָ','מִמֵּךְ'],'עליך':['עָלֶיךָ','עָלַיִךְ'],'אליך':['אֵלֶיךָ','אֵלַיִךְ'],'לפניך':['לְפָנֶיךָ','לְפָנַיִךְ']};
+function pronFix(text,fem){
+    if(fem===undefined){try{fem=curFemale()}catch(e){fem=false}}
+    for(const [w,[m,f]] of Object.entries(PRON_YOU))
+        text=text.replace(new RegExp('(^|[^\u05D0-\u05EA\u0591-\u05C7])([ו]?)'+w+'(?=$|[^\u05D0-\u05EA\u0591-\u05C7])','g'),(x,pre,px)=>pre+px+(fem?f:m));
     const extra=PRON_TRY!=null?pronParse(PRON_TRY).sort((a,b)=>b[0].length-a[0].length):[];
     for(const [w,say] of [...extra,...pronList()]){
         const esc=w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
