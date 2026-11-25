@@ -848,6 +848,11 @@ body.circle-armed{touch-action:none}
   <div class="settings-row"><select id="narratorLang" class="input" style="padding:5px 8px;font-size:.8rem;flex:1"><option value="mix">🌍 עברית, ולפעמים אנגלית, צרפתית, רוסית, יידיש, אמהרית</option><option value="he">עברית בלבד</option></select><button class="btn btn-sm btn-outline" type="button" onclick="testNarrator()" title="להשמיע דוגמה">🔈</button></div>
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
   <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
+  <details class="pron-box" style="margin-top:6px"><summary style="cursor:pointer;font-size:.8rem">📖 הגייה בעברית — לתקן מילים שהקריין אומר לא נכון</summary>
+    <div style="font-size:.68rem;color:var(--text-dim);margin:4px 0">שורה לכל מילה: <b>המילה = איך לומר אותה</b>. אפשר לכתוב בניקוד, ואם הקריין עדיין טועה — לכתוב כמו שזה נשמע (למשל: שמש = שאמאש). המילה מתוקנת גם עם ו/ה/ב/ל/מ/ש/כ לפניה.</div>
+    <textarea id="pronList" class="input" rows="4" dir="rtl" style="width:100%;font-size:.85rem" onchange="pronSave()"></textarea>
+    <div class="settings-row" style="margin-top:4px"><input id="pronTest" class="input" dir="rtl" style="flex:1;font-size:.85rem" value="איך קוראים לנר הגבוה בחנוכייה? שמש. בלי השמש."><button type="button" class="btn btn-outline btn-sm" onclick="pronSave();say(document.getElementById('pronTest').value)">▶ לשמוע</button></div>
+  </details>
   </details>
   <details class="sp-sec"><summary>🎙️ הקלטות שלנו לקריין</summary>
     <div style="font-size:.65rem;color:var(--text-dim);margin:4px 0">כל לחיצה על ⏺ מוסיפה הקלטה (עד 5 שניות). אפשר כמה הקלטות לכל תוצאה — הקריין יבחר ביניהן. נשמר במכשיר הזה.</div>
@@ -944,7 +949,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v108';
+const APP_VERSION='v109';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -4016,8 +4021,26 @@ const NARR_PHRASES={
 let NARR_BUSY_UNTIL=0,LAST_REVEAL=0;
 function narrBusy(){return (window.speechSynthesis&&speechSynthesis.speaking)||performance.now()<NARR_BUSY_UNTIL||performance.now()-LAST_REVEAL<2600}
 function narrOn(){return document.getElementById('narratorOn')?.checked&&document.getElementById('soundOn')?.checked}
+// ── 📖 how to say Hebrew words the voice gets wrong (editable in the settings) ──
+const PRON_DEFAULT='שמש = שַׁמָּשׁ\nחנוכייה = חֲנֻכִּיָּה\nמכבים = מַכַּבִּים\nסביבון = סְבִיבוֹן';
+function pronList(){
+    const txt=lsGet('dreidel_pron')??PRON_DEFAULT;
+    return txt.split('\n').map(l=>l.split('=')).filter(x=>x.length>=2&&x[0].trim()&&x.slice(1).join('=').trim()).map(x=>[x[0].trim(),x.slice(1).join('=').trim()]);
+}
+function pronFix(text){
+    for(const [w,say] of pronList()){
+        const esc=w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        // the word on its own, or with ו/ה/ב/ל/מ/ש/כ in front ("השמש", "בשמש", "והשמש")
+        text=text.replace(new RegExp('(^|[^\u05D0-\u05EA\u0591-\u05C7])([ובלמשכה]{0,3})'+esc+'(?=$|[^\u05D0-\u05EA\u0591-\u05C7])','g'),(m,pre,px)=>pre+px+say);
+    }
+    return text;
+}
+function pronSave(){const t=document.getElementById('pronList');if(t)lsSet('dreidel_pron',t.value)}
+function pronInit(){const t=document.getElementById('pronList');if(t&&!t.value)t.value=lsGet('dreidel_pron')??PRON_DEFAULT}
+setTimeout(pronInit,0);
 function speakIn(lang,text){
     const nv=NARR_VOICE[lang];if(!nv||!text)return false;
+    if(lang==='he')text=pronFix(text);
     try{
         speechSynthesis.cancel();
         const u=new SpeechSynthesisUtterance(text);u.voice=nv.voice;u.lang=nv.voice.lang;
