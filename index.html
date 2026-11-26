@@ -326,7 +326,12 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .auth-card h2{margin:0;color:var(--gold)}.auth-logo{font-size:3rem;line-height:1}
 .auth-card #authForm,.auth-card #authWait{display:flex;flex-direction:column;gap:10px}.auth-card #authWait.hidden{display:none}
 .auth-sub{margin:0;color:var(--text);font-size:.95rem;line-height:1.5}.auth-small{margin:0;color:var(--text-dim);font-size:.78rem;line-height:1.5}
-.auth-small a{color:var(--gold)}.auth-msg{min-height:1.2em;color:#ff8a8a;font-size:.88rem}.auth-copy{color:var(--text-dim);font-size:.7rem;opacity:.7}
+.auth-small a{color:var(--gold)}.auth-tabs{display:flex;gap:6px;background:rgba(255,255,255,.06);border-radius:12px;padding:4px}
+.auth-tabs button{flex:1;border:0;border-radius:9px;padding:8px;font:inherit;font-weight:700;background:transparent;color:var(--text-dim);cursor:pointer}
+.auth-tabs button.on{background:var(--gold);color:#2a1a00}
+.auth-link{background:none;border:0;color:var(--gold);font:inherit;font-size:.82rem;cursor:pointer;text-decoration:underline;padding:0}
+.auth-msg.ok{color:#8be28b}
+.auth-msg{min-height:1.2em;color:#ff8a8a;font-size:.88rem}.auth-copy{color:var(--text-dim);font-size:.7rem;opacity:.7}
 .acc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.85rem}
 .narr-cap{position:fixed;right:16px;bottom:16px;z-index:60;background:rgba(20,24,50,.88);border:1px solid var(--border-l,#445);color:var(--text-dim,#bbc);border-radius:10px;padding:4px 10px;font-size:.8rem;opacity:0;transition:opacity .4s;pointer-events:none}.narr-cap.show{opacity:1}
 .share-note{position:fixed;left:16px;bottom:72px;z-index:60;background:rgba(20,24,50,.92);border:1px solid var(--gold);color:var(--gold);border-radius:12px;padding:6px 12px;font-size:.9rem;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -634,12 +639,19 @@ body.circle-armed{touch-action:none}
     <div class="auth-logo">🕎</div>
     <h2 id="authTitle">סביבון — כניסה</h2>
     <div id="authForm">
-      <p class="auth-sub">המשחק פתוח למשפחות שאושרו. נכנסים עם <b>שם המשתמש והסיסמה של אתר CerviniaLive</b>.</p>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="on" id="authTabIn" onclick="authTab('in')">כניסה</button>
+        <button type="button" id="authTabUp" onclick="authTab('up')">הרשמה</button>
+      </div>
+      <p class="auth-sub" id="authLead">המשחק פתוח למשפחות שאושרו.</p>
       <input class="input" id="authUser" placeholder="שם משתמש" autocomplete="username" dir="auto">
-      <input class="input" id="authPass" type="password" placeholder="סיסמה" autocomplete="current-password" dir="auto" onkeydown="if(event.key==='Enter')authLogin()">
-      <button class="btn btn-gold" id="authGo" onclick="authLogin()">כניסה</button>
+      <input class="input auth-up hidden" id="authEmail" type="email" placeholder="מייל (לאיפוס סיסמה, לא מוצג לאף אחד)" autocomplete="email" dir="ltr">
+      <input class="input" id="authPass" type="password" placeholder="סיסמה" autocomplete="current-password" dir="ltr" onkeydown="if(event.key==='Enter')authGo()">
+      <input class="input auth-up hidden" id="authPass2" type="password" placeholder="סיסמה שוב" autocomplete="new-password" dir="ltr" onkeydown="if(event.key==='Enter')authGo()">
+      <button class="btn btn-gold" id="authGo" onclick="authGo()">כניסה</button>
       <div class="auth-msg" id="authMsg" role="alert"></div>
-      <p class="auth-small">אין לכם משתמש? נרשמים (בחינם) באתר <a href="https://cervinialive.co.il" target="_blank" rel="noopener">cervinialive.co.il</a>, ואז מבקשים ממנהל המשחק לאשר אתכם.<br>שכחתם סיסמה? מאפסים אותה באתר הזה.</p>
+      <button type="button" class="auth-link" id="authForgot" onclick="authForgot()">שכחתי סיסמה</button>
+      <p class="auth-small" id="authNote">מי שכבר יש לו משתמש באתר CerviniaLive — נכנס עם אותו משתמש.</p>
     </div>
     <div id="authWait" class="hidden">
       <p class="auth-sub" id="authWaitText"></p>
@@ -895,8 +907,11 @@ body.circle-armed{touch-action:none}
   <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
   <div id="accBox" class="hidden" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">
     <div class="settings-row"><span>👤 מחובר/ת: <b id="accName"></b></span><button type="button" class="btn btn-outline btn-sm" onclick="authLogout()">יציאה</button></div>
-    <details id="accAdmin" class="hidden" ontoggle="if(this.open)accRefresh()"><summary style="cursor:pointer;font-size:.85rem">👥 מי מורשה לשחק (מנהל)</summary>
+    <details id="accAdmin" class="hidden" ontoggle="if(this.open)accRefresh()"><summary style="cursor:pointer;font-size:.85rem" id="accSum">👥 מי מורשה לשחק (מנהל)</summary>
       <div style="font-size:.7rem;color:var(--text-dim);margin:4px 0">מחפשים משתמש של CerviniaLive לפי שם, ולוחצים "אשר". רק מאושרים נכנסים למשחק ולחדרי האונליין.</div>
+      <div style="font-size:.78rem;margin-top:4px;color:var(--gold)">ממתינים לאישור:</div>
+      <div id="accWaiting"></div>
+      <div style="font-size:.78rem;margin-top:8px;color:var(--gold)">לחפש ולאשר משתמש:</div>
       <div class="settings-row"><input id="accQ" class="input" dir="auto" style="flex:1" placeholder="שם משתמש…" oninput="clearTimeout(window._accT);window._accT=setTimeout(accFind,350)"></div>
       <div id="accFound"></div>
       <div style="font-size:.78rem;margin-top:6px;color:var(--gold)">מאושרים עכשיו:</div>
@@ -1006,7 +1021,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://cdgqodtbdhsqkvcgcdlm.supabase.co';
 const SB_KEY='sb_publishable_B4HOCQF3IxN_6Ojz1_ctnA_k6JEAR4g';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v116';
+const APP_VERSION='v117';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1061,6 +1076,7 @@ function sbClient(){
 }
 function authShow(mode,text){
     const g=document.getElementById('authGate');if(!g)return;
+    if(g.parentNode!==document.body)document.body.appendChild(g);        // above everything (out of the app's own layers)
     g.classList.toggle('hidden',mode==='open');
     document.getElementById('authForm').classList.toggle('hidden',mode!=='form');
     document.getElementById('authWait').classList.toggle('hidden',mode!=='wait');
@@ -1077,10 +1093,65 @@ async function authCheck(again){
         if(/PGRST202|Could not find the function/.test(String(e.message))){authShow('open');return true}}   // (the server isn't set up for it yet → don't lock anyone out)
     if(!w){authShow('wait','לא הצלחתי לבדוק את המשתמש מול השרת. בדקו את האינטרנט.');return false}
     AUTH.user=w.username||'';AUTH.allowed=!!w.allowed;AUTH.admin=!!w.admin;
-    if(!AUTH.allowed){authShow('wait',`שלום <b>${esc(AUTH.user)}</b> 👋<br>המשתמש שלך עוד לא אושר למשחק הסביבון.<br>בקשו ממנהל המשחק לאשר אתכם, ואז לחצו "בדיקה שוב".`);return false}
+    if(!AUTH.allowed){try{await sbRpc('dreidel_request_access')}catch(e){}
+        authShow('wait',`שלום <b>${esc(AUTH.user)}</b> 👋<br>הבקשה שלכם לשחק נשלחה למנהל המשחק.<br>כשהוא יאשר — לחצו "בדיקה שוב".`);return false}
     authShow('open');
     if(again)floatText(document.body,'ברוכים הבאים! 🕎','plus');
+    if(AUTH.admin){try{const w=await sbRpc('dreidel_request_list');accBadge(w.length);if(w.length)floatText(document.body,`🔔 ${w.length} ממתינים לאישור — בהגדרות`,'plus')}catch(e){}}
     return true;
+}
+let AUTH_MODE='in';
+function authTab(m){
+    AUTH_MODE=m;const up=m==='up';
+    document.getElementById('authTabIn').classList.toggle('on',!up);document.getElementById('authTabUp').classList.toggle('on',up);
+    document.querySelectorAll('.auth-up').forEach(e=>e.classList.toggle('hidden',!up));
+    document.getElementById('authGo').textContent=up?'הרשמה':'כניסה';
+    document.getElementById('authForgot').classList.toggle('hidden',up);
+    document.getElementById('authLead').textContent=up?'בוחרים שם משתמש וסיסמה. אחרי ההרשמה מנהל המשחק מאשר אתכם — ואפשר לשחק.':'המשחק פתוח למשפחות שאושרו.';
+    document.getElementById('authPass').autocomplete=up?'new-password':'current-password';
+    document.getElementById('authMsg').textContent='';
+}
+function authGo(){AUTH_MODE==='up'?authRegister():authLogin()}
+// a new user — the same kind of account as the CerviniaLive site (one account for both)
+async function authRegister(){
+    const u=document.getElementById('authUser').value.trim(),email=document.getElementById('authEmail').value.trim().toLowerCase(),
+        pw=document.getElementById('authPass').value,pw2=document.getElementById('authPass2').value,msg=document.getElementById('authMsg'),btn=document.getElementById('authGo');
+    msg.className='auth-msg';
+    if(!u||u.length<2){msg.textContent='בחרו שם משתמש (לפחות 2 תווים).';return}
+    if(!email||!email.includes('@')){msg.textContent='כתבו כתובת מייל — היא משמשת רק לאיפוס סיסמה.';return}
+    if(pw.length<6){msg.textContent='הסיסמה צריכה לפחות 6 תווים.';return}
+    if(/[\u0590-\u05FF]/.test(pw)){msg.textContent='הסיסמה באותיות אנגליות ומספרים בלבד.';return}
+    if(pw!==pw2){msg.textContent='שתי הסיסמאות לא זהות.';return}
+    const c=sbClient();if(!c){msg.textContent='אין חיבור לשרת.';return}
+    btn.disabled=true;msg.textContent='נרשמים…';
+    try{
+        const {data:taken}=await c.rpc('cl_username_taken',{p_username:u});
+        if(taken){msg.textContent='שם המשתמש הזה כבר תפוס — בחרו שם אחר.';return}
+        const internal=u.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+(Math.floor(Math.random()*900000)+100000)+'@cervinialive.app';
+        const {data,error}=await c.auth.signUp({email:internal,password:pw,options:{data:{username:u}}});
+        if(error){msg.textContent='ההרשמה לא הצליחה: '+error.message;return}
+        if(data&&data.user){const r=await c.rpc('cl_register_profile',{p_username:u,p_email:email,p_internal:internal});if(r&&r.error)console.warn(r.error.message)}
+        if(!(data&&data.session)){const si=await c.auth.signInWithPassword({email:internal,password:pw});if(si.error){msg.textContent='נרשמתם! עכשיו היכנסו עם השם והסיסמה.';authTab('in');return}}
+        ['authPass','authPass2'].forEach(id=>document.getElementById(id).value='');msg.textContent='';
+        try{await sbRpc('dreidel_request_access')}catch(e){}
+        await authCheck(true);
+    }catch(e){msg.textContent='משהו השתבש — נסו שוב.'}finally{btn.disabled=false}
+}
+// forgot the password: a reset link goes to the e-mail given at sign-up
+async function authForgot(){
+    const msg=document.getElementById('authMsg');msg.className='auth-msg';
+    const u=document.getElementById('authUser').value.trim();
+    if(!u){msg.textContent='כתבו קודם את שם המשתמש, ואז "שכחתי סיסמה".';document.getElementById('authUser').focus();return}
+    msg.textContent='שולחים…';
+    try{
+        const r=await fetch(SB_URL+'/functions/v1/reset-password',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({username:u})});
+        let d=null;try{d=await r.json()}catch(e){}
+        const st=(d&&d.status)||(r.ok?'sent':'error');
+        if(st==='no-user'){msg.textContent=`לא נמצא משתמש בשם "${u}". בדקו את האיות.`;return}
+        if(st==='no-email'){msg.textContent='למשתמש הזה אין מייל שמור — פנו למנהל המשחק.';return}
+        if(!r.ok){msg.textContent='השליחה לא הצליחה — נסו שוב בעוד רגע.';return}
+        msg.className='auth-msg ok';msg.textContent='📧 נשלח קישור לאיפוס הסיסמה למייל שלכם.';
+    }catch(e){msg.textContent='השליחה לא הצליחה — בדקו את האינטרנט.'}
 }
 async function authLogin(){
     const u=document.getElementById('authUser').value.trim(),pw=document.getElementById('authPass').value,msg=document.getElementById('authMsg'),btn=document.getElementById('authGo');
@@ -1089,7 +1160,7 @@ async function authLogin(){
     btn.disabled=true;msg.textContent='נכנסים…';
     try{
         const {data:email}=await c.rpc('cl_login_email',{p_username:u});
-        if(!email){msg.textContent='שם המשתמש לא קיים באתר CerviniaLive.';return}
+        if(!email){msg.textContent='שם המשתמש לא קיים — אולי צריך להירשם? (לשונית "הרשמה")';return}
         const {error}=await c.auth.signInWithPassword({email,password:pw});
         if(error){msg.textContent='שם משתמש או סיסמה שגויים.';return}
         msg.textContent='';document.getElementById('authPass').value='';
@@ -1106,6 +1177,11 @@ function accountUI(){
 }
 async function accRefresh(){
     const box=document.getElementById('accList');if(!box||!AUTH.admin)return;
+    const wb=document.getElementById('accWaiting');
+    try{const w=await sbRpc('dreidel_request_list');
+        wb.innerHTML=w.length?w.map(r=>`<div class="acc-row"><span>⏳ ${esc(r.username||'?')}</span><span><button class="btn btn-gold btn-sm" onclick="accSet('${r.id}',true)">אשר</button> <button class="btn btn-outline btn-sm" onclick="accDismiss('${r.id}')">דחה</button></span></div>`).join(''):'<div class="acc-row">אין בקשות חדשות.</div>';
+        accBadge(w.length);
+    }catch(e){wb.textContent=''}
     try{const rows=await sbRpc('dreidel_access_list');
         box.innerHTML=rows.length?rows.map(r=>`<div class="acc-row"><span>✅ ${esc(r.username||'?')}</span><button class="btn btn-outline btn-sm" onclick="accSet('${r.id}',false)">הסר</button></div>`).join(''):'<div class="acc-row">עוד אין משתמשים מאושרים.</div>';
     }catch(e){box.textContent='לא הצלחתי לטעון.'}
@@ -1116,6 +1192,8 @@ async function accFind(){
         box.innerHTML=rows.length?rows.map(r=>`<div class="acc-row"><span>${r.approved?'✅':'⏳'} ${esc(r.username)}</span><button class="btn ${r.approved?'btn-outline':'btn-gold'} btn-sm" onclick="accSet('${r.id}',${!r.approved})">${r.approved?'הסר':'אשר'}</button></div>`).join(''):'<div class="acc-row">לא נמצא משתמש בשם הזה.</div>';
     }catch(e){box.textContent='לא הצלחתי לחפש.'}
 }
+async function accDismiss(id){try{await sbRpc('dreidel_request_dismiss',{p_user:id});accRefresh()}catch(e){uiAlert('לא הצלחתי.')}}
+function accBadge(n){const s=document.getElementById('accSum');if(s)s.textContent='👥 מי מורשה לשחק (מנהל)'+(n?` — ${n} ממתינים לאישור 🔔`:'')}
 async function accSet(id,on){try{await sbRpc('dreidel_access_set',{p_user:id,p_on:on});accRefresh();accFind()}catch(e){uiAlert('לא הצלחתי לשמור.')}}
 setTimeout(()=>authCheck(false),0);
 async function sbToken(){try{const c=sbClient();const g=c&&await c.auth.getSession();return (g&&g.data&&g.data.session&&g.data.session.access_token)||SB_KEY}catch(e){return SB_KEY}}
