@@ -320,6 +320,14 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 @keyframes guyHopR{0%{transform:translateY(0) scaleX(-1) scale(1.06,.92) rotate(0)}35%{transform:translateY(-26%) scaleX(-1) scale(.96,1.05) rotate(-9deg)}70%{transform:translateY(0) scaleX(-1) scale(1.05,.94) rotate(-4deg)}100%{transform:translateY(0) scaleX(-1) scale(1) rotate(-3deg)}}
 #tuneDance.on img{animation:guySway .6s ease-in-out infinite}
 @media(max-width:600px){.dance-guy{height:calc(150px*var(--k));right:calc(100% - 20px)}}
+.auth-gate{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#232a5a,#0b0e22 75%);padding:16px}
+.auth-gate.hidden{display:none}
+.auth-card{width:min(380px,100%);background:rgba(20,24,50,.95);border:1px solid var(--gold);border-radius:18px;padding:26px 22px;text-align:center;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.auth-card h2{margin:0;color:var(--gold)}.auth-logo{font-size:3rem;line-height:1}
+.auth-card #authForm,.auth-card #authWait{display:flex;flex-direction:column;gap:10px}.auth-card #authWait.hidden{display:none}
+.auth-sub{margin:0;color:var(--text);font-size:.95rem;line-height:1.5}.auth-small{margin:0;color:var(--text-dim);font-size:.78rem;line-height:1.5}
+.auth-small a{color:var(--gold)}.auth-msg{min-height:1.2em;color:#ff8a8a;font-size:.88rem}.auth-copy{color:var(--text-dim);font-size:.7rem;opacity:.7}
+.acc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.85rem}
 .narr-cap{position:fixed;right:16px;bottom:16px;z-index:60;background:rgba(20,24,50,.88);border:1px solid var(--border-l,#445);color:var(--text-dim,#bbc);border-radius:10px;padding:4px 10px;font-size:.8rem;opacity:0;transition:opacity .4s;pointer-events:none}.narr-cap.show{opacity:1}
 .share-note{position:fixed;left:16px;bottom:72px;z-index:60;background:rgba(20,24,50,.92);border:1px solid var(--gold);color:var(--gold);border-radius:12px;padding:6px 12px;font-size:.9rem;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tune-player button.on{background:var(--gold-dim,#7a6420);color:var(--gold)}
@@ -621,6 +629,26 @@ body.circle-armed{touch-action:none}
   </h1>
 </header>
 
+<div class="auth-gate hidden" id="authGate" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="auth-card">
+    <div class="auth-logo">🕎</div>
+    <h2 id="authTitle">סביבון — כניסה</h2>
+    <div id="authForm">
+      <p class="auth-sub">המשחק פתוח למשפחות שאושרו. נכנסים עם <b>שם המשתמש והסיסמה של אתר CerviniaLive</b>.</p>
+      <input class="input" id="authUser" placeholder="שם משתמש" autocomplete="username" dir="auto">
+      <input class="input" id="authPass" type="password" placeholder="סיסמה" autocomplete="current-password" dir="auto" onkeydown="if(event.key==='Enter')authLogin()">
+      <button class="btn btn-gold" id="authGo" onclick="authLogin()">כניסה</button>
+      <div class="auth-msg" id="authMsg" role="alert"></div>
+      <p class="auth-small">אין לכם משתמש? נרשמים (בחינם) באתר <a href="https://cervinialive.co.il" target="_blank" rel="noopener">cervinialive.co.il</a>, ואז מבקשים ממנהל המשחק לאשר אתכם.<br>שכחתם סיסמה? מאפסים אותה באתר הזה.</p>
+    </div>
+    <div id="authWait" class="hidden">
+      <p class="auth-sub" id="authWaitText"></p>
+      <button class="btn btn-gold" onclick="authCheck(true)">בדיקה שוב</button>
+      <button class="btn btn-outline btn-sm" onclick="authLogout()">יציאה מהמשתמש</button>
+    </div>
+    <div class="auth-copy">© Yosef Krauss</div>
+  </div>
+</div>
 <div id="modeScreen">
     <div class="mode-selector" id="modeSelector">
         <div class="back-wrap"><button class="btn btn-outline" onclick="resetMode()">◂ חזרה</button></div>
@@ -865,8 +893,18 @@ body.circle-armed{touch-action:none}
   <div class="settings-row"><select id="narratorLang" class="input" style="padding:5px 8px;font-size:.8rem;flex:1"><option value="mix">🌍 עברית, ולפעמים אנגלית, צרפתית, רוסית, יידיש, אמהרית</option><option value="he">עברית בלבד</option></select><button class="btn btn-sm btn-outline" type="button" onclick="testNarrator()" title="להשמיע דוגמה">🔈</button></div>
   <div id="narratorNote" style="font-size:.65rem;color:var(--text-dim)"></div>
   <div id="narrSamples" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px"></div>
+  <div id="accBox" class="hidden" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">
+    <div class="settings-row"><span>👤 מחובר/ת: <b id="accName"></b></span><button type="button" class="btn btn-outline btn-sm" onclick="authLogout()">יציאה</button></div>
+    <details id="accAdmin" class="hidden" ontoggle="if(this.open)accRefresh()"><summary style="cursor:pointer;font-size:.85rem">👥 מי מורשה לשחק (מנהל)</summary>
+      <div style="font-size:.7rem;color:var(--text-dim);margin:4px 0">מחפשים משתמש של CerviniaLive לפי שם, ולוחצים "אשר". רק מאושרים נכנסים למשחק ולחדרי האונליין.</div>
+      <div class="settings-row"><input id="accQ" class="input" dir="auto" style="flex:1" placeholder="שם משתמש…" oninput="clearTimeout(window._accT);window._accT=setTimeout(accFind,350)"></div>
+      <div id="accFound"></div>
+      <div style="font-size:.78rem;margin-top:6px;color:var(--gold)">מאושרים עכשיו:</div>
+      <div id="accList"></div>
+    </details>
+  </div>
   <details class="pron-box" style="margin-top:6px"><summary style="cursor:pointer;font-size:.8rem">📖 הגייה בעברית — לתקן מילים שהקריין אומר לא נכון</summary>
-    <div style="font-size:.68rem;color:var(--text-dim);margin:4px 0">כ-100 מילים של חנוכה כבר מתוקנות בפנים (שמש, מכבים, חשמונאים, פך, הלל…). כאן מוסיפים עוד — שורה לכל מילה: <b>המילה = איך לומר אותה</b>, בניקוד, ואם הקריין עדיין טועה — כמו שזה נשמע (שמש = שאמאש). המילה מתוקנת גם עם ו/ה/ב/ל/מ/ש/כ לפניה. <b>הרשימה נשמרת לכל המכשירים</b> (בקוד מנהל).</div>
+    <div style="font-size:.68rem;color:var(--text-dim);margin:4px 0">כ-100 מילים של חנוכה כבר מתוקנות בפנים (שמש, מכבים, חשמונאים, פך, הלל…). כאן מוסיפים עוד — שורה לכל מילה: <b>המילה = איך לומר אותה</b>, בניקוד, ואם הקריין עדיין טועה — כמו שזה נשמע (שמש = שאמאש). המילה מתוקנת גם עם ו/ה/ב/ל/מ/ש/כ לפניה. <b>הרשימה נשמרת לכל המכשירים</b> (מנהל המשחק).</div>
     <textarea id="pronList" class="input" rows="4" dir="rtl" style="width:100%;font-size:.85rem" placeholder="למשל: סבתא = סָבְתָא"></textarea>
     <div class="settings-row" style="margin-top:4px"><button type="button" class="btn btn-gold btn-sm" onclick="pronSave()">💾 שמור לכל המכשירים</button></div>
     <div class="settings-row" style="margin-top:4px"><input id="pronTest" class="input" dir="rtl" style="flex:1;font-size:.85rem" value="איך קוראים לנר הגבוה בחנוכייה? שמש. בלי השמש."><button type="button" class="btn btn-outline btn-sm" onclick="PRON.list=null;PRON_TRY=document.getElementById('pronList').value;say(document.getElementById('pronTest').value);PRON_TRY=null">▶ לשמוע</button></div>
@@ -930,7 +968,7 @@ body.circle-armed{touch-action:none}
             const key=kind+'|'+msg+'|'+src;if(sent[key]||count>=6)return;sent[key]=1;count++;
             const ctx=[...document.querySelectorAll('#gameScreen,#modeScreen,#onlineSetup,#localSetup')].filter(e=>!e.classList.contains('hidden')).map(e=>e.id).join(',')+' '+(typeof MODE!=='undefined'?MODE:'')+' '+(localStorage.getItem('dreidel_spinmode')||'');
             const ver=(()=>{try{return APP_VERSION}catch(e){return '?'}})();
-            fetch('https://vhcxfrrafpqhvmmunoxp.supabase.co/rest/v1/rpc/dreidel_log_error',{method:'POST',keepalive:true,
+            fetch('https://cdgqodtbdhsqkvcgcdlm.supabase.co/rest/v1/rpc/dreidel_log_error',{method:'POST',keepalive:true,
                 headers:{'apikey':SBK(),'Authorization':'Bearer '+SBK(),'Content-Type':'application/json'},
                 body:JSON.stringify({p_ver:ver,p_kind:kind,p_msg:String(msg||'').slice(0,500),p_src:String(src||'').slice(0,300),p_stack:String(stack||'').slice(0,2000),p_ua:navigator.userAgent.slice(0,300),p_ctx:ctx.slice(0,200)})}).catch(()=>{});
         }catch(e){}
@@ -964,10 +1002,11 @@ let G={players:[],families:[],pot:0,currentTurn:0,startAmt:100,ante:10,over:fals
 let MY_ID=null, MY_FAMILY=null, IS_HOST=false, ROOM_CODE=null, spinning=false;
 let localStream=null, videoEnabled=false, micEnabled=true;
 
-const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
-const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
+// the CerviniaLive project: the same users (username + password); only players the manager approved may play
+const SB_URL='https://cdgqodtbdhsqkvcgcdlm.supabase.co';
+const SB_KEY='sb_publishable_B4HOCQF3IxN_6Ojz1_ctnA_k6JEAR4g';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v115';
+const APP_VERSION='v116';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1013,8 +1052,76 @@ function famKeys(){try{return JSON.parse(lsGet('dreidel_fams')||'[]').filter(k=>
 function famRemember(k){const a=famKeys().filter(x=>x!==k);a.unshift(k);lsSet('dreidel_fams',JSON.stringify(a.slice(0,12)))}
 function famForget(k){lsSet('dreidel_fams',JSON.stringify(famKeys().filter(x=>x!==k)));try{localStorage.removeItem('dreidel_fam_'+k)}catch(e){}delete FAM.cache[k];if(lsGet('dreidel_my_fam')===k)lsSet('dreidel_my_fam','')}
 function famLocal(k){if(FAM.cache[k])return FAM.cache[k];try{const f=JSON.parse(lsGet('dreidel_fam_'+k)||'null');if(f)FAM.cache[k]=f;return f}catch(e){return null}}
+// ═══════════ who may play: signing in (CerviniaLive users) + the manager's approval ═══════════
+const AUTH={client:null,user:null,allowed:false,admin:false,bypass:/^(localhost|127\.0\.0\.1)$/.test(location.hostname)};   // (on this computer, while developing: no sign-in)
+function sbClient(){
+    if(AUTH.client)return AUTH.client;
+    try{AUTH.client=supabase.createClient(SB_URL,SB_KEY,{auth:{storageKey:'dreidel-auth',persistSession:true,autoRefreshToken:true}})}catch(e){AUTH.client=null}
+    return AUTH.client;
+}
+function authShow(mode,text){
+    const g=document.getElementById('authGate');if(!g)return;
+    g.classList.toggle('hidden',mode==='open');
+    document.getElementById('authForm').classList.toggle('hidden',mode!=='form');
+    document.getElementById('authWait').classList.toggle('hidden',mode!=='wait');
+    if(mode==='wait')document.getElementById('authWaitText').innerHTML=text;
+    if(mode==='form')setTimeout(()=>document.getElementById('authUser').focus(),50);
+    accountUI();
+}
+async function authCheck(again){
+    if(AUTH.bypass){AUTH.allowed=true;authShow('open');return true}
+    const c=sbClient();if(!c){authShow('form');document.getElementById('authMsg').textContent='אין חיבור לשרת. בדקו את האינטרנט ורעננו.';return false}
+    const {data:{session}}=await c.auth.getSession();
+    if(!session){authShow('form');return false}
+    let w=null;try{w=await sbRpc('dreidel_whoami')}catch(e){
+        if(/PGRST202|Could not find the function/.test(String(e.message))){authShow('open');return true}}   // (the server isn't set up for it yet → don't lock anyone out)
+    if(!w){authShow('wait','לא הצלחתי לבדוק את המשתמש מול השרת. בדקו את האינטרנט.');return false}
+    AUTH.user=w.username||'';AUTH.allowed=!!w.allowed;AUTH.admin=!!w.admin;
+    if(!AUTH.allowed){authShow('wait',`שלום <b>${esc(AUTH.user)}</b> 👋<br>המשתמש שלך עוד לא אושר למשחק הסביבון.<br>בקשו ממנהל המשחק לאשר אתכם, ואז לחצו "בדיקה שוב".`);return false}
+    authShow('open');
+    if(again)floatText(document.body,'ברוכים הבאים! 🕎','plus');
+    return true;
+}
+async function authLogin(){
+    const u=document.getElementById('authUser').value.trim(),pw=document.getElementById('authPass').value,msg=document.getElementById('authMsg'),btn=document.getElementById('authGo');
+    if(!u||!pw){msg.textContent='כתבו שם משתמש וסיסמה.';return}
+    const c=sbClient();if(!c){msg.textContent='אין חיבור לשרת.';return}
+    btn.disabled=true;msg.textContent='נכנסים…';
+    try{
+        const {data:email}=await c.rpc('cl_login_email',{p_username:u});
+        if(!email){msg.textContent='שם המשתמש לא קיים באתר CerviniaLive.';return}
+        const {error}=await c.auth.signInWithPassword({email,password:pw});
+        if(error){msg.textContent='שם משתמש או סיסמה שגויים.';return}
+        msg.textContent='';document.getElementById('authPass').value='';
+        await authCheck(true);
+    }catch(e){msg.textContent='משהו השתבש — נסו שוב.'}finally{btn.disabled=false}
+}
+async function authLogout(){try{await sbClient().auth.signOut()}catch(e){}AUTH.user=null;AUTH.allowed=false;AUTH.admin=false;authShow('form')}
+// the settings: who is signed in + (for the manager) who may play
+function accountUI(){
+    const a=document.getElementById('accBox');if(!a)return;
+    a.classList.toggle('hidden',AUTH.bypass||!AUTH.user);
+    const n=document.getElementById('accName');if(n)n.textContent=AUTH.user||'';
+    const m=document.getElementById('accAdmin');if(m)m.classList.toggle('hidden',!AUTH.admin);
+}
+async function accRefresh(){
+    const box=document.getElementById('accList');if(!box||!AUTH.admin)return;
+    try{const rows=await sbRpc('dreidel_access_list');
+        box.innerHTML=rows.length?rows.map(r=>`<div class="acc-row"><span>✅ ${esc(r.username||'?')}</span><button class="btn btn-outline btn-sm" onclick="accSet('${r.id}',false)">הסר</button></div>`).join(''):'<div class="acc-row">עוד אין משתמשים מאושרים.</div>';
+    }catch(e){box.textContent='לא הצלחתי לטעון.'}
+}
+async function accFind(){
+    const q=document.getElementById('accQ').value.trim(),box=document.getElementById('accFound');if(q.length<2){box.innerHTML='';return}
+    try{const rows=await sbRpc('dreidel_user_find',{p_q:q});
+        box.innerHTML=rows.length?rows.map(r=>`<div class="acc-row"><span>${r.approved?'✅':'⏳'} ${esc(r.username)}</span><button class="btn ${r.approved?'btn-outline':'btn-gold'} btn-sm" onclick="accSet('${r.id}',${!r.approved})">${r.approved?'הסר':'אשר'}</button></div>`).join(''):'<div class="acc-row">לא נמצא משתמש בשם הזה.</div>';
+    }catch(e){box.textContent='לא הצלחתי לחפש.'}
+}
+async function accSet(id,on){try{await sbRpc('dreidel_access_set',{p_user:id,p_on:on});accRefresh();accFind()}catch(e){uiAlert('לא הצלחתי לשמור.')}}
+setTimeout(()=>authCheck(false),0);
+async function sbToken(){try{const c=sbClient();const g=c&&await c.auth.getSession();return (g&&g.data&&g.data.session&&g.data.session.access_token)||SB_KEY}catch(e){return SB_KEY}}
 async function sbRpc(fn,args){
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});
+    const tok=await sbToken();
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify(args||{})});
     const t=await r.text();if(!r.ok)throw new Error(t||r.status);return t?JSON.parse(t):null;
 }
 async function famFetch(k,force){
@@ -1213,7 +1320,7 @@ function uiPrompt(msg,val){
 function sbKeepAlive(){try{if(typeof fetch!=='function'||!navigator.onLine)return;
     fetch(SB_URL+'/rest/v1/keepalive?select=id&limit=1',{headers:{apikey:SB_KEY}}).catch(()=>{})}catch(e){}}
 setTimeout(sbKeepAlive,4000);
-function connectSupabase(){try{sb=supabase.createClient(SB_URL,SB_KEY);show('onlineLobby');return true}catch(e){uiAlert(e.message);return false}}
+function connectSupabase(){if(!sbClient()){uiAlert('אין חיבור לשרת.');return false}sb=sbClient();show('onlineLobby');return true}
 
 // ═══════════ MODE / ONLINE TYPE ═══════════
 function selectMode(m){document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));document.querySelector(`.mode-card[data-mode="${m}"]`)?.classList.add('selected');MODE=m;document.getElementById('modeSelector').classList.add('collapsed');hide('localSetup');hide('onlineSetup');if(m==='local')show('localSetup');if(m==='online'){show('onlineSetup');if(!sb)connectSupabase()}}
@@ -1368,8 +1475,9 @@ function leaveRoom(){
     hide('waitingRoom');show('onlineLobby');
 }
 
-function joinChannel(onReady){
-    channel=sb.channel('room_'+ROOM_CODE,{config:{broadcast:{self:true},presence:{key:MY_ID}}});
+async function joinChannel(onReady){
+    if(!AUTH.bypass){try{const tok=await sbToken();if(sb.realtime&&sb.realtime.setAuth)await sb.realtime.setAuth(tok)}catch(e){}}
+    channel=sb.channel('room_'+ROOM_CODE,{config:{private:!AUTH.bypass,broadcast:{self:true},presence:{key:MY_ID}}});
     let subscribedOnce=false;
 
     channel.on('broadcast',{event:'player_join'},({payload:p})=>{
@@ -1532,7 +1640,7 @@ function rejoinGame(){
     const x=loadSession();if(!x){resumeLocalGame();return}
     hide('rejoinBanner');
     MODE='online';ROOM_CODE=x.code;MY_ID=x.id;MY_FAMILY=x.fam;IS_HOST=!!x.host;
-    if(!sb){try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){uiAlert(e.message);return}}
+    if(!sb){sb=sbClient();if(!sb){uiAlert('אין חיבור לשרת.');return}}
     hide('modeScreen');show('onlineSetup');hide('onlineLobby');show('waitingRoom');
     document.getElementById('roomCodeDisplay').textContent=ROOM_CODE;
     document.getElementById('waitingTitle').textContent='מתחבר מחדש...';
@@ -4296,14 +4404,10 @@ function pronInit(force){const t=document.getElementById('pronList');if(t&&(forc
 async function pronSave(){
     const t=document.getElementById('pronList');if(!t)return;
     PRON.list=null;const v=t.value.trim();
-    let code=adminOpen()?adminCode():'';
-    if(!code){const a=await uiPrompt('כדי לשמור לכל המכשירים — קוד מנהל (4 ספרות):','');if(a==null)return;code=String(a).replace(/\D/g,'');
-        if(adminCode()&&!(await adminCheck(code))){uiAlert('הקוד לא נכון.');return}}
-    try{const ok=await sbRpc('dreidel_set_config',{p_key:'pron',p_value:v,p_secret:code});
-        if(ok===false){uiAlert('השרת לא קיבל את הקוד (הרשימה נשמרה לכל המכשירים בקוד אחר).');return}
-        PRON.shared=v;lsSet('dreidel_pron_shared',v);lsSet('dreidel_pron','');PRON.list=null;
-        floatText(t,'✔ נשמר לכל המכשירים','plus');
-    }catch(e){lsSet('dreidel_pron',v);uiAlert(/too many/.test(String(e.message))?'יותר מדי ניסיונות — נסו בעוד שעה.':'לא הצלחתי לשמור בשרת — נשמר בינתיים רק במחשב הזה.')}
+    if(!AUTH.admin){lsSet('dreidel_pron',v);uiAlert('נשמר במחשב הזה. לכל המכשירים שומר רק מנהל המשחק.');return}
+    try{await sbRpc('dreidel_set_config',{p_key:'pron',p_value:v});
+        PRON.shared=v;lsSet('dreidel_pron_shared',v);lsSet('dreidel_pron','');PRON.list=null;floatText(t,'✔ נשמר לכל המכשירים','plus');
+    }catch(e){lsSet('dreidel_pron',v);uiAlert('לא הצלחתי לשמור בשרת — נשמר בינתיים רק במחשב הזה.')}
 }
 setTimeout(pronInit,0);
 function speakIn(lang,text){
