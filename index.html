@@ -529,6 +529,15 @@ body:has(#gameScreen:not(.hidden)) .app-copy{display:none}   /* on the home scre
 .mg-half span{font-size:3rem}.mg-l{left:0}.mg-r{right:0}.mg-half.on{background:rgba(245,200,66,.25);color:var(--gold)}
 .mg-count{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:'Secular One',sans-serif;font-size:5rem;color:var(--gold);pointer-events:none;text-shadow:0 4px 20px rgba(0,0,0,.6)}
 .mg-drum{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-size:min(28vh,170px);cursor:pointer;transition:transform .08s}
+.mga-drums{position:absolute;left:0;right:0;top:12%;display:flex;justify-content:space-around;align-items:center;direction:rtl;pointer-events:none}
+.drm{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.55;transition:opacity .15s,transform .08s,filter .15s}
+.drm span{font-size:min(22vh,140px);line-height:1}.drm b{font-size:.9rem;color:var(--text-dim)}
+.drm.lit{opacity:1;filter:drop-shadow(0 0 18px rgba(245,200,66,.8))}.drm.beat{animation:mgBeat .3s ease-out}.drm.hit{transform:scale(.88)}
+.mga-drums .mg-words{position:static;transform:none;font-size:clamp(1.4rem,5vh,2.4rem);min-width:4em;text-align:center}
+.drm-roll{position:absolute;left:15%;right:15%;bottom:22%;height:14px;border-radius:7px;background:rgba(255,255,255,.12);overflow:hidden}
+.drm-roll i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f5c842,#ff7043);transition:width .1s}
+.drm-cheer{position:absolute;left:0;right:0;bottom:30%;text-align:center;font-size:clamp(1.1rem,3.6vh,1.8rem);font-weight:800;color:var(--gold);opacity:0;transition:opacity .2s}
+.drm-cheer.show{opacity:1}.drm-cheer.r2{color:#ffab40}.drm-cheer.r3{color:#ff7043;transform:scale(1.1)}
 .mg-drum.beat{animation:mgBeat .3s ease-out}.mg-drum.hit{transform:translate(-50%,-50%) scale(.9)}
 @keyframes mgBeat{0%{transform:translate(-50%,-50%) scale(1.18)}100%{transform:translate(-50%,-50%) scale(1)}}
 .mg-beats{position:absolute;left:0;right:0;bottom:16%;display:flex;justify-content:center;gap:14px}
@@ -950,7 +959,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v112';
+const APP_VERSION='v113';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2333,40 +2342,85 @@ function mgRace(area){
     area.addEventListener('pointerdown',down);MG.off=()=>area.removeEventListener('pointerdown',down);
 }
 
-// ── 🥁 drum to the beat: 4 counting beats, then click on each of the next 8 beats ──
+// ── 🥁 two drums: first drum in the beat (the lit drum, right / left in turn), then a drum roll — as fast as you can.
+//    Anywhere on the screen: the right half = the right drum, the left half = the left drum.
+//    Keys: → / ← (or J / F). Laptop touchpad: the right-hand click (or right mouse button) = the right drum.
 function mgDrum(area){
-    let BEAT=600;const N=8,COUNT=4;let t0=0,hits=new Array(N).fill(0),extra=0,withMusic=false;
-    area.innerHTML=`<div class="mg-drum" id="mgDrum">🥁</div><div class="mg-beats" id="mgBeats">${'<i></i>'.repeat(N)}</div><div class="mg-words" id="mgWords"></div>`;
-    mgEl('mgFoot').textContent=G2('ספור עם התוף 1-2-3-4, ואז לחץ (או רווח) בדיוק על כל פעמה','ספרי עם התוף 1-2-3-4, ואז לחצי (או רווח) בדיוק על כל פעמה');
+    let BEAT=600;const N=8,COUNT=4,ROLL=3000;let t0=0,hits=new Array(N).fill(0),extra=0,withMusic=false,phase='wait',roll=[],rollEnd=0;
+    area.innerHTML=`<div class="mga-drums"><div class="drm" id="drmR"><span>🥁</span><b>ימין</b></div><div class="mg-words" id="mgWords"></div><div class="drm" id="drmL"><span>🥁</span><b>שמאל</b></div></div>
+        <div class="mg-beats" id="mgBeats">${'<i></i>'.repeat(N)}</div><div class="drm-roll hidden" id="drmRoll"><i id="drmRollFill"></i></div><div class="drm-cheer" id="drmCheer"></div>`;
+    mgEl('mgFoot').textContent=G2('ספור 1-2-3-4, ואז תופף על התוף שנדלק — ימין או שמאל. בסוף: תיפוף מהיר! (חיצים ← → או לחיצה על צד המסך)','ספרי 1-2-3-4, ואז תופפי על התוף שנדלק — ימין או שמאל. בסוף: תיפוף מהיר! (חיצים ← → או לחיצה על צד המסך)');
     const words=['סְבִי','בוֹן','סוֹב','סוֹב','סוֹב','חֲנֻכָּה','חַג','טוֹב'];
+    const side=i=>i%2===0?'R':'L';                       // right first (as we read), then left, and so on
     const beatAt=i=>t0+(COUNT+i)*BEAT;
-    const pulse=(i,count)=>{const d=mgEl('mgDrum');if(!d)return;d.classList.remove('beat');void d.offsetWidth;d.classList.add('beat');
+    const drum=x=>mgEl(x==='R'?'drmR':'drmL');
+    const flash=(x,cls,ms)=>{const d=drum(x);if(!d)return;d.classList.remove(cls);void d.offsetWidth;d.classList.add(cls);if(ms)setTimeout(()=>d&&d.classList.remove(cls),ms)};
+    const cheer=(t,cls)=>{const c=mgEl('drmCheer');if(!c)return;c.textContent=t;c.className='drm-cheer show '+(cls||'')};
+    const pulse=(i,count)=>{
         playSfx(pick(SFX.tick),{vol:(count?.45:.6)*(withMusic?.55:1),rate:count?1.5:1});
-        if(count)mgEl('mgWords').textContent=String(i+1);else{mgEl('mgWords').textContent=words[i];mgEl('mgBeats').children[i].classList.add('now')}};
-    const tap=e=>{
-        if(e&&e.type==='pointerdown'){e.preventDefault()}
-        if(MG.done||!t0)return;
-        const now=performance.now();let best=-1,bd=1e9;
-        for(let i=0;i<N;i++){const d=Math.abs(now-beatAt(i));if(d<bd){bd=d;best=i}}
-        const d=mgEl('mgDrum');d.classList.add('hit');setTimeout(()=>d&&d.classList.remove('hit'),120);
-        if(bd>300||hits[best]){extra++;return}
-        hits[best]=Math.max(.05,1-bd/300);const dot=mgEl('mgBeats').children[best];dot.classList.add(hits[best]>.6?'good':'ok');
-        mgEl('mgScore').textContent='🥁 '+hits.filter(x=>x>.5).length+'/'+N;
+        if(count){flash('R','beat');flash('L','beat');mgEl('mgWords').textContent=String(i+1);return}
+        phase='beats';mgEl('mgWords').textContent=words[i];mgEl('mgBeats').children[i].classList.add('now');
+        ['R','L'].forEach(x=>drum(x).classList.toggle('lit',x===side(i)));flash(side(i),'beat');
     };
-    const key=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();if(!e.repeat)tap()}};
-    area.addEventListener('pointerdown',tap);document.addEventListener('keydown',key,true);
-    MG.off=()=>{area.removeEventListener('pointerdown',tap);document.removeEventListener('keydown',key,true)};
+    const hit=x=>{
+        if(MG.done||!t0)return;const now=performance.now();
+        flash(x,'hit',110);playSfx(pick(SFX.tick),{vol:.35,rate:x==='R'?1.15:.9});
+        if(phase==='roll'){roll.push([now,x]);return}
+        if(phase!=='beats'&&phase!=='count')return;
+        let best=-1,bd=1e9;for(let i=0;i<N;i++){const d=Math.abs(now-beatAt(i));if(d<bd){bd=d;best=i}}
+        if(bd>300||hits[best]){extra++;return}
+        hits[best]=Math.max(.05,1-bd/300)*(x===side(best)?1:.5);                  // the other drum: half
+        mgEl('mgBeats').children[best].classList.add(hits[best]>.6?'good':'ok');
+        mgEl('mgScore').textContent='🥁 '+hits.filter(v=>v>.5).length+'/'+N;
+    };
+    // anywhere on the screen (not on the game's own buttons)
+    const down=e=>{
+        if(!MG.open||(e.target.closest&&e.target.closest('button,a,input,.mg-close')))return;
+        e.preventDefault();
+        if(e.button===2){hit('R');return}                                       // right button / touchpad right side
+        hit(e.clientX>=innerWidth/2?'R':'L');
+    };
+    const ctx=e=>{if(MG.open)e.preventDefault()};
+    const key=e=>{
+        if(e.repeat)return;const k=e.key;
+        if(k==='ArrowRight'||k==='j'||k==='J'||k==='ח'){e.preventDefault();e.stopPropagation();hit('R')}
+        else if(k==='ArrowLeft'||k==='f'||k==='F'||k==='כ'){e.preventDefault();e.stopPropagation();hit('L')}
+        else if(k===' '||k==='Enter'){e.preventDefault();e.stopPropagation();
+            const i=Math.max(0,Math.min(N-1,Math.round((performance.now()-t0)/BEAT)-COUNT));hit(phase==='roll'?(roll.length%2?'L':'R'):side(i))}
+    };
+    document.addEventListener('pointerdown',down,true);document.addEventListener('contextmenu',ctx,true);document.addEventListener('keydown',key,true);
+    MG.off=()=>{document.removeEventListener('pointerdown',down,true);document.removeEventListener('contextmenu',ctx,true);document.removeEventListener('keydown',key,true)};
+    // the drum roll: hits per second, with cheering
+    const rollTick=()=>{
+        if(phase!=='roll'||MG.done)return;
+        const now=performance.now(),r=roll.filter(([t])=>now-t<1000).length;       // hits in the last second
+        mgEl('drmRollFill').style.width=Math.min(100,r/9*100)+'%';
+        const left=Math.max(0,rollEnd-now);
+        if(now-(rollTick.at||0)>450){rollTick.at=now;
+            cheer(r<3?G2('מהר יותר! 💪','מהר יותר! 💪'):r<5?'יופי! עוד קצת! 🔥':r<7?'וואו! איזה מתופף! 🔥🔥':'מטורף!!! 🚀','r'+Math.min(3,Math.floor(r/2.5)))}
+        mgEl('mgScore').textContent=`🥁 ${Math.ceil(left/1000)}…`;
+        if(left>0)requestAnimationFrame(rollTick);
+    };
     mgLater(()=>{
-        // music playing → the drum goes with the song's own beat
-        const mb=musicBeat();let first=performance.now();
+        // a song is playing → drum in its beat
+        const mb=musicBeat();let first=performance.now()+150;
         if(mb){let p=mb.period;while(p<420)p*=2;while(p>900)p/=2;BEAT=p;first=mb.next;while(first<performance.now()+120)first+=mb.period;withMusic=true;
-            mgEl('mgFoot').textContent=G2('תופפו בקצב של השיר! ספור 1-2-3-4, ואז לחץ (או רווח) על כל פעמה','תופפי בקצב של השיר! ספרי 1-2-3-4, ואז לחצי (או רווח) על כל פעמה')}
-        t0=first;const d0=first-performance.now();
+            cheer('🎶 בקצב של השיר!','')}
+        t0=first;phase='count';const d0=first-performance.now();
         for(let i=0;i<COUNT;i++)mgLater(()=>pulse(i,true),d0+i*BEAT);
         for(let i=0;i<N;i++)mgLater(()=>pulse(i,false),d0+(COUNT+i)*BEAT);
-        mgTimed(d0+(COUNT+N)*BEAT+350,null,()=>{
-            const good=hits.filter(x=>x>.5).length,sc=hits.reduce((a,b)=>a+b,0)/N-extra*.04;
-            mgFinish(Math.max(.15,Math.min(1,sc*1.15)),good>=7?`🥁 ${good} מתוך ${N} — מתופף אמיתי!`:`🥁 ${good} מתוך ${N} בקצב`)});
+        // then — the drum roll
+        mgLater(()=>{phase='roll';roll=[];rollEnd=performance.now()+ROLL;['R','L'].forEach(x=>drum(x).classList.add('lit'));
+            mgEl('mgWords').textContent='🥁🥁🥁';mgEl('drmRoll').classList.remove('hidden');cheer(G2('עכשיו מהר! ימין-שמאל-ימין-שמאל!','עכשיו מהר! ימין-שמאל-ימין-שמאל!'),'');
+            playSfx('he1',{vol:.5});requestAnimationFrame(rollTick)},d0+(COUNT+N)*BEAT+200);
+        mgTimed(d0+(COUNT+N)*BEAT+200+ROLL+300,null,()=>{
+            phase='done';
+            const good=hits.filter(v=>v>.5).length,beat=Math.max(0,hits.reduce((a,b)=>a+b,0)/N-extra*.03);
+            let alt=0;for(let i=1;i<roll.length;i++)if(roll[i][1]!==roll[i-1][1])alt++;
+            const rate=roll.length/(ROLL/1000),rollSc=Math.min(1,(rate/7)*(.6+.4*(roll.length>1?alt/(roll.length-1):0)));   // fast, and right-left in turn
+            const power=Math.max(.15,Math.min(1,beat*.55+rollSc*.5));
+            mgFinish(power,`🥁 ${good}/${N} בקצב · תיפוף ${rate.toFixed(1)} בשנייה`+(rollSc>.85?' — מתופף אמיתי!':''));
+        });
     },500);
 }
 
@@ -2797,7 +2851,9 @@ function boostSpin(remote){
 
 // ── 👏 clap party: two claps start it, every clap pushes it (and it hops); claps from the other homes count too.
 // When nobody claps for ~2 s it flies on and falls as usual.
-const CP={on:false,claps:[],start:0,sp:0,last:0,lastClap:0,n:0};
+const CP={on:false,claps:[],start:0,sp:0,last:0,lastClap:0,n:0,onBeat:0,nb:0};
+// how close a clap is to the song's beat (ms) — Infinity when no song is playing
+function offBeatMs(){const mb=musicBeat();if(!mb)return Infinity;const now=performance.now();return Math.min(mb.next-now,now-(mb.next-mb.period))}
 function clapPartyClap(fromOtherHome){
     const now=performance.now();
     if(!CP.on){
@@ -2805,20 +2861,25 @@ function clapPartyClap(fromOtherHome){
         CP.claps=CP.claps.filter(x=>now-x<1500);CP.claps.push(now);
         const pl=document.getElementById('powerLabel');
         if(CP.claps.length<2){document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='👏';if(pl)pl.textContent='עוד מחיאה!';return}
-        CP.on=true;CP.start=now;CP.lastClap=now;CP.n=2;CP.sp=2.2;CP.last=0;CIRCLE.singing=true;
+        CP.on=true;CP.start=now;CP.lastClap=now;CP.n=2;CP.sp=2.2;CP.last=0;CP.onBeat=0;CP.nb=0;CIRCLE.singing=true;
         psBegin('clap',true);partyBeat();
         document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='👏';
         if(pl)pl.textContent=G2('👏 המשך למחוא כפיים!','👏 המשיכי למחוא כפיים!');document.getElementById('powerFill').classList.add('hot');
         document.querySelector('.dreidel-controls').classList.remove('can-spin');return;
     }
-    CP.lastClap=now;CP.n++;CP.sp=Math.min(6.5,CP.sp+(fromOtherHome?.7:1.1));partyBeat();
+    CP.lastClap=now;CP.n++;
+    const ob=fromOtherHome?Infinity:offBeatMs();
+    if(ob<130){CP.onBeat++;CP.sp=Math.min(7.5,CP.sp+1.8);                    // right on the song's beat → a big push
+        const pl=document.getElementById('powerLabel');if(pl){pl.textContent=CP.onBeat>=6?'👏🔥 בדיוק בקצב!':'👏 בקצב!';clearTimeout(CP.lt);CP.lt=setTimeout(()=>{if(CP.on&&pl)pl.textContent=G2('👏 המשך למחוא כפיים!','👏 המשיכי למחוא כפיים!')},700)}}
+    else CP.sp=Math.min(6.5,CP.sp+(fromOtherHome?.7:ob===Infinity?1.1:.8));
+    partyBeat();
 }
 function clapPartyStop(launch){
     if(!CP.on)return;CP.on=false;CIRCLE.singing=false;psEnd();CP.claps=[];
     const art=document.getElementById('dreidelSvg');document.getElementById('powerFill').classList.remove('hot');art.style.transform='';art.style.filter='';
     const sec=(CP.lastClap-CP.start)/1000;
     if(!launch||!canSpinNow()||CP.n<3){d3Settle();resetSpinUI();refreshSpinUI();return}
-    const power=Math.max(.25,Math.min(1,.25+Math.min(.45,sec/14)+Math.min(.3,CP.n/40)));
+    const power=Math.max(.25,Math.min(1,.25+Math.min(.45,sec/14)+Math.min(.3,CP.n/40)+Math.min(.2,CP.onBeat/30)));   // claps in the song's beat = extra strength
     playWhoosh(power);spinFromInput(power,'clap',{});
 }
 (function clapLoop(){
@@ -2828,6 +2889,7 @@ function clapPartyStop(launch){
         const dt=CP.last?Math.min(60,t-CP.last)/1000:0;CP.last=t;
         CP.sp*=Math.pow(.6,dt);
         const el=(performance.now()-CP.start)/1000;
+        const mb=musicBeat();if(mb){if(CP.nb&&mb.next>CP.nb+mb.period*.5&&performance.now()-PARTY.beatT>180){PARTY.beatT=CP.nb;PARTY.hue+=40;PS.beats++}CP.nb=mb.next}   // a song → it bobs to the beat between claps
         psStep(t,dt,Math.max(.35,CP.sp),el,.03);
         document.getElementById('powerFill').style.width=Math.min(100,el*8).toFixed(0)+'%';
         if(performance.now()-CP.lastClap>1900)clapPartyStop(true);             // the clapping stopped → let it fly
@@ -3008,7 +3070,7 @@ function partyFrame(el,t,loud){
             if(SING.armed&&(!canSpinNow()||performance.now()-SING.armedAt>25000)){singArm(false);return}   // turn passed / nobody sang
             if(SING.armed&&(SING.voicedMs||0)>=1500&&!SING.shownDone){SING.shownDone=true;singUI()}
             if(SING.armed&&MIC.singing&&canSpinNow()){on=true;SING.on=true;singUI();CIRCLE.singing=true;start=performance.now();phase=0;last=t;loudSum=0;n=0;
-                psBegin('sing',true);seenOnsets=MIC.onsets||0;
+                psBegin('sing',true);seenOnsets=MIC.onsets||0;SING.nb=0;
                 document.getElementById('powerMeter').classList.remove('hidden');document.getElementById('powerClicks').textContent='🎤';
                 document.getElementById('powerLabel').textContent=G2('🎶 המשך לשיר!','🎶 המשיכי לשיר!');document.getElementById('powerFill').classList.add('hot');
                 document.querySelector('.dreidel-controls').classList.remove('can-spin')}
@@ -3017,7 +3079,9 @@ function partyFrame(el,t,loud){
         const dt=Math.min(60,t-last)/1000;last=t;
         const singingNow=performance.now()-MIC.lastVoiced<250;
         const sp=singingNow?(.8+Math.min(5,MIC.loud*60)):Math.max(0,.8-(performance.now()-MIC.lastVoiced)/900);
-        if((MIC.onsets||0)>seenOnsets){seenOnsets=MIC.onsets;if(singingNow)partyBeat()}   // a new note → hop
+        const mb=musicBeat();
+        if(mb){if(SING.nb&&mb.next>SING.nb+mb.period*.5&&singingNow)partyBeat();SING.nb=mb.next}       // a song is playing → hop on its beats
+        if((MIC.onsets||0)>seenOnsets){seenOnsets=MIC.onsets;if(singingNow&&(!mb||(mb.next-performance.now()>160&&performance.now()-PARTY.beatT>200)))partyBeat()}   // a new note → hop
         psStep(t,dt,sp,(performance.now()-start)/1000,MIC.loud);
         if(singingNow){loudSum+=MIC.loud;n++}
         const sec=(MIC.lastVoiced-start)/1000;
