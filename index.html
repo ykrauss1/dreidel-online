@@ -182,7 +182,7 @@ body:has(#gameScreen:not(.hidden)) .header{display:none}
 
 /* Dreidel */
 .dreidel-zone{display:flex;flex-direction:column;align-items:center;position:relative;margin-top:-105px;z-index:3;pointer-events:none;width:100%}
-.dreidel-wrap{--k:1;width:calc(180px*var(--k));height:calc(290px*var(--k));display:flex;justify-content:center;overflow:visible}
+.dreidel-wrap{position:relative;--k:1;width:calc(180px*var(--k));height:calc(290px*var(--k));display:flex;justify-content:center;overflow:visible}
 .dreidel-scale{width:148px;height:280px;flex-shrink:0;transform:scale(var(--k));transform-origin:top center}
 .dreidel-svg{width:148px;height:280px;filter:drop-shadow(0 0 14px rgba(245,200,66,.35)) drop-shadow(0 10px 14px rgba(0,0,0,.5));
              transform-origin:50% 99%;overflow:visible}
@@ -312,6 +312,14 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .tune-player input{width:150px;accent-color:var(--gold)}
 .tune-player .tp-track{direction:rtl;background:var(--bg-input);color:var(--gold);border:1px solid var(--border-l);border-radius:14px;padding:4px 8px;font-family:inherit;font-size:.85rem;max-width:170px}
 .tune-toggle.playing{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(245,200,66,.55);animation:tuneGlow 1.6s ease-in-out infinite}@keyframes tuneGlow{50%{box-shadow:0 0 0 2px var(--gold),0 0 4px rgba(245,200,66,.2)}}
+.dance-guy{position:absolute;bottom:0;right:calc(100% + 10px*var(--k));height:calc(230px*var(--k));width:auto;opacity:0;pointer-events:none;transform-origin:50% 100%;transition:opacity .4s;z-index:2;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+.dance-guy.on{opacity:1;animation:guySway 1.2s ease-in-out infinite}
+.dance-guy.hopL{animation:guyHopL .42s cubic-bezier(.3,.7,.4,1)}.dance-guy.hopR{animation:guyHopR .42s cubic-bezier(.3,.7,.4,1)}
+@keyframes guySway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes guyHopL{0%{transform:translateY(0) scale(1.06,.92) rotate(0)}35%{transform:translateY(-26%) scale(.96,1.05) rotate(-9deg)}70%{transform:translateY(0) scale(1.05,.94) rotate(-4deg)}100%{transform:translateY(0) scale(1) rotate(-3deg)}}
+@keyframes guyHopR{0%{transform:translateY(0) scaleX(-1) scale(1.06,.92) rotate(0)}35%{transform:translateY(-26%) scaleX(-1) scale(.96,1.05) rotate(-9deg)}70%{transform:translateY(0) scaleX(-1) scale(1.05,.94) rotate(-4deg)}100%{transform:translateY(0) scaleX(-1) scale(1) rotate(-3deg)}}
+#tuneDance.on img{animation:guySway .6s ease-in-out infinite}
+@media(max-width:600px){.dance-guy{height:calc(150px*var(--k));right:calc(100% - 20px)}}
 .narr-cap{position:fixed;right:16px;bottom:16px;z-index:60;background:rgba(20,24,50,.88);border:1px solid var(--border-l,#445);color:var(--text-dim,#bbc);border-radius:10px;padding:4px 10px;font-size:.8rem;opacity:0;transition:opacity .4s;pointer-events:none}.narr-cap.show{opacity:1}
 .share-note{position:fixed;left:16px;bottom:72px;z-index:60;background:rgba(20,24,50,.92);border:1px solid var(--gold);color:var(--gold);border-radius:12px;padding:6px 12px;font-size:.9rem;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tune-player button.on{background:var(--gold-dim,#7a6420);color:var(--gold)}
@@ -741,7 +749,7 @@ body.circle-armed{touch-action:none}
         </div>
         <div class="game-main">
             <div class="dreidel-zone">
-                <div class="dreidel-wrap"><div class="dreidel-scale">
+                <div class="dreidel-wrap"><img id="danceGuy" class="dance-guy" src="dancer_big.webp" alt="" aria-hidden="true"><div class="dreidel-scale">
                     <div class="dreidel-shadow" id="dreidelShadow"></div>
                     <div class="spin-ring" id="spinRing"></div>
                     <div class="dreidel-svg dreidel-art" id="dreidelSvg" role="img" aria-label="סביבון">
@@ -959,7 +967,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v114';
+const APP_VERSION='v115';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2942,6 +2950,17 @@ function danceStop(){
     danceUI();
 }
 function danceUI(){const b=document.getElementById('tuneDance');if(b)b.classList.toggle('on',DANCE.on)}
+// 🕺 the dancer beside the dreidel: shows up whenever the dreidel dances (here, or the dance shared from another home), jumps on every beat
+(function danceGuyLoop(){
+    let lastBeat=0,side=0;
+    function loop(){requestAnimationFrame(loop);
+        const g=document.getElementById('danceGuy');if(!g)return;
+        const on=PS.on&&PS.kind==='dance';
+        if(g.classList.contains('on')!==on){g.classList.toggle('on',on);if(!on)g.classList.remove('hopL','hopR')}
+        if(on&&PARTY.beatT!==lastBeat){lastBeat=PARTY.beatT;side^=1;g.classList.remove('hopL','hopR');void g.offsetWidth;g.classList.add(side?'hopL':'hopR')}
+    }
+    requestAnimationFrame(loop);
+})();
 (function danceLoop(){
     function loop(t){requestAnimationFrame(loop);
         if(!DANCE.on){DANCE.last=t;return}
