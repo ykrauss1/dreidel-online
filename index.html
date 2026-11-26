@@ -838,7 +838,7 @@ body.circle-armed{touch-action:none}
   <input type="file" id="tuneDir" webkitdirectory directory multiple hidden onchange="tuneAddFiles(this.files);this.value=''">
   <button id="tuneShuf" onclick="tuneShuffleToggle()" title="ערבוב — כל השירים, בסדר אקראי" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.5c2 0 3 1 4.2 2.8l2.6 4.4C14.5 16 15.5 17 17.5 17H21M18 14l3 3-3 3M3 17h3.5c1.4 0 2.3-.5 3.1-1.4M14.4 8.4c.8-.9 1.7-1.4 3.1-1.4H21M18 4l3 3-3 3"/></svg></button>
   <button id="tuneShare" onclick="shareToggle()" title="להשמיע את השיר לכל הבתים (דרך שיחת הווידאו)" style="display:none">📡</button>
-  <button id="tuneDance" onclick="danceToggle()" title="הסביבון רוקד עם השיר — שירו איתו והוא ישתולל (הפסקה, לא חלק מהמשחק)">💃</button>
+  <button id="tuneDance" onclick="danceToggle()" title="הסביבון רוקד עם השיר — שירו איתו והוא ישתולל (הפסקה, לא חלק מהמשחק)"><img src="dancer.webp" alt="ריקוד" width="28" height="28" style="display:block;width:28px;height:28px;object-fit:contain;margin:-4px"></button>
   <button id="tuneNextBtn" onclick="tuneNext()" title="השיר הבא" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 6v12l9-6zM16 6h2.5v12H16z"/></svg></button>
   <button onclick="tuneSkip(-8)" title="אחורה"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.5 6v12L3 12zM21 6v12l-8.5-6z"/></svg></button>
   <button id="tunePlay" class="tp-main" onclick="tuneToggle()" title="נגן / השהה"></button>
@@ -959,7 +959,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://vhcxfrrafpqhvmmunoxp.supabase.co';
 const SB_KEY='sb_publishable_4RWou7vJ8GdNXukaXduu5g_jd1LpyXN';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v113';
+const APP_VERSION='v114';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2930,7 +2930,7 @@ async function danceStart(){
     if(tuneIsFile())songBeat(TUNE.track);
     DANCE.on=true;DANCE.last=0;DANCE.el=6;DANCE.nb=0;danceUI();
     psBegin('dance',true);
-    floatText(document.querySelector('.dreidel-wrap')||document.body,'💃 הסביבון רוקד! שירו איתו — הוא ישתולל','plus');
+    floatText(document.querySelector('.dreidel-wrap')||document.body,'🎶 הסביבון רוקד! שירו איתו — הוא ישתולל','plus');
     if(!MIC.on){const ok=await micStart();DANCE.mic=ok&&DANCE.on;if(ok&&!DANCE.on&&MIC.own)micStop()}   // the mic: so singing along makes it wilder (optional)
     DANCE.seen=MIC.onsets||0;
 }
@@ -2995,7 +2995,7 @@ function psRemote(p){
     if(!p.on){if(PS.on&&!PS.owner)psEnd();return}
     if(p.k==='dance'&&(spinning||MG.open||DANCE.on||(PS.on&&PS.owner)))return;        // a turn is going on here → their dance waits
     if(!PS.on){psBegin(p.k,false,p.face);const w=document.getElementById('waitingMsg');
-        if(w){PS.oldWait=w.textContent;w.textContent=p.k==='dance'?'💃 הסביבון רוקד עם השיר — שירו איתו!':p.k==='clap'?'👏 מוחאים כפיים — הצטרפו! כל מחיאה שלכם דוחפת אותו':'🎶 שרים — שירו יחד ומחאו כפיים בקצב!'}}
+        if(w){PS.oldWait=w.textContent;w.textContent=p.k==='dance'?'🎶 הסביבון רוקד עם השיר — שירו איתו!':p.k==='clap'?'👏 מוחאים כפיים — הצטרפו! כל מחיאה שלכם דוחפת אותו':'🎶 שרים — שירו יחד ומחאו כפיים בקצב!'}}
     PS.msgAt=performance.now();PS.rEl=p.el;PS.rSp=p.sp;PS.rPh=p.ph;
     if(p.beats>PS.beats){PS.beats=p.beats;PARTY.beatT=performance.now();PARTY.hue+=40}
 }
