@@ -333,6 +333,15 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .auth-msg.ok{color:#8be28b}
 .auth-msg{min-height:1.2em;color:#ff8a8a;font-size:.88rem}.auth-copy{color:var(--text-dim);font-size:.7rem;opacity:.7}
 .acc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.85rem}
+.pick-modal{position:fixed;inset:0;z-index:9500;background:rgba(5,8,20,.75);display:flex;align-items:center;justify-content:center;padding:14px}.pick-modal.hidden{display:none}
+.pick-card{width:min(440px,100%);max-height:88vh;display:flex;flex-direction:column;gap:10px;background:var(--bg-card,#1a1f3d);border:1px solid var(--gold);border-radius:16px;padding:18px}
+.pick-card h3{margin:0;color:var(--gold);text-align:center}.pick-tools{display:flex;gap:8px}.pick-tools .input{flex:1}
+.pick-list{overflow:auto;min-height:80px;max-height:46vh;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:4px}
+.pick-list label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:1rem}.pick-list label:hover{background:rgba(255,255,255,.06)}
+.pick-list input{width:20px;height:20px;accent-color:#f5c842}.pick-count{font-size:.85rem;color:var(--text-dim);text-align:center}
+.pick-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.pick-note{font-size:.72rem;color:var(--text-dim);text-align:center}
+.inv-banner{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9400;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;max-width:94vw;background:#1d2450;border:2px solid var(--gold);border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.6);font-size:1rem}
+.inv-banner.hidden{display:none}
 .narr-cap{position:fixed;right:16px;bottom:16px;z-index:60;background:rgba(20,24,50,.88);border:1px solid var(--border-l,#445);color:var(--text-dim,#bbc);border-radius:10px;padding:4px 10px;font-size:.8rem;opacity:0;transition:opacity .4s;pointer-events:none}.narr-cap.show{opacity:1}
 .share-note{position:fixed;left:16px;bottom:72px;z-index:60;background:rgba(20,24,50,.92);border:1px solid var(--gold);color:var(--gold);border-radius:12px;padding:6px 12px;font-size:.9rem;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tune-player button.on{background:var(--gold-dim,#7a6420);color:var(--gold)}
@@ -634,6 +643,21 @@ body.circle-armed{touch-action:none}
   </h1>
 </header>
 
+<div class="pick-modal hidden" id="pickModal" role="dialog" aria-modal="true" aria-labelledby="pickTitle" onclick="if(event.target===this)pickClose()">
+  <div class="pick-card">
+    <h3 id="pickTitle">👥 את מי מזמינים?</h3>
+    <div class="pick-tools"><input class="input" id="pickQ" placeholder="חיפוש שם…" dir="auto" oninput="pickRender()"><button type="button" class="btn btn-outline btn-sm" onclick="pickAll()">סמן הכול</button></div>
+    <div class="pick-list" id="pickList">טוען…</div>
+    <div class="pick-count" id="pickCount"></div>
+    <div class="pick-actions">
+      <button type="button" class="btn btn-gold" onclick="pickSend()">🔔 שלח הזמנה</button>
+      <button type="button" class="btn btn-outline hidden" id="pickMailBtn" onclick="pickMail()">✉️ גם במייל</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="pickClose()">סגור</button>
+    </div>
+    <div class="pick-note">ההזמנה מופיעה אצלם בתוך המשחק — כשהמשחק פתוח אצלם, או ברגע שיפתחו אותו.</div>
+  </div>
+</div>
+<div class="inv-banner hidden" id="invBanner" role="alert"><span id="invText"></span><button type="button" class="btn btn-gold btn-sm" onclick="invJoin()">הצטרף</button><button type="button" class="btn btn-outline btn-sm" onclick="invLater()">לא עכשיו</button></div>
 <div class="auth-gate hidden" id="authGate" role="dialog" aria-modal="true" aria-labelledby="authTitle">
   <div class="auth-card">
     <div class="auth-logo">🕎</div>
@@ -767,7 +791,7 @@ body.circle-armed{touch-action:none}
         <h2 class="section-title" id="waitingTitle">ממתינים לשחקנים...</h2>
         <div class="room-code-display" id="roomCodeDisplay">----</div>
         <p style="text-align:center;color:var(--text-dim);font-size:.75rem;margin-bottom:8px">שתף את הקוד עם החברים</p>
-        <div class="invite-row"><button type="button" class="btn btn-gold btn-sm" onclick="inviteWhatsApp()">📲 הזמנה בוואטסאפ</button><button type="button" class="btn btn-outline btn-sm" onclick="inviteEmail()">✉️ הזמנה במייל</button><button type="button" class="btn btn-outline btn-sm" id="copyInvite" onclick="copyInvite()">📋 העתק קישור</button></div>
+        <div class="invite-row"><button type="button" class="btn btn-gold btn-sm" onclick="inviteWhatsApp()">📲 הזמנה בוואטסאפ</button><button type="button" class="btn btn-outline btn-sm" onclick="inviteEmail()">✉️ הזמנה במייל</button><button type="button" class="btn btn-outline btn-sm" id="copyInvite" onclick="copyInvite()">📋 העתק קישור</button><button type="button" class="btn btn-gold btn-sm" id="pickInviteBtn" onclick="pickOpen()">👥 הזמנה מרשימת המשתמשים</button></div>
         <div id="lobbyPlayers"></div>
         <button class="btn btn-gold hidden" style="width:100%;margin-top:10px" id="startOnlineBtn" onclick="startOnlineGame()">🎲 התחל!</button>
     </div>
@@ -1021,7 +1045,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://cdgqodtbdhsqkvcgcdlm.supabase.co';
 const SB_KEY='sb_publishable_B4HOCQF3IxN_6Ojz1_ctnA_k6JEAR4g';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v117';
+const APP_VERSION='v118';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -1097,6 +1121,7 @@ async function authCheck(again){
         authShow('wait',`שלום <b>${esc(AUTH.user)}</b> 👋<br>הבקשה שלכם לשחק נשלחה למנהל המשחק.<br>כשהוא יאשר — לחצו "בדיקה שוב".`);return false}
     authShow('open');
     if(again)floatText(document.body,'ברוכים הבאים! 🕎','plus');
+    setTimeout(invPoll,1200);
     if(AUTH.admin){try{const w=await sbRpc('dreidel_request_list');accBadge(w.length);if(w.length)floatText(document.body,`🔔 ${w.length} ממתינים לאישור — בהגדרות`,'plus')}catch(e){}}
     return true;
 }
@@ -1319,11 +1344,63 @@ function famShareText(){
 function famShare(){const t=famShareText();if(t)window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
 function famShareEmail(){const f=FAM_EDIT;const t=famShareText();if(t)sendEmail(`קוד המשפחה למשחק הסביבון — ${f.name}`,t)}
 // ✉️ e-mail: the mail program on this device, or Gmail in the browser (for those without a mail program)
-async function sendEmail(subject,body){
+async function sendEmail(subject,body,bcc){
     const a=await uiDialog('איך לשלוח את המייל?','Gmail (בדפדפן)','ביטול','תוכנת המייל במכשיר');
-    if(a==='extra'){location.href='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);return}
-    if(a===true)window.open('https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank');
+    const b=bcc&&bcc.length?bcc.join(','):'';
+    if(a==='extra'){location.href='mailto:?'+(b?'bcc='+encodeURIComponent(b)+'&':'')+'subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);return}
+    if(a===true)window.open('https://mail.google.com/mail/?view=cm&fs=1'+(b?'&bcc='+encodeURIComponent(b):'')+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank');
 }
+// ── 👥 invite from the list of approved users: tick, send — each one gets the invitation inside the game ──
+const PICK={players:[],sel:new Set()};
+async function pickOpen(){
+    if(AUTH.bypass){uiAlert('ההזמנה מהרשימה עובדת באתר עצמו (עם משתמשים).');return}
+    if(!ROOM_CODE){uiAlert('קודם פותחים חדר.');return}
+    document.getElementById('pickModal').classList.remove('hidden');document.getElementById('pickMailBtn').classList.toggle('hidden',!AUTH.admin);
+    document.getElementById('pickList').textContent='טוען…';
+    try{PICK.players=await sbRpc('dreidel_players')||[]}catch(e){document.getElementById('pickList').textContent='לא הצלחתי לטעון את הרשימה.';return}
+    pickRender();
+}
+function pickClose(){document.getElementById('pickModal').classList.add('hidden')}
+function pickRender(){
+    const q=(document.getElementById('pickQ').value||'').trim().toLowerCase(),box=document.getElementById('pickList');
+    const rows=PICK.players.filter(p=>!q||(p.username||'').toLowerCase().includes(q));
+    box.innerHTML=rows.length?rows.map(p=>`<label><input type="checkbox" ${PICK.sel.has(p.id)?'checked':''} onchange="pickTick('${p.id}',this.checked)"> ${esc(p.username||'?')}</label>`).join(''):'<div style="padding:10px;color:var(--text-dim)">אין משתמשים מאושרים'+(q?' בשם הזה':' עדיין')+'.</div>';
+    document.getElementById('pickCount').textContent=PICK.sel.size?`נבחרו ${PICK.sel.size}`:'';
+}
+function pickTick(id,on){on?PICK.sel.add(id):PICK.sel.delete(id);document.getElementById('pickCount').textContent=PICK.sel.size?`נבחרו ${PICK.sel.size}`:''}
+function pickAll(){const all=PICK.players.every(p=>PICK.sel.has(p.id));PICK.players.forEach(p=>all?PICK.sel.delete(p.id):PICK.sel.add(p.id));pickRender()}
+async function pickSend(){
+    if(!PICK.sel.size){uiAlert('סמנו את מי להזמין.');return}
+    try{const n=await sbRpc('dreidel_invite',{p_room:ROOM_CODE,p_type:ONLINE_TYPE==='family'?'family':'',p_users:[...PICK.sel]});
+        floatText(document.getElementById('pickInviteBtn')||document.body,`🔔 נשלחו ${n} הזמנות`,'plus');pickClose();
+    }catch(e){uiAlert('לא הצלחתי לשלוח את ההזמנות.')}
+}
+async function pickMail(){
+    if(!PICK.sel.size){uiAlert('סמנו את מי להזמין.');return}
+    let rows=[];try{rows=await sbRpc('dreidel_player_emails',{p_users:[...PICK.sel]})||[]}catch(e){}
+    const emails=rows.map(r=>r.email).filter(Boolean);
+    if(!emails.length){uiAlert('לא נמצאו כתובות מייל למשתמשים שנבחרו.');return}
+    sendEmail('🕎 הזמנה למשחק סביבון — קוד חדר '+ROOM_CODE,inviteText(),emails);
+}
+// ── 🔔 invitations to me: a banner with "join" (checked when the game opens, and every half minute while not in a game) ──
+const INV={cur:null,later:new Set()};
+async function invPoll(){
+    if(AUTH.bypass||!AUTH.allowed||document.hidden)return;
+    if(!document.getElementById('gameScreen').classList.contains('hidden')||(typeof ROOM_CODE!=='undefined'&&ROOM_CODE&&channel))return;   // already playing / in a room
+    let rows=[];try{rows=await sbRpc('dreidel_my_invites')||[]}catch(e){return}
+    const r=rows.find(x=>!INV.later.has(x.id));const b=document.getElementById('invBanner');
+    if(!r){b.classList.add('hidden');INV.cur=null;return}
+    if(INV.cur&&INV.cur.id===r.id)return;
+    INV.cur=r;document.getElementById('invText').textContent=`🕎 ${r.from_name||'מישהו'} מזמין אותך למשחק סביבון!`;
+    b.classList.remove('hidden');playSfx&&playSfx('he1',{vol:.5});
+}
+async function invJoin(){
+    const r=INV.cur;if(!r)return;document.getElementById('invBanner').classList.add('hidden');INV.cur=null;
+    try{await sbRpc('dreidel_invite_dismiss',{p_id:r.id})}catch(e){}
+    joinRoomCode(r.room,r.room_type);
+}
+function invLater(){if(INV.cur)INV.later.add(INV.cur.id);INV.cur=null;document.getElementById('invBanner').classList.add('hidden')}
+setInterval(invPoll,30000);
 // a link with ?fam=CODE → that family is added to this device
 (function famFromLink(){const k=(new URLSearchParams(location.search).get('fam')||'').toUpperCase();
     if(FK_RE.test(k))setTimeout(()=>famFetch(k,true).then(f=>{if(f){famRemember(k);if(!lsGet('dreidel_my_fam'))lsSet('dreidel_my_fam',k);floatText(document.body,`👨‍👩‍👧 ${f.name} נוספה למכשיר`,'plus');famBtnsUI()}}),900)})();
@@ -1460,12 +1537,16 @@ function inviteEmail(){sendEmail('🕎 הזמנה למשחק סביבון אונ
 async function copyInvite(){const b=document.getElementById('copyInvite');
     try{await navigator.clipboard.writeText(inviteText());b.textContent='✓ הועתק'}catch(e){b.textContent=inviteLink()}setTimeout(()=>b.textContent='📋 העתק קישור',2500)}
 // arriving from an invitation link → straight to "join", with the code filled in
+function joinRoomCode(r,t){
+    try{if(document.getElementById('modeScreen').classList.contains('hidden')&&!document.getElementById('onlineSetup').classList.contains('hidden')){}else selectMode('online');
+        if(t==='family')setOnlineType('family');showOnlineTab('join');
+        document.getElementById('joinCode').value=r;
+        const n=document.getElementById(t==='family'?'joinFamilyName':'joinName');n&&n.focus();
+        floatText(n||document.body,'👋 הוזמנתם! '+(t==='family'?'טענו את המשפחה':'כתבו שם')+' ולחצו "הצטרף"','plus')}catch(e){}
+}
 (function joinFromLink(){const q=new URLSearchParams(location.search),r=(q.get('room')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
     if(r.length<4)return;
-    setTimeout(()=>{try{selectMode('online');if(q.get('t')==='family')setOnlineType('family');showOnlineTab('join');
-        document.getElementById('joinCode').value=r;
-        const n=document.getElementById(q.get('t')==='family'?'joinFamilyName':'joinName');n&&n.focus();
-        floatText(n||document.body,'👋 הוזמנתם! כתבו שם ולחצו "הצטרף"','plus')}catch(e){}},400)})();
+    setTimeout(()=>joinRoomCode(r,q.get('t')),400)})();
 function showOnlineTab(t){document.getElementById('tabCreate').classList.toggle('active',t==='create');document.getElementById('tabJoin').classList.toggle('active',t==='join');toggle('createPanel',t==='create');toggle('joinPanel',t==='join')}
 function genCode(){const c='ABCDEFGHJKLMNPRSTUVWXYZ23456789';let r='';for(let i=0;i<4;i++)r+=c[Math.floor(Math.random()*c.length)];return r}
 
