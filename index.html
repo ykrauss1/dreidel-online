@@ -367,6 +367,7 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 .inv-banner.hidden{display:none}
 .narr-cap{position:fixed;right:16px;bottom:16px;z-index:60;background:rgba(20,24,50,.88);border:1px solid var(--border-l,#445);color:var(--text-dim,#bbc);border-radius:10px;padding:4px 10px;font-size:.8rem;opacity:0;transition:opacity .4s;pointer-events:none}.narr-cap.show{opacity:1}
 .share-note{position:fixed;left:16px;bottom:72px;z-index:60;background:rgba(20,24,50,.92);border:1px solid var(--gold);color:var(--gold);border-radius:12px;padding:6px 12px;font-size:.9rem;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ask-btn.dance-btn{border-color:#9c7bff!important;color:#d7c9ff!important}.ask-btn.dance-btn.on{background:#9c7bff!important;color:#1a1035!important}
 .tune-player button.on{background:var(--gold-dim,#7a6420);color:var(--gold)}
 .tune-player .tp-time{font-size:.75rem;color:var(--text-dim);min-width:70px;font-variant-numeric:tabular-nums}
 @media(max-width:600px){.tune-player{left:10px;right:10px;bottom:112px;max-width:none;flex-wrap:wrap;justify-content:center}.tune-player input{flex:1;width:auto}.tune-player .tp-track{max-width:110px}}
@@ -870,6 +871,7 @@ body.circle-armed{touch-action:none}
                     <button data-m="candles">🕯️ הדלקת נרות</button>
                     <button data-m="nights">🕎 נרות הלילה</button>
                     <button type="button" class="ask-btn" id="askBtn" onclick="askTriviaNow()" title="שאלת חנוכה לשחקן שבתור — עכשיו">❓ שאלה עכשיו</button>
+                    <button type="button" class="ask-btn dance-btn" id="danceBtn" onclick="danceToggle()" title="הפסקה: שיר מתנגן, הסביבון רוקד — שרים ומוחאים כפיים איתו, בלי תור">🎶 שירה וכפיים — בלי תור</button>
                 </div>
                 <div class="spin-prompt" id="spinPrompt"></div>
                 <button class="spin-btn" id="spinBtn">סובב!</button>
@@ -1070,7 +1072,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://cdgqodtbdhsqkvcgcdlm.supabase.co';
 const SB_KEY='sb_publishable_B4HOCQF3IxN_6Ojz1_ctnA_k6JEAR4g';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v120';
+const APP_VERSION='v121';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -2242,10 +2244,13 @@ function d3Render(){
     // camera tilt and perspective as the 3D scene, and draw the flat handle image along it
     if(e.handle){
         const O=[232.5,874,0],cam=-2.5*Math.PI/180,P=2600,PO=[232.5,880*.32];
-        const pt=(x,y)=>{let v=[x-O[0],y-O[1],0];v=_lean(v);v[0]+=D3.drift;
+        const pt=(x,y,z)=>{let v=[x-O[0],y-O[1],z||0];v=_lean(v);v[0]+=D3.drift;
             const c=Math.cos(cam),s=Math.sin(cam);v=[v[0],v[1]*c-v[2]*s,v[1]*s+v[2]*c];
             const X=O[0]+v[0],Y=O[1]+v[1],k=P/(P-v[2]);return[PO[0]+(X-PO[0])*k,PO[1]+(Y-PO[1])*k,k]};
-        const B=pt(232.5,312),T=pt(232.5,12),dx=T[0]-B[0],dy=T[1]-B[1];
+        // the foot of the handle (a disc, 122 wide) stands in the middle of the lid: its front rim — the bottom of the picture —
+        // comes a little in front of the lid's centre, as much as the lid is seen from above
+        const LF=pt(232.5,318,229),LB=pt(232.5,318,-229),C=pt(232.5,318),f=61/458;
+        const B=[C[0]+(LF[0]-LB[0])*f,C[1]+(LF[1]-LB[1])*f,C[2]],T=pt(232.5,12),dx=T[0]-B[0],dy=T[1]-B[1];
         const len=Math.hypot(dx,dy),ang=Math.atan2(dx,-dy)*180/Math.PI;
         e.handle.style.transform=`translate(${(B[0]-232.5).toFixed(1)}px,${(B[1]-310).toFixed(1)}px) rotate(${ang.toFixed(2)}deg) scale(${B[2].toFixed(3)},${(len/300).toFixed(3)})`;
     }
@@ -3244,7 +3249,8 @@ function danceStop(){
     if(DANCE.mic&&MIC.on&&!SING.armed&&!SING.on&&spinMode()!=='clap')micStop();DANCE.mic=false;
     danceUI();
 }
-function danceUI(){const b=document.getElementById('tuneDance');if(b)b.classList.toggle('on',DANCE.on)}
+function danceUI(){const b=document.getElementById('tuneDance');if(b)b.classList.toggle('on',DANCE.on);
+    const d=document.getElementById('danceBtn');if(d){d.classList.toggle('on',DANCE.on);d.textContent=DANCE.on?'⏹ סיום הריקוד':'🎶 שירה וכפיים — בלי תור'}}
 // 🕺 the dancer beside the dreidel: shows up whenever the dreidel dances (here, or the dance shared from another home), jumps on every beat
 (function danceGuyLoop(){
     let lastBeat=0,side=0,n=0;
