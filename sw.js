@@ -10,7 +10,7 @@
  * When changing this file, bump CACHE so old caches are cleaned up.
  */
 
-const CACHE = 'dreidel-v122';
+const CACHE = 'dreidel-v123';
 const FALLBACK = './index.html';
 // Each picture is listed once, as .webp. The .png / .jpg twins exist only for a browser that cannot
 // show webp; precaching both made every install download the pictures twice (about 1.2 MB extra).
@@ -19,7 +19,7 @@ const STATIC = [
   './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './dreidel.webp', './d3-face.webp', './d3-tip.webp', './d3-handle.webp', './bg-table.webp',
   './bg-table-portrait.webp', './coin.webp', './pile.webp', './trivia.json',
-  './dancer.webp', './dancer_big.webp', './dancer_boy.webp', './dancer_girl.webp', './dancer_grandpa.webp', './dancer_grandma.webp', './bg-table-nod.webp', './bg-table-portrait-nod.webp', './dancers_old.webp', './cstack1.webp', './cstack2.webp', './cstack3.webp', './cstack4.webp', './cstack5.webp', './cstack6.webp', './cstack7.webp', './cstack8.webp', './cstack9.webp', './cstack10.webp', './cstack11.webp', './cstack12.webp',
+  './dancer.webp', './dancer_big.webp', './hasid_pose1.webp', './hasid_pose2.webp', './hasid_pose3.webp', './dancer_boy.webp', './dancer_girl.webp', './dancer_grandpa.webp', './dancer_grandma.webp', './bg-table-nod.webp', './bg-table-portrait-nod.webp', './dancers_old.webp', './cstack1.webp', './cstack2.webp', './cstack3.webp', './cstack4.webp', './cstack5.webp', './cstack6.webp', './cstack7.webp', './cstack8.webp', './cstack9.webp', './cstack10.webp', './cstack11.webp', './cstack12.webp',
   './trivia-editor.html'
 ];
 

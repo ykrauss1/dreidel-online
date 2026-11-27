@@ -826,7 +826,7 @@ body.circle-armed{touch-action:none}
         </div>
         <div class="game-main">
             <div class="dreidel-zone">
-                <div class="dreidel-wrap"><img id="danceGuy" class="dance-fig" src="dancer_big.webp" alt="" aria-hidden="true"><img id="danceBoy" class="dance-fig" src="dancer_boy.webp" alt="" aria-hidden="true"><img id="danceGirl" class="dance-fig" src="dancer_girl.webp" alt="" aria-hidden="true"><img id="danceGpa" class="dance-fig" src="dancer_grandpa.webp" alt="" aria-hidden="true"><img id="danceGma" class="dance-fig" src="dancer_grandma.webp" alt="" aria-hidden="true"><div class="dreidel-scale">
+                <div class="dreidel-wrap"><img id="danceGuy" class="dance-fig" src="hasid_pose1.webp" alt="" aria-hidden="true"><img id="danceBoy" class="dance-fig" src="dancer_boy.webp" alt="" aria-hidden="true"><img id="danceGirl" class="dance-fig" src="dancer_girl.webp" alt="" aria-hidden="true"><img id="danceGpa" class="dance-fig" src="dancer_grandpa.webp" alt="" aria-hidden="true"><img id="danceGma" class="dance-fig" src="dancer_grandma.webp" alt="" aria-hidden="true"><div class="dreidel-scale">
                     <div class="dreidel-shadow" id="dreidelShadow"></div>
                     <div class="spin-ring" id="spinRing"></div>
                     <div class="dreidel-svg dreidel-art" id="dreidelSvg" role="img" aria-label="סביבון">
@@ -1060,7 +1060,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://cdgqodtbdhsqkvcgcdlm.supabase.co';
 const SB_KEY='sb_publishable_B4HOCQF3IxN_6Ojz1_ctnA_k6JEAR4g';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v122';
+const APP_VERSION='v123';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -3242,8 +3242,9 @@ function danceUI(){const b=document.getElementById('tuneDance');if(b)b.classList
 // 🕺 the dancer beside the dreidel: shows up whenever the dreidel dances (here, or the dance shared from another home), jumps on every beat
 // ── 🕺 the dancers: the Hasid from the start; the children join when the singing gets going; then the grandparents.
 //    Each moves with the beat in its own way — sways, steps, hops, turns — and the pairs change places every few bars.
+const GUY_POSES=[1,2,3].map(i=>{const im=new Image();im.src='hasid_pose'+i+'.webp';return im});   // (loaded ahead — no flicker)
 (function dancersLoop(){
-    const F={guy:{id:'danceGuy',h:230,side:-1},boy:{id:'danceBoy',h:150*419/420,side:-1},girl:{id:'danceGirl',h:150*399/420,side:-1},
+    const F={guy:{id:'danceGuy',h:240,side:-1},boy:{id:'danceBoy',h:150*419/420,side:-1},girl:{id:'danceGirl',h:150*399/420,side:-1},
              gpa:{id:'danceGpa',h:225*417/420,side:1},gma:{id:'danceGma',h:225*378/420,side:1}};
     let n=0,lastNext=0,lastShift=null,kidsSwap=false,oldSwap=false;
     for(const f of Object.values(F)){f.x=null;f.face=1}
@@ -3277,10 +3278,12 @@ function danceUI(){const b=document.getElementById('tuneDance');if(b)b.classList
             const dx=tx-f.x;f.x+=dx*Math.min(1,.06);                       // walking over to the new place
             const walking=Math.abs(dx)>3;if(walking)f.face=dx>0?1:-1;
             let x=f.x,y=0,rot=0,sx=1,sy=1,H=f.h*sc;
-            if(k==='guy'){                                                 // sways with the music, a big hop every second beat, turns around every 8
-                rot=7*Math.sin(two*2*Math.PI);x+=H*.05*Math.sin(two*2*Math.PI);
-                y=-H*.16*Math.max(0,Math.sin(two*Math.PI));sy=1-.05*Math.max(0,Math.cos(two*Math.PI*2))*(two<.1?1:0);
-                sx=(Math.floor(n/8)%2?-1:1);
+            if(k==='guy'){                                                 // real dance steps: right knee up, arms open, left knee up, arms open — one per beat
+                const pose=[1,3,2,3][((n%4)+4)%4];
+                if(f.pose!==pose){f.pose=pose;f.el.src=GUY_POSES[pose-1].src}
+                const knee=pose!==3;
+                y=knee?-H*.07*Math.sin(ph*Math.PI):-H*.015*Math.sin(ph*Math.PI);   // a little lift on the knee steps
+                rot=(pose===1?-3:pose===2?3:0)*Math.sin(ph*Math.PI);x+=H*.04*Math.sin(two*2*Math.PI);
             }else if(k==='boy'||k==='girl'){                               // hop on every beat, leaning to opposite sides; the girl's skirt twirls
                 const s=(k==='boy'?1:-1)*(n%2?1:-1);
                 y=-H*(walking?.06:.1)*Math.sin(ph*Math.PI);rot=6*s*Math.sin(ph*Math.PI);
