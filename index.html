@@ -45,6 +45,17 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     background:
       linear-gradient(180deg,rgba(6,8,15,.80) 0%,rgba(6,8,15,.35) 30%,rgba(6,8,15,.30) 55%,rgba(6,8,15,.6) 100%),
       image-set(url(bg-table-portrait.webp) type('image/webp'),url(bg-table-portrait.jpg) type('image/jpeg')) center 40%/cover no-repeat}}
+/* while the dreidel dances: the same table without the doughnuts (room for the dancers) */
+#bgDance{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 1.2s;
+    background:
+      linear-gradient(180deg,rgba(6,8,15,.82) 0%,rgba(6,8,15,.45) 28%,rgba(6,8,15,.30) 55%,rgba(6,8,15,.55) 100%),
+      radial-gradient(ellipse 70% 60% at 50% 55%,transparent 40%,rgba(6,8,15,.55) 100%),
+      image-set(url(bg-table-nod.webp) type('image/webp'),url(bg-table-nod.jpg) type('image/jpeg')) center 60%/cover no-repeat}
+@media(max-aspect-ratio:4/5){#bgDance{
+    background:
+      linear-gradient(180deg,rgba(6,8,15,.80) 0%,rgba(6,8,15,.35) 30%,rgba(6,8,15,.30) 55%,rgba(6,8,15,.6) 100%),
+      image-set(url(bg-table-portrait-nod.webp) type('image/webp'),url(bg-table-portrait-nod.jpg) type('image/jpeg')) center 40%/cover no-repeat}}
+body.dancing #bgDance{opacity:1}
 /* glass panels over the table */
 .card,.mode-card,.p-card,.pot-box,.turn-box,.sidebar-panel,.lobby-family,.install-banner{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:12px}
@@ -319,8 +330,8 @@ button,.mode-card,.tab-btn{touch-action:manipulation;-webkit-tap-highlight-color
 @keyframes guyHopL{0%{transform:translateY(0) scale(1.06,.92) rotate(0)}35%{transform:translateY(-26%) scale(.96,1.05) rotate(-9deg)}70%{transform:translateY(0) scale(1.05,.94) rotate(-4deg)}100%{transform:translateY(0) scale(1) rotate(-3deg)}}
 @keyframes guyHopR{0%{transform:translateY(0) scaleX(-1) scale(1.06,.92) rotate(0)}35%{transform:translateY(-26%) scaleX(-1) scale(.96,1.05) rotate(-9deg)}70%{transform:translateY(0) scaleX(-1) scale(1.05,.94) rotate(-4deg)}100%{transform:translateY(0) scaleX(-1) scale(1) rotate(-3deg)}}
 .dance-pair{position:absolute;bottom:0;width:auto;opacity:0;pointer-events:none;transform-origin:50% 100%;transition:opacity .8s,transform .8s;z-index:2;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));transform:translateY(12%) scale(.9)}
-.dance-kids{right:calc(100% + 200px*var(--k));height:calc(190px*var(--k))}
-.dance-old{left:calc(100% + 14px*var(--k));height:calc(230px*var(--k))}
+.dance-kids{right:calc(100% + 185px*var(--k));height:calc(150px*var(--k))}
+.dance-old{left:calc(100% + 14px*var(--k));height:calc(225px*var(--k))}
 .dance-pair.on{opacity:1;transform:none}
 .dance-pair.hopL{animation:pairHopL .45s cubic-bezier(.3,.7,.4,1)}.dance-pair.hopR{animation:pairHopR .45s cubic-bezier(.3,.7,.4,1)}
 .dance-old.hopL,.dance-old.hopR{animation-duration:.6s}
@@ -655,6 +666,7 @@ body.circle-armed{touch-action:none}
   </h1>
 </header>
 
+<div id="bgDance" aria-hidden="true"></div>
 <div class="pick-modal hidden" id="pickModal" role="dialog" aria-modal="true" aria-labelledby="pickTitle" onclick="if(event.target===this)pickClose()">
   <div class="pick-card">
     <h3 id="pickTitle">👥 את מי מזמינים?</h3>
@@ -1058,7 +1070,7 @@ let localStream=null, videoEnabled=false, micEnabled=true;
 const SB_URL='https://cdgqodtbdhsqkvcgcdlm.supabase.co';
 const SB_KEY='sb_publishable_B4HOCQF3IxN_6Ojz1_ctnA_k6JEAR4g';
 const FAM_COLORS=['#f5c842','#3d7aed','#34d399','#f87171','#c084fc','#fb923c','#22d3ee','#f472b6'];
-const APP_VERSION='v119';
+const APP_VERSION='v120';
 document.getElementById('appVersion').textContent=APP_VERSION;
 document.querySelectorAll('.copy-year').forEach(e=>e.textContent=new Date().getFullYear());
 
@@ -3240,6 +3252,7 @@ function danceUI(){const b=document.getElementById('tuneDance');if(b)b.classList
     function loop(){requestAnimationFrame(loop);
         const g=document.getElementById('danceGuy'),k=document.getElementById('danceKids'),o=document.getElementById('danceOld');if(!g)return;
         const on=PS.on&&PS.kind==='dance',el=DANCE.on?DANCE.el:(PS.rEl||0);
+        if(document.body.classList.contains('dancing')!==on)document.body.classList.toggle('dancing',on);
         const show=[[g,on],[k,on&&el>=10],[o,on&&el>=13.5]];       // more singing → more dancers join
         for(const [x,v] of show)if(x&&x.classList.contains('on')!==v){x.classList.toggle('on',v);if(!v)x.classList.remove('hopL','hopR')}
         if(on&&PARTY.beatT!==lastBeat){lastBeat=PARTY.beatT;side^=1;n++;
